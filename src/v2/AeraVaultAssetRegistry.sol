@@ -10,16 +10,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
     uint256 internal constant ONE = 10**18;
 
-    ///@notice Array of all active assets for the vault.
+    /// @notice Array of all active assets for the vault.
     AssetInformation[] internal assets;
 
-    ///@notice Units in oracle decimals.
+    /// @notice Units in oracle decimals.
     uint256[] public oracleUnits;
 
-    ///@notice The index of the numeraire asset in the assets array.
+    /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
 
-    ///@notice Number of ERC4626 assets.
+    /// @notice Number of ERC4626 assets.
     uint256 public numYieldAssets;
 
     /// EVENTS ///
@@ -217,6 +217,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
     }
 
+    /// @inheritdoc IAssetRegistry
     function checkWeights(
         AssetWeight[] calldata currentWeights,
         AssetWeight[] calldata targetWeights
