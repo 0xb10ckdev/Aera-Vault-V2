@@ -73,17 +73,17 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         for (uint256 i = 0; i != numAssets; ) {
-            if (i != numeraire_) {
-                if (address(assets_[i].oracle) == address(0)) {
-                    revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
-                }
-            } else {
+            if (i == numeraire_) {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
+                insertAsset(assets_[i], ONE, i);
+            } else {
+                if (address(assets_[i].oracle) == address(0)) {
+                    revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
+                }
+                insertAsset(assets_[i], 10**assets_[i].oracle.decimals(), i);
             }
-
-            insertAsset(assets_[i], i);
 
             unchecked {
                 ++i;
@@ -123,7 +123,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             revert Aera__AssetIsAlreadyRegistered(0);
         }
 
-        insertAsset(asset, newAssetIndex);
+        insertAsset(asset, 10**asset.oracle.decimals(), newAssetIndex);
 
         emit AssetAdded(asset);
     }
@@ -270,15 +270,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @notice Insert asset at a given index in an array of assets.
     /// @dev Will only be called by constructor() and addAsset().
     /// @param asset A new asset to add.
+    /// @param oracleUint Unit in oracle decimals.
     /// @param index Index of a new asset in the array.
-    function insertAsset(AssetInformation memory asset, uint256 index)
-        internal
-    {
+    function insertAsset(
+        AssetInformation memory asset,
+        uint256 oracleUint,
+        uint256 index
+    ) internal {
         uint256 numAssets = assets.length;
 
         if (index == numAssets) {
             assets.push(asset);
-            oracleUnits.push(10**asset.oracle.decimals());
+            oracleUnits.push(oracleUint);
         } else {
             assets.push(assets[numAssets - 1]);
             oracleUnits.push(ONE);
@@ -295,7 +298,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             }
 
             assets[index] = asset;
-            oracleUnits[index] = 10**asset.oracle.decimals();
+            oracleUnits[index] = oracleUint;
 
             if (index <= numeraire) {
                 unchecked {
