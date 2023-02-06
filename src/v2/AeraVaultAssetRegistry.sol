@@ -228,34 +228,34 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         int256 answer;
         uint256 index;
         for (uint256 i = 0; i != numAssets; ++i) {
+            if (assets[i].isERC4626) {
+                continue;
+            }
+
             if (i == numeraire) {
                 spotPrices[index] = AssetPriceReading({
                     asset: assets[i].asset,
                     spotPrice: ONE
                 });
-                continue;
+            } else {
+                (, answer, , , ) = assets[i].oracle.latestRoundData();
+
+                // Check if the price from the Oracle is valid as Aave does
+                if (answer <= 0) {
+                    revert Aera__OraclePriceIsInvalid(i, answer);
+                }
+
+                price = uint256(answer);
+
+                if (oracleUnits[i] != ONE) {
+                    price = (price * ONE) / oracleUnits[i];
+                }
+
+                spotPrices[index] = AssetPriceReading({
+                    asset: assets[i].asset,
+                    spotPrice: price
+                });
             }
-            if (assets[i].isERC4626) {
-                continue;
-            }
-
-            (, answer, , , ) = assets[i].oracle.latestRoundData();
-
-            // Check if the price from the Oracle is valid as Aave does
-            if (answer <= 0) {
-                revert Aera__OraclePriceIsInvalid(i, answer);
-            }
-
-            price = uint256(answer);
-
-            if (oracleUnits[i] != ONE) {
-                price = (price * ONE) / oracleUnits[i];
-            }
-
-            spotPrices[index] = AssetPriceReading({
-                asset: assets[i].asset,
-                spotPrice: price
-            });
 
             unchecked {
                 ++index;
