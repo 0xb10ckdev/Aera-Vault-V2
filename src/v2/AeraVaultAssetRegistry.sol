@@ -51,7 +51,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// FUNCTIONS ///
 
     constructor(AssetInformation[] memory assets_, uint256 numeraire_) {
-
         uint256 numAssets = assets_.length;
 
         if (numeraire_ >= numAssets) {
@@ -84,14 +83,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 }
             }
 
-            assets.push(assets_[i]);
-            oracleUnits.push(10**assets_[i].oracle.decimals());
-
-            if (assets_[i].isERC4626) {
-                unchecked {
-                    ++numYieldAssets;
-                }
-            }
+            insertAsset(assets_[i], i);
 
             unchecked {
                 ++i;
@@ -131,39 +123,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             revert Aera__AssetIsAlreadyRegistered(0);
         }
 
-        if (newAssetIndex == numAssets) {
-            assets.push(asset);
-            oracleUnits.push(10**asset.oracle.decimals());
-        } else {
-            assets.push(assets[numAssets - 1]);
-            oracleUnits.push(ONE);
-
-            uint256 prevIndex;
-            for (uint256 i = numAssets - 1; i != newAssetIndex; ) {
-                prevIndex = i - 1;
-                assets[i] = assets[prevIndex];
-                oracleUnits[i] = oracleUnits[prevIndex];
-
-                unchecked {
-                    --i;
-                }
-            }
-
-            assets[newAssetIndex] = asset;
-            oracleUnits[newAssetIndex] = 10**asset.oracle.decimals();
-
-            if (newAssetIndex <= numeraire) {
-                unchecked {
-                    ++numeraire;
-                }
-            }
-        }
-
-        if (asset.isERC4626) {
-            unchecked {
-                ++numYieldAssets;
-            }
-        }
+        insertAsset(asset, newAssetIndex);
 
         emit AssetAdded(asset);
     }
@@ -303,6 +263,50 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
             unchecked {
                 ++index;
+            }
+        }
+    }
+
+    /// @notice Insert asset at a given index in an array of assets.
+    /// @dev Will only be called by constructor() and addAsset().
+    /// @param asset A new asset to add.
+    /// @param index Index of a new asset in the array.
+    function insertAsset(AssetInformation memory asset, uint256 index)
+        internal
+    {
+        uint256 numAssets = assets.length;
+
+        if (index == numAssets) {
+            assets.push(asset);
+            oracleUnits.push(10**asset.oracle.decimals());
+        } else {
+            assets.push(assets[numAssets - 1]);
+            oracleUnits.push(ONE);
+
+            uint256 prevIndex;
+            for (uint256 i = numAssets - 1; i != index; ) {
+                prevIndex = i - 1;
+                assets[i] = assets[prevIndex];
+                oracleUnits[i] = oracleUnits[prevIndex];
+
+                unchecked {
+                    --i;
+                }
+            }
+
+            assets[index] = asset;
+            oracleUnits[index] = 10**asset.oracle.decimals();
+
+            if (index <= numeraire) {
+                unchecked {
+                    ++numeraire;
+                }
+            }
+        }
+
+        if (asset.isERC4626) {
+            unchecked {
+                ++numYieldAssets;
             }
         }
     }
