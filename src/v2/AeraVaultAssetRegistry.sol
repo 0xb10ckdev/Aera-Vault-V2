@@ -104,23 +104,19 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         uint256 numAssets = assets.length;
-        uint256 newAssetIndex;
+        uint256 newAssetIndex = numAssets;
 
-        if (asset.asset > assets[0].asset) {
-            for (uint256 i = 0; i != numAssets; ) {
-                if (assets[i].asset < asset.asset) {
-                    newAssetIndex = i + 1;
-                    break;
-                } else if (assets[i].asset == asset.asset) {
-                    revert Aera__AssetIsAlreadyRegistered(i);
-                }
-
-                unchecked {
-                    ++i;
-                }
+        for (uint256 i = 0; i != numAssets; ) {
+            if (asset.asset < assets[i].asset) {
+                newAssetIndex = i;
+                break;
+            } else if (assets[i].asset == asset.asset) {
+                revert Aera__AssetIsAlreadyRegistered(i);
             }
-        } else if (asset.asset == assets[0].asset) {
-            revert Aera__AssetIsAlreadyRegistered(0);
+
+            unchecked {
+                ++i;
+            }
         }
 
         insertAsset(asset, 10**asset.oracle.decimals(), newAssetIndex);
