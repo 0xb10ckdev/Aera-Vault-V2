@@ -60,19 +60,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             );
         }
 
-        uint256 nextIndex = 1;
-        for (uint256 i = 0; i != numAssets - 1; ) {
-            if (assets_[i].asset >= assets_[nextIndex].asset) {
+        for (uint256 i = 1; i < numAssets; i++) {
+            if (assets_[i - 1].asset >= assets_[i].asset) {
                 revert Aera__AssetOrderIsIncorrect(i);
-            }
-
-            unchecked {
-                ++nextIndex;
-                ++i;
             }
         }
 
-        for (uint256 i = 0; i != numAssets; ) {
+        for (uint256 i = 0; i < numAssets; i++) {
             if (i == numeraire_) {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
@@ -83,10 +77,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                     revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
                 }
                 insertAsset(assets_[i], 10**assets_[i].oracle.decimals(), i);
-            }
-
-            unchecked {
-                ++i;
             }
         }
 

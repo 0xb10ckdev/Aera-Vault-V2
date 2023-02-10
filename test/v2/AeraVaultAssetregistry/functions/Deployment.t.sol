@@ -31,7 +31,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector,
-                0
+                1
             )
         );
         new AeraVaultAssetRegistry(invalidAssets, numeraire);
