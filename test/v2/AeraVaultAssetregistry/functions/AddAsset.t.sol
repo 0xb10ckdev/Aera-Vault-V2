@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseAssetRegistry.sol";
 
 contract AddAssetTest is TestBaseAssetRegistry {
+    event AssetAdded(IAssetRegistry.AssetInformation asset);
+
     function test_addAsset_fail_whenCallerIsNotOwner() public {
         (, IAssetRegistry.AssetInformation memory newAsset) = createAsset();
 
@@ -61,6 +63,9 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
             assets[newAssetIndex] = newAsset;
         }
+
+        vm.expectEmit(true, true, true, true, address(assetRegistry));
+        emit AssetAdded(newAsset);
 
         assetRegistry.addAsset(newAsset);
 

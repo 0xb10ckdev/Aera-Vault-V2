@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseAssetRegistry.sol";
 
 contract RemoveAssetTest is TestBaseAssetRegistry {
+    event AssetRemoved(address asset);
+
     function test_removeAsset_fail_whenCallerIsNotOwner() public {
         hoax(USER);
 
@@ -36,6 +38,9 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_success() public {
+        vm.expectEmit(true, true, true, true, address(assetRegistry));
+        emit AssetRemoved(address(assets[nonNumeraire].asset));
+
         assetRegistry.removeAsset(address(assets[nonNumeraire].asset));
 
         for (uint256 i = nonNumeraire; i < numAssets - 1; i++) {
