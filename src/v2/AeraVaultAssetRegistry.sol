@@ -110,8 +110,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         insertAsset(asset, 10**asset.oracle.decimals(), newAssetIndex);
-
-        emit AssetAdded(asset);
     }
 
     /// @inheritdoc IAssetRegistry
@@ -298,5 +296,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 ++numYieldAssets;
             }
         }
+
+        emit AssetAdded(asset);
     }
 }
