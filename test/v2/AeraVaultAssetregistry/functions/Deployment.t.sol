@@ -4,16 +4,14 @@ pragma solidity ^0.8.17;
 import "../TestBaseAssetRegistry.sol";
 
 contract DeploymentTest is TestBaseAssetRegistry {
-    function test_assetRegistryDeployment_fail_whenNumeraireIndexExceedsAssetLength()
+    function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
         public
     {
         uint256 invalidNumeraire = numAssets + 1;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry
-                    .Aera__NumeraireAssetIndexExceedsAssetLength
-                    .selector,
+                AeraVaultAssetRegistry.NumeraireIndexTooHigh.selector,
                 numAssets,
                 invalidNumeraire
             )

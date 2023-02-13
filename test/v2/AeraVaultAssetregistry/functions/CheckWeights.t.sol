@@ -49,7 +49,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         assetRegistry.checkWeights(weights, invalidTargetWeights);
     }
 
-    function test_checkWeights_fail_whenSumOfTargetWeightsIsNotOne() public {
+    function test_checkWeights_fail_whenSumOfTargetsWeightsIsNotOne() public {
         IAssetRegistry.AssetWeight[] memory weights = generateValidWeights();
         IAssetRegistry.AssetWeight[]
             memory invalidTargetWeights = new IAssetRegistry.AssetWeight[](
@@ -61,7 +61,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         invalidTargetWeights[0].weight += 1;
 
         vm.expectRevert(
-            AeraVaultAssetRegistry.Aera__SumOfWeightIsNotOne.selector
+            AeraVaultAssetRegistry.Aera__SumOfWeightsIsNotOne.selector
         );
         assetRegistry.checkWeights(weights, invalidTargetWeights);
     }

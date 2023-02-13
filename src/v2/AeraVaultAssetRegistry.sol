@@ -6,9 +6,9 @@ import "./interfaces/IAssetRegistry.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
-    /// STORAGE ///
-
     uint256 internal constant ONE = 10**18;
+
+    /// STORAGE ///
 
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
@@ -19,32 +19,29 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
 
-    /// @notice Number of ERC4626 assets.
+    /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
 
     /// EVENTS ///
 
     /// @notice Emitted when a new asset is added.
-    /// @param asset Struct asset information.
+    /// @param asset Added asset details.
     event AssetAdded(AssetInformation asset);
 
     /// @notice Emitted when an asset is removed.
-    /// @param asset Address of an asset.
+    /// @param asset Address of removed asset.
     event AssetRemoved(address asset);
 
     /// ERRORS ///
 
-    error Aera__NumeraireAssetIndexExceedsAssetLength(
-        uint256 numAsset,
-        uint256 index
-    );
+    error NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__OracleIsZeroAddress(address asset);
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
-    error Aera__SumOfWeightIsNotOne();
+    error Aera__SumOfWeightsIsNotOne();
     error Aera__AssetIsAlreadyRegistered(uint256 index);
-    error Aera__NoAssetIsRegistered(address asset);
+    error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
 
@@ -54,10 +51,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         uint256 numAssets = assets_.length;
 
         if (numeraire_ >= numAssets) {
-            revert Aera__NumeraireAssetIndexExceedsAssetLength(
-                numAssets,
-                numeraire_
-            );
+            revert NumeraireIndexTooHigh(numAssets, numeraire_);
         }
 
         for (uint256 i = 1; i < numAssets; i++) {
@@ -157,7 +151,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
             emit AssetRemoved(asset);
         } else {
-            revert Aera__NoAssetIsRegistered(asset);
+            revert Aera__AssetNotRegistered(asset);
         }
     }
 
@@ -186,7 +180,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         if (weightSum != ONE) {
-            revert Aera__SumOfWeightIsNotOne();
+            revert Aera__SumOfWeightsIsNotOne();
         }
 
         return true;
@@ -253,21 +247,21 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
     /// INTERNAL FUNCTIONS ///
 
-    /// @notice Insert asset at a given index in an array of assets.
+    /// @notice Insert asset at the given index in an array of assets.
     /// @dev Will only be called by constructor() and addAsset().
-    /// @param asset A new asset to add.
-    /// @param oracleUint Unit in oracle decimals.
-    /// @param index Index of a new asset in the array.
+    /// @param asset New asset details.
+    /// @param oracleUnit Unit in oracle decimals.
+    /// @param index Index of the new asset in the array.
     function _insertAsset(
         AssetInformation memory asset,
-        uint256 oracleUint,
+        uint256 oracleUnit,
         uint256 index
     ) internal {
         uint256 numAssets = _assets.length;
 
         if (index == numAssets) {
             _assets.push(asset);
-            oracleUnits.push(oracleUint);
+            oracleUnits.push(oracleUnit);
         } else {
             _assets.push(_assets[numAssets - 1]);
             oracleUnits.push(ONE);
@@ -284,7 +278,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             }
 
             _assets[index] = asset;
-            oracleUnits[index] = oracleUint;
+            oracleUnits[index] = oracleUnit;
 
             if (index <= numeraire) {
                 unchecked {

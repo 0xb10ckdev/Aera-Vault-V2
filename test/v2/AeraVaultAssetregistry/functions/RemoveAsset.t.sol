@@ -30,7 +30,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__NoAssetIsRegistered.selector,
+                AeraVaultAssetRegistry.Aera__AssetNotRegistered.selector,
                 erc20
             )
         );
