@@ -88,22 +88,19 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         uint256 numAssets = _assets.length;
-        uint256 newAssetIndex = numAssets;
 
-        for (uint256 i = 0; i != numAssets; ) {
-            if (asset.asset < _assets[i].asset) {
-                newAssetIndex = i;
+        uint256 i = 0;
+        for (; i < numAssets; i++) {
+            if (asset.asset >= _assets[i].asset) {
+                if (asset.asset == _assets[i].asset) {
+                    revert Aera__AssetIsAlreadyRegistered(i);
+                }
+            } else {
                 break;
-            } else if (_assets[i].asset == asset.asset) {
-                revert Aera__AssetIsAlreadyRegistered(i);
-            }
-
-            unchecked {
-                ++i;
             }
         }
 
-        _insertAsset(asset, 10**asset.oracle.decimals(), newAssetIndex);
+        _insertAsset(asset, 10**asset.oracle.decimals(), i);
     }
 
     /// @inheritdoc IAssetRegistry
@@ -113,40 +110,33 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         uint256 numAssets = _assets.length;
-        uint256 oldAssetIndex = numAssets;
-        for (uint256 i = 0; i != numAssets; i++) {
-            if (address(_assets[i].asset) == asset) {
-                oldAssetIndex = i;
-
-                break;
-            }
-        }
+        uint256 oldAssetIndex = 0;
+        for (
+            ;
+            oldAssetIndex < numAssets &&
+                address(_assets[oldAssetIndex].asset) != asset;
+            oldAssetIndex++
+        ) {}
 
         if (oldAssetIndex < numAssets) {
             if (_assets[oldAssetIndex].isERC4626) {
-                unchecked {
-                    --numYieldAssets;
-                }
+                numYieldAssets--;
             }
 
             uint256 nextIndex;
             uint256 lastIndex = numAssets - 1;
-            for (uint256 i = oldAssetIndex; i != lastIndex; ) {
+            // Slide all elements after oldAssetIndex left
+            for (uint256 i = oldAssetIndex; i < lastIndex; i++) {
                 nextIndex = i + 1;
                 _assets[i] = _assets[nextIndex];
                 oracleUnits[i] = oracleUnits[nextIndex];
-                unchecked {
-                    ++i;
-                }
             }
 
             delete _assets[lastIndex];
             delete oracleUnits[lastIndex];
 
             if (oldAssetIndex < numeraire) {
-                unchecked {
-                    --numeraire;
-                }
+                numeraire--;
             }
 
             emit AssetRemoved(asset);
@@ -171,12 +161,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
         uint256 weightSum = 0;
 
-        for (uint256 i = 0; i != numAssets; ) {
+        for (uint256 i = 0; i < numAssets; i++) {
             weightSum += targetWeights[i].weight;
-
-            unchecked {
-                ++i;
-            }
         }
 
         if (weightSum != ONE) {
@@ -209,7 +195,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         uint256 price;
         int256 answer;
         uint256 index;
-        for (uint256 i = 0; i != numAssets; ++i) {
+        for (uint256 i = 0; i < numAssets; i++) {
             if (_assets[i].isERC4626) {
                 continue;
             }
@@ -222,7 +208,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             } else {
                 (, answer, , , ) = _assets[i].oracle.latestRoundData();
 
-                // Check if the price from the Oracle is valid as Aave does
+                // Check basic validity
                 if (answer <= 0) {
                     revert Aera__OraclePriceIsInvalid(i, answer);
                 }
@@ -239,9 +225,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 });
             }
 
-            unchecked {
-                ++index;
-            }
+            index++;
         }
     }
 
@@ -267,30 +251,22 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             oracleUnits.push(ONE);
 
             uint256 prevIndex;
-            for (uint256 i = numAssets - 1; i != index; ) {
+            for (uint256 i = numAssets - 1; i > index; i--) {
                 prevIndex = i - 1;
                 _assets[i] = _assets[prevIndex];
                 oracleUnits[i] = oracleUnits[prevIndex];
-
-                unchecked {
-                    --i;
-                }
             }
 
             _assets[index] = asset;
             oracleUnits[index] = oracleUnit;
 
             if (index <= numeraire) {
-                unchecked {
-                    ++numeraire;
-                }
+                numeraire++;
             }
         }
 
         if (asset.isERC4626) {
-            unchecked {
-                ++numYieldAssets;
-            }
+            numYieldAssets++;
         }
 
         emit AssetAdded(asset);
