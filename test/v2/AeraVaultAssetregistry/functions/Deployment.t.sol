@@ -63,6 +63,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
     }
 
     function test_assetRegistryDeployment_success() public {
-        _checkRegisteredAssets();
+        propNumeraire();
+        propNumYieldAssets();
+        propAssets();
     }
 }

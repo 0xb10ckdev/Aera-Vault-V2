@@ -23,6 +23,54 @@ contract TestBaseAssetRegistry is TestBase {
         _deploy();
     }
 
+    function propNumeraire() public {
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
+
+        assertEq(numeraire, assetRegistry.numeraire());
+        assertEq(numeraireAsset, address(registryAssets[numeraire].asset));
+        assertEq(address(registryAssets[numeraire].oracle), address(0));
+    }
+
+    function propNumYieldAssets() public {
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
+
+        uint256 numYieldAssets = 0;
+        for (uint256 i = 0; i < registryAssets.length; i++) {
+            if (registryAssets[i].isERC4626) {
+                numYieldAssets++;
+            }
+        }
+
+        assertEq(numYieldAssets, assetRegistry.numYieldAssets());
+    }
+
+    function propAssets() internal {
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
+
+        assertEq(numAssets, registryAssets.length);
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (i < numAssets - 1) {
+                assertTrue(
+                    registryAssets[i].asset < registryAssets[i + 1].asset
+                );
+            }
+            assertEq(
+                address(registryAssets[i].asset),
+                address(assets[i].asset)
+            );
+            assertEq(registryAssets[i].isERC4626, assets[i].isERC4626);
+            assertEq(registryAssets[i].withdrawable, assets[i].withdrawable);
+            assertEq(
+                address(registryAssets[i].oracle),
+                address(assets[i].oracle)
+            );
+        }
+    }
+
     function _deploy() internal {
         for (uint256 i = 0; i < 4; i++) {
             (
@@ -95,33 +143,10 @@ contract TestBaseAssetRegistry is TestBase {
         IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(ONE));
     }
 
-    function _checkRegisteredAssets() internal {
-        uint256 numAssets = assets.length;
-        IAssetRegistry.AssetInformation[]
-            memory registeredAssets = assetRegistry.assets();
-
-        assertEq(numeraire, assetRegistry.numeraire());
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            assertEq(
-                address(registeredAssets[i].asset),
-                address(assets[i].asset)
-            );
-            assertEq(registeredAssets[i].isERC4626, assets[i].isERC4626);
-            assertEq(registeredAssets[i].withdrawable, assets[i].withdrawable);
-            assertEq(
-                address(registeredAssets[i].oracle),
-                address(assets[i].oracle)
-            );
-        }
-    }
-
     function _generateValidWeights()
         internal
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
-        uint256 numAssets = assets.length;
-
         weights = new IAssetRegistry.AssetWeight[](numAssets);
 
         uint256 weightSum;

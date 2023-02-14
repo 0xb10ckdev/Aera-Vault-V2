@@ -72,6 +72,10 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
         assetRegistry.addAsset(newAsset);
 
-        _checkRegisteredAssets();
+        numAssets++;
+
+        propNumeraire();
+        propNumYieldAssets();
+        propAssets();
     }
 }

@@ -38,17 +38,35 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_success() public {
-        vm.expectEmit(true, true, true, true, address(assetRegistry));
-        emit AssetRemoved(address(assets[nonNumeraire].asset));
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
+        address removalAsset = address(registryAssets[nonNumeraire].asset);
 
-        assetRegistry.removeAsset(address(assets[nonNumeraire].asset));
+        vm.expectEmit(true, true, true, true, address(assetRegistry));
+        emit AssetRemoved(removalAsset);
+
+        assetRegistry.removeAsset(removalAsset);
+
+        registryAssets = assetRegistry.assets();
+
+        for (uint256 i = 0; i < registryAssets.length; i++) {
+            assertTrue(removalAsset != address(registryAssets[i].asset));
+        }
+
+        if (nonNumeraire < numeraire) {
+            numeraire--;
+        }
 
         for (uint256 i = nonNumeraire; i < numAssets - 1; i++) {
             assets[i] = assets[i + 1];
         }
 
-        delete assets[numAssets - 1];
+        assets.pop();
 
-        _checkRegisteredAssets();
+        numAssets--;
+
+        propNumeraire();
+        propNumYieldAssets();
+        propAssets();
     }
 }
