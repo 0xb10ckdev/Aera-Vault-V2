@@ -53,10 +53,12 @@ interface IAssetRegistry {
     /// @notice Check if submitter weights are valid.
     /// @param currentWeights Current weights of assets.
     /// @param targetWeights Target weights of assets.
+    /// @param duration Weight change duration.
     /// @return valid True if weights are valid.
     function checkWeights(
         AssetWeight[] memory currentWeights,
-        AssetWeight[] memory targetWeights
+        AssetWeight[] memory targetWeights,
+        uint256 duration
     ) external view returns (bool valid);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.

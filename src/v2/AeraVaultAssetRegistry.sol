@@ -8,6 +8,17 @@ import "./interfaces/IAssetRegistry.sol";
 contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     uint256 internal constant ONE = 10**18;
 
+    /// @notice Minimum period for weight change duration.
+    uint256 internal constant MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
+
+    /// @notice Largest possible weight change ratio per second.
+    /// @dev The increment/decrement factor per one second.
+    ///      Increment/decrement factor per n seconds: Fn = f * n
+    ///      Weight growth range for n seconds: [1 / Fn - 1, Fn - 1]
+    ///      E.g. increment/decrement factor per 2000 seconds is 2
+    ///      Weight growth range for 2000 seconds is [-50%, 100%]
+    uint256 internal constant MAX_WEIGHT_CHANGE_RATIO = 10**15;
+
     /// STORAGE ///
 
     /// @notice Array of all active assets for the vault.
@@ -39,7 +50,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     error Aera__OracleIsZeroAddress(address asset);
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
-    error Aera__SumOfWeightsIsNotOne();
     error Aera__AssetIsAlreadyRegistered(uint256 index);
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
@@ -148,25 +158,40 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @inheritdoc IAssetRegistry
     function checkWeights(
         AssetWeight[] calldata currentWeights,
-        AssetWeight[] calldata targetWeights
-    ) external view override returns (bool valid) {
+        AssetWeight[] calldata targetWeights,
+        uint256 duration
+    ) external view override returns (bool) {
+        if (duration < MINIMUM_WEIGHT_CHANGE_DURATION) {
+            return false;
+        }
+
         uint256 numAssets = _assets.length;
 
-        if (numAssets != currentWeights.length) {
-            revert Aera__ValueLengthIsNotSame(numAssets, currentWeights.length);
+        if (
+            numAssets != currentWeights.length ||
+            numAssets != targetWeights.length
+        ) {
+            return false;
         }
-        if (numAssets != targetWeights.length) {
-            revert Aera__ValueLengthIsNotSame(numAssets, targetWeights.length);
-        }
+
+        uint256 maximumRatio = MAX_WEIGHT_CHANGE_RATIO * duration;
 
         uint256 weightSum = 0;
-
         for (uint256 i = 0; i < numAssets; i++) {
+            uint256 changeRatio = _getWeightChangeRatio(
+                currentWeights[i].weight,
+                targetWeights[i].weight
+            );
+
+            if (changeRatio > maximumRatio) {
+                return false;
+            }
+
             weightSum += targetWeights[i].weight;
         }
 
         if (weightSum != ONE) {
-            revert Aera__SumOfWeightsIsNotOne();
+            return false;
         }
 
         return true;
@@ -270,5 +295,21 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         emit AssetAdded(asset);
+    }
+
+    /// @notice Calculate a change ratio for weight upgrade.
+    /// @dev Will only be called by checkWeights().
+    /// @param currentWeight Current weight.
+    /// @param targetWeight Target weight.
+    /// @return ratio Change ratio(>1) from current weight to target weight.
+    function _getWeightChangeRatio(uint256 currentWeight, uint256 targetWeight)
+        internal
+        pure
+        returns (uint256 ratio)
+    {
+        return
+            currentWeight > targetWeight
+                ? (ONE * currentWeight) / targetWeight
+                : (ONE * targetWeight) / currentWeight;
     }
 }
