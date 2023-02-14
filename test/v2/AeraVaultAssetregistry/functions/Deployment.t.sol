@@ -22,9 +22,9 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenAssetOrderIsIncorrect()
         public
     {
-        IAssetRegistry.AssetInformation[] memory invalidAssets = assets;
-        invalidAssets[0] = assets[1];
-        invalidAssets[1] = assets[0];
+        IAssetRegistry.AssetInformation memory temp = assets[0];
+        assets[0] = assets[1];
+        assets[1] = temp;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -32,30 +32,26 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 1
             )
         );
-        new AeraVaultAssetRegistry(invalidAssets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire);
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress()
         public
     {
-        IAssetRegistry.AssetInformation[] memory invalidAssets = assets;
-        invalidAssets[numeraire].oracle = AggregatorV2V3Interface(address(1));
+        assets[numeraire].oracle = AggregatorV2V3Interface(address(1));
 
         vm.expectRevert(
             AeraVaultAssetRegistry
                 .Aera__NumeraireOracleIsNotZeroAddress
                 .selector
         );
-        new AeraVaultAssetRegistry(invalidAssets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire);
     }
 
     function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress()
         public
     {
-        IAssetRegistry.AssetInformation[] memory invalidAssets = assets;
-        invalidAssets[nonNumeraire].oracle = AggregatorV2V3Interface(
-            address(0)
-        );
+        assets[nonNumeraire].oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -63,10 +59,10 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 assets[nonNumeraire].asset
             )
         );
-        new AeraVaultAssetRegistry(invalidAssets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire);
     }
 
     function test_assetRegistryDeployment_success() public {
-        checkRegisteredAssets();
+        _checkRegisteredAssets();
     }
 }

@@ -26,7 +26,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {
-        (ERC20Mock erc20, ) = createAsset();
+        (ERC20Mock erc20, ) = _createAsset();
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -49,6 +49,6 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
         delete assets[numAssets - 1];
 
-        checkRegisteredAssets();
+        _checkRegisteredAssets();
     }
 }

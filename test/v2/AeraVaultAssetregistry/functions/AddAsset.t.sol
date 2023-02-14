@@ -6,9 +6,15 @@ import "../TestBaseAssetRegistry.sol";
 contract AddAssetTest is TestBaseAssetRegistry {
     event AssetAdded(IAssetRegistry.AssetInformation asset);
 
-    function test_addAsset_fail_whenCallerIsNotOwner() public {
-        (, IAssetRegistry.AssetInformation memory newAsset) = createAsset();
+    IAssetRegistry.AssetInformation newAsset;
 
+    function setUp() public override {
+        _deploy();
+
+        (, newAsset) = _createAsset();
+    }
+
+    function test_addAsset_fail_whenCallerIsNotOwner() public {
         hoax(USER);
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
@@ -16,16 +22,15 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addAsset_fail_whenOracleIsZeroAddress() public {
-        (, IAssetRegistry.AssetInformation memory invalidAsset) = createAsset();
-        invalidAsset.oracle = AggregatorV2V3Interface(address(0));
+        newAsset.oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OracleIsZeroAddress.selector,
-                invalidAsset.asset
+                newAsset.asset
             )
         );
-        assetRegistry.addAsset(invalidAsset);
+        assetRegistry.addAsset(newAsset);
     }
 
     function test_addAsset_fail_whenAssetIsAlreadyRegistered() public {
@@ -39,8 +44,6 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addAsset_success() public {
-        (, IAssetRegistry.AssetInformation memory newAsset) = createAsset();
-
         uint256 newAssetIndex = numAssets;
         for (uint256 i = 0; i < numAssets; i++) {
             if (newAsset.asset < assets[i].asset) {
@@ -69,6 +72,6 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
         assetRegistry.addAsset(newAsset);
 
-        checkRegisteredAssets();
+        _checkRegisteredAssets();
     }
 }

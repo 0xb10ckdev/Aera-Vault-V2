@@ -12,19 +12,23 @@ import {ERC4626Mock} from "../../utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBase {
-    AeraVaultAssetRegistry internal assetRegistry;
-    IAssetRegistry.AssetInformation[] internal assets;
-    address internal numeraireAsset;
-    uint256 internal numeraire;
-    uint256 internal nonNumeraire;
-    uint256 internal numAssets;
+    AeraVaultAssetRegistry assetRegistry;
+    IAssetRegistry.AssetInformation[] assets;
+    address numeraireAsset;
+    uint256 numeraire;
+    uint256 nonNumeraire;
+    uint256 numAssets;
 
-    function setUp() public virtual{
+    function setUp() public virtual {
+        _deploy();
+    }
+
+    function _deploy() internal {
         for (uint256 i = 0; i < 4; i++) {
             (
                 ERC20Mock erc20,
                 IAssetRegistry.AssetInformation memory asset
-            ) = createAsset();
+            ) = _createAsset();
 
             if (i == 0) {
                 numeraireAsset = address(asset.asset);
@@ -73,7 +77,7 @@ contract TestBaseAssetRegistry is TestBase {
         assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
     }
 
-    function createAsset()
+    function _createAsset()
         internal
         returns (
             ERC20Mock erc20,
@@ -91,7 +95,7 @@ contract TestBaseAssetRegistry is TestBase {
         IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(ONE));
     }
 
-    function checkRegisteredAssets() internal {
+    function _checkRegisteredAssets() internal {
         uint256 numAssets = assets.length;
         IAssetRegistry.AssetInformation[]
             memory registeredAssets = assetRegistry.getAssets();
@@ -112,7 +116,7 @@ contract TestBaseAssetRegistry is TestBase {
         }
     }
 
-    function generateValidWeights()
+    function _generateValidWeights()
         internal
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
