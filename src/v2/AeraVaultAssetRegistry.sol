@@ -45,7 +45,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
     /// ERRORS ///
 
-    error NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
+    error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__OracleIsZeroAddress(address asset);
     error Aera__NumeraireOracleIsNotZeroAddress();
@@ -61,7 +61,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         uint256 numAssets = assets_.length;
 
         if (numeraire_ >= numAssets) {
-            revert NumeraireIndexTooHigh(numAssets, numeraire_);
+            revert Aera__NumeraireIndexTooHigh(numAssets, numeraire_);
         }
 
         for (uint256 i = 1; i < numAssets; i++) {

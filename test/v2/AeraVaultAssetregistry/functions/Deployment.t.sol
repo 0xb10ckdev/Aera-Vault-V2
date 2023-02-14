@@ -11,7 +11,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.NumeraireIndexTooHigh.selector,
+                AeraVaultAssetRegistry.Aera__NumeraireIndexTooHigh.selector,
                 numAssets,
                 invalidNumeraire
             )
