@@ -24,9 +24,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
 
-    /// @notice Units in oracle decimals.
-    uint256[] public oracleUnits;
-
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
 
@@ -75,12 +72,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
-                _insertAsset(assets_[i], ONE, i);
+                _insertAsset(assets_[i], i);
             } else {
                 if (address(assets_[i].oracle) == address(0)) {
                     revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
                 }
-                _insertAsset(assets_[i], 10**assets_[i].oracle.decimals(), i);
+                _insertAsset(assets_[i], i);
             }
         }
 
@@ -110,7 +107,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             }
         }
 
-        _insertAsset(asset, 10**asset.oracle.decimals(), i);
+        _insertAsset(asset, i);
     }
 
     /// @inheritdoc IAssetRegistry
@@ -139,11 +136,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             for (uint256 i = oldAssetIndex; i < lastIndex; i++) {
                 nextIndex = i + 1;
                 _assets[i] = _assets[nextIndex];
-                oracleUnits[i] = oracleUnits[nextIndex];
             }
 
             _assets.pop();
-            oracleUnits.pop();
 
             if (oldAssetIndex < numeraire) {
                 numeraire--;
@@ -221,6 +216,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
         uint256 price;
         int256 answer;
+        uint256 oracleUnit;
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
             if (_assets[i].isERC4626) {
@@ -241,9 +237,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 }
 
                 price = uint256(answer);
+                oracleUnit = 10**_assets[i].oracle.decimals();
 
-                if (oracleUnits[i] != ONE) {
-                    price = (price * ONE) / oracleUnits[i];
+                if (oracleUnit != ONE) {
+                    price = (price * ONE) / oracleUnit;
                 }
 
                 prices[index] = AssetPriceReading({
@@ -263,31 +260,24 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @notice Insert asset at the given index in an array of assets.
     /// @dev Will only be called by constructor() and addAsset().
     /// @param asset New asset details.
-    /// @param oracleUnit Unit in oracle decimals.
     /// @param index Index of the new asset in the array.
-    function _insertAsset(
-        AssetInformation memory asset,
-        uint256 oracleUnit,
-        uint256 index
-    ) internal {
+    function _insertAsset(AssetInformation memory asset, uint256 index)
+        internal
+    {
         uint256 numAssets = _assets.length;
 
         if (index == numAssets) {
             _assets.push(asset);
-            oracleUnits.push(oracleUnit);
         } else {
             _assets.push(_assets[numAssets - 1]);
-            oracleUnits.push(ONE);
 
             uint256 prevIndex;
             for (uint256 i = numAssets - 1; i > index; i--) {
                 prevIndex = i - 1;
                 _assets[i] = _assets[prevIndex];
-                oracleUnits[i] = oracleUnits[prevIndex];
             }
 
             _assets[index] = asset;
-            oracleUnits[index] = oracleUnit;
 
             if (index <= numeraire) {
                 numeraire++;
