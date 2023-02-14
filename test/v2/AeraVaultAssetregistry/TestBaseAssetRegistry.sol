@@ -98,7 +98,7 @@ contract TestBaseAssetRegistry is TestBase {
     function _checkRegisteredAssets() internal {
         uint256 numAssets = assets.length;
         IAssetRegistry.AssetInformation[]
-            memory registeredAssets = assetRegistry.getAssets();
+            memory registeredAssets = assetRegistry.assets();
 
         assertEq(numeraire, assetRegistry.numeraire());
 

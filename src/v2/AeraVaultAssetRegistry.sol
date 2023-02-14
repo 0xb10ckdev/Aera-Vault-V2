@@ -198,7 +198,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     }
 
     /// @inheritdoc IAssetRegistry
-    function getAssets()
+    function assets()
         external
         view
         override
@@ -212,10 +212,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         external
         view
         override
-        returns (AssetPriceReading[] memory spotPrices)
+        returns (AssetPriceReading[] memory)
     {
         uint256 numAssets = _assets.length;
-        spotPrices = new AssetPriceReading[](numAssets - numYieldAssets);
+        AssetPriceReading[] memory prices = new AssetPriceReading[](
+            numAssets - numYieldAssets
+        );
 
         uint256 price;
         int256 answer;
@@ -226,7 +228,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             }
 
             if (i == numeraire) {
-                spotPrices[index] = AssetPriceReading({
+                prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
                     spotPrice: ONE
                 });
@@ -244,7 +246,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                     price = (price * ONE) / oracleUnits[i];
                 }
 
-                spotPrices[index] = AssetPriceReading({
+                prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
                     spotPrice: price
                 });
@@ -252,6 +254,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
 
             index++;
         }
+
+        return prices;
     }
 
     /// INTERNAL FUNCTIONS ///

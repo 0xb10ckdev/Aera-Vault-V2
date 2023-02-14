@@ -33,10 +33,7 @@ interface IAssetRegistry {
 
     /// @notice Get a list of all active assets for the vault.
     /// @return assets List of assets.
-    function getAssets()
-        external
-        view
-        returns (AssetInformation[] memory assets);
+    function assets() external view returns (AssetInformation[] memory assets);
 
     /// @notice Get the index of the numeraire asset in the assets array.
     /// @return numeraire Index of numeraire asset.
