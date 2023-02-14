@@ -142,8 +142,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 oracleUnits[i] = oracleUnits[nextIndex];
             }
 
-            delete _assets[lastIndex];
-            delete oracleUnits[lastIndex];
+            _assets.pop();
+            oracleUnits.pop();
 
             if (oldAssetIndex < numeraire) {
                 numeraire--;
