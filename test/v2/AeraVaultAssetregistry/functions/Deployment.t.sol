@@ -4,6 +4,10 @@ pragma solidity ^0.8.17;
 import "../TestBaseAssetRegistry.sol";
 
 contract DeploymentTest is TestBaseAssetRegistry {
+    function setUp() public override {
+        _createAssets(4, 2);
+    }
+
     function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
         public
     {
@@ -63,8 +67,11 @@ contract DeploymentTest is TestBaseAssetRegistry {
     }
 
     function test_assetRegistryDeployment_success() public {
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+
         propNumeraire();
         propNumYieldAssets();
+        propAssetsSorted();
         propAssets();
     }
 }

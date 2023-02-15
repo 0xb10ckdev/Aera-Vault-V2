@@ -46,6 +46,15 @@ contract TestBaseAssetRegistry is TestBase {
         assertEq(numYieldAssets, assetRegistry.numYieldAssets());
     }
 
+    function propAssetsSorted() internal {
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
+
+        for (uint256 i = 0; i < registryAssets.length - 1; i++) {
+            assertTrue(registryAssets[i].asset < registryAssets[i + 1].asset);
+        }
+    }
+
     function propAssets() internal {
         IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
             .assets();
@@ -53,11 +62,6 @@ contract TestBaseAssetRegistry is TestBase {
         assertEq(numAssets, registryAssets.length);
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (i < numAssets - 1) {
-                assertTrue(
-                    registryAssets[i].asset < registryAssets[i + 1].asset
-                );
-            }
             assertEq(
                 address(registryAssets[i].asset),
                 address(assets[i].asset)
@@ -72,7 +76,13 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function _deploy() internal {
-        for (uint256 i = 0; i < 4; i++) {
+        _createAssets(4, 2);
+
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+    }
+
+    function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
+        for (uint256 i = 0; i < numERC20; i++) {
             (
                 ERC20Mock erc20,
                 IAssetRegistry.AssetInformation memory asset
@@ -85,7 +95,7 @@ contract TestBaseAssetRegistry is TestBase {
 
             assets.push(asset);
 
-            if (i < 2) {
+            if (i < numERC4626) {
                 ERC4626Mock erc4626 = new ERC4626Mock(
                     erc20,
                     erc20.name(),
@@ -104,7 +114,7 @@ contract TestBaseAssetRegistry is TestBase {
             }
         }
 
-        numAssets = assets.length;
+        numAssets = numERC20 + numERC4626;
 
         for (uint256 i = 0; i < numAssets; i++) {
             for (uint256 j = numAssets - 1; j > i; j--) {
@@ -121,8 +131,6 @@ contract TestBaseAssetRegistry is TestBase {
         }
 
         nonNumeraire = (numeraire + 1) % numAssets;
-
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
     }
 
     function _createAsset()
@@ -147,12 +155,14 @@ contract TestBaseAssetRegistry is TestBase {
         internal
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
+        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
+            .assets();
         weights = new IAssetRegistry.AssetWeight[](numAssets);
 
         uint256 weightSum;
         for (uint256 i = 0; i < numAssets; i++) {
             weights[i] = IAssetRegistry.AssetWeight({
-                asset: assets[i].asset,
+                asset: registryAssets[i].asset,
                 weight: ONE / numAssets
             });
             weightSum += ONE / numAssets;

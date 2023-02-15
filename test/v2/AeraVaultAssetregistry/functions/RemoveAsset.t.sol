@@ -38,35 +38,45 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_success() public {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
-        address removalAsset = address(registryAssets[nonNumeraire].asset);
+        uint256 numRegistryAssets = assetRegistry.assets().length;
+        address removalAsset = address(assets[nonNumeraire].asset);
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
         emit AssetRemoved(removalAsset);
 
         assetRegistry.removeAsset(removalAsset);
 
-        registryAssets = assetRegistry.assets();
+        IAssetRegistry.AssetInformation[] memory updatedAssets = assetRegistry
+            .assets();
 
-        for (uint256 i = 0; i < registryAssets.length; i++) {
-            assertTrue(removalAsset != address(registryAssets[i].asset));
+        bool exist;
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (removalAsset == address(assets[i].asset)) {
+                continue;
+            }
+
+            exist = false;
+            for (uint256 j = 0; j < updatedAssets.length; j++) {
+                if (assets[i].asset == updatedAssets[j].asset) {
+                    exist = true;
+                    break;
+                }
+            }
+            assertTrue(exist);
         }
+
+        for (uint256 i = 0; i < updatedAssets.length; i++) {
+            assertTrue(removalAsset != address(updatedAssets[i].asset));
+        }
+
+        assertEq(numRegistryAssets - 1, updatedAssets.length);
 
         if (nonNumeraire < numeraire) {
             numeraire--;
         }
 
-        for (uint256 i = nonNumeraire; i < numAssets - 1; i++) {
-            assets[i] = assets[i + 1];
-        }
-
-        assets.pop();
-
-        numAssets--;
-
         propNumeraire();
         propNumYieldAssets();
-        propAssets();
+        propAssetsSorted();
     }
 }

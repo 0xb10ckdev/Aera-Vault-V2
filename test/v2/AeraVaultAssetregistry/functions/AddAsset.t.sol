@@ -44,38 +44,45 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addAsset_success() public {
-        uint256 newAssetIndex = numAssets;
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (newAsset.asset < assets[i].asset) {
-                newAssetIndex = i;
-                if (newAssetIndex <= numeraire) {
-                    numeraire++;
-                }
-                break;
-            }
-        }
-
-        if (newAssetIndex == numAssets) {
-            assets.push(newAsset);
-        } else {
-            assets.push(assets[numAssets - 1]);
-
-            for (uint256 i = numAssets - 1; i > newAssetIndex; i--) {
-                assets[i] = assets[i - 1];
-            }
-
-            assets[newAssetIndex] = newAsset;
-        }
+        uint256 numRegistryAssets = assetRegistry.assets().length;
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
         emit AssetAdded(newAsset);
 
         assetRegistry.addAsset(newAsset);
 
-        numAssets++;
+        IAssetRegistry.AssetInformation[] memory updatedAssets = assetRegistry
+            .assets();
+
+        bool exist;
+        for (uint256 i = 0; i < numAssets; i++) {
+            exist = false;
+            for (uint256 j = 0; j < updatedAssets.length; j++) {
+                if (assets[i].asset == updatedAssets[j].asset) {
+                    exist = true;
+                    break;
+                }
+            }
+            assertTrue(exist);
+        }
+
+        exist = false;
+        for (uint256 i = 0; i < updatedAssets.length; i++) {
+            if (newAsset.asset == updatedAssets[i].asset) {
+                exist = true;
+                break;
+            }
+        }
+        assertTrue(exist);
+
+        assertEq(numRegistryAssets + 1, updatedAssets.length);
+
+        if (newAsset.asset < assets[numeraire].asset) {
+            numeraire++;
+        }
 
         propNumeraire();
         propNumYieldAssets();
-        propAssets();
+        propAssetsSorted();
     }
 }
