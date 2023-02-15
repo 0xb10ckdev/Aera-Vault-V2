@@ -72,13 +72,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
-                _insertAsset(assets_[i], i);
-            } else {
-                if (address(assets_[i].oracle) == address(0)) {
-                    revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
-                }
-                _insertAsset(assets_[i], i);
+            } else if (address(assets_[i].oracle) == address(0)) {
+                revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
             }
+
+            _insertAsset(assets_[i], i);
         }
 
         numeraire = numeraire_;
@@ -125,29 +123,29 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             oldAssetIndex++
         ) {}
 
-        if (oldAssetIndex < numAssets) {
-            if (_assets[oldAssetIndex].isERC4626) {
-                numYieldAssets--;
-            }
-
-            uint256 nextIndex;
-            uint256 lastIndex = numAssets - 1;
-            // Slide all elements after oldAssetIndex left
-            for (uint256 i = oldAssetIndex; i < lastIndex; i++) {
-                nextIndex = i + 1;
-                _assets[i] = _assets[nextIndex];
-            }
-
-            _assets.pop();
-
-            if (oldAssetIndex < numeraire) {
-                numeraire--;
-            }
-
-            emit AssetRemoved(asset);
-        } else {
+        if (oldAssetIndex >= numAssets) {
             revert Aera__AssetNotRegistered(asset);
         }
+
+        if (_assets[oldAssetIndex].isERC4626) {
+            numYieldAssets--;
+        }
+
+        uint256 nextIndex;
+        uint256 lastIndex = numAssets - 1;
+        // Slide all elements after oldAssetIndex left
+        for (uint256 i = oldAssetIndex; i < lastIndex; i++) {
+            nextIndex = i + 1;
+            _assets[i] = _assets[nextIndex];
+        }
+
+        _assets.pop();
+
+        if (oldAssetIndex < numeraire) {
+            numeraire--;
+        }
+
+        emit AssetRemoved(asset);
     }
 
     /// @inheritdoc IAssetRegistry
