@@ -5,7 +5,6 @@ import "../TestBaseAssetRegistry.sol";
 
 contract SpotPricesTest is TestBaseAssetRegistry {
     function test_spotPrices_fail_whenOraclePriceIsInvalid() public {
-        uint256 nonNumeraire;
         for (uint256 i = 0; i < numAssets; i++) {
             if (i != numeraire && !assets[i].isERC4626) {
                 nonNumeraire = i;
@@ -26,6 +25,17 @@ contract SpotPricesTest is TestBaseAssetRegistry {
     }
 
     function test_spotPrices_success() public {
+        uint256 testPrice = ONE * 5;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (i == numeraire || assets[i].isERC4626) {
+                continue;
+            }
+            IOracleMock(address(assets[i].oracle)).setLatestAnswer(
+                int256(testPrice)
+            );
+        }
+
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
             .spotPrices();
 
@@ -43,9 +53,8 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             if (i == numeraire) {
                 assertEq(spotPrices[index].spotPrice, ONE);
             } else {
-                (, int256 answer, , , ) = assets[i].oracle.latestRoundData();
                 uint256 oracleUnit = 10**assets[i].oracle.decimals();
-                uint256 price = (uint256(answer) * ONE) / oracleUnit;
+                uint256 price = (testPrice * ONE) / oracleUnit;
 
                 assertEq(spotPrices[index].spotPrice, price);
             }
