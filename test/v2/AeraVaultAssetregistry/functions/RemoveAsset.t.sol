@@ -39,19 +39,19 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
     function test_removeAsset_success() public {
         uint256 numRegistryAssets = assetRegistry.assets().length;
-        address removalAsset = address(assets[nonNumeraire].asset);
+        IERC20 removalAsset = assets[nonNumeraire].asset;
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
-        emit AssetRemoved(removalAsset);
+        emit AssetRemoved(address(removalAsset));
 
-        assetRegistry.removeAsset(removalAsset);
+        assetRegistry.removeAsset(address(removalAsset));
 
         IAssetRegistry.AssetInformation[] memory updatedAssets = assetRegistry
             .assets();
 
         bool exist;
         for (uint256 i = 0; i < numAssets; i++) {
-            if (removalAsset == address(assets[i].asset)) {
+            if (removalAsset == assets[i].asset) {
                 continue;
             }
 
@@ -66,13 +66,13 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         }
 
         for (uint256 i = 0; i < updatedAssets.length; i++) {
-            assertTrue(removalAsset != address(updatedAssets[i].asset));
+            assertTrue(removalAsset != updatedAssets[i].asset);
         }
 
         assertEq(numRegistryAssets - 1, updatedAssets.length);
 
-        if (nonNumeraire < numeraire) {
-            numeraire--;
+        if (removalAsset < assets[numeraire].asset) {
+            numeraire++;
         }
 
         propNumeraire();
