@@ -10,6 +10,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install dependencies
+        run: yarn install --immutable || true
+
+      - name: Run solhint linter
+        run: yarn run lint:sol
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
