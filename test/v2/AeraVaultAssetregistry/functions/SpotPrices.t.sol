@@ -25,7 +25,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
     }
 
     function test_spotPrices_success() public {
-        uint256 testPrice = ONE * 5;
+        uint256 testPrice = _ONE * 5;
 
         for (uint256 i = 0; i < numAssets; i++) {
             if (i == numeraire || assets[i].isERC4626) {
@@ -51,10 +51,10 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             );
 
             if (i == numeraire) {
-                assertEq(spotPrices[index].spotPrice, ONE);
+                assertEq(spotPrices[index].spotPrice, _ONE);
             } else {
                 uint256 oracleUnit = 10**assets[i].oracle.decimals();
-                uint256 price = (testPrice * ONE) / oracleUnit;
+                uint256 price = (testPrice * _ONE) / oracleUnit;
 
                 assertEq(spotPrices[index].spotPrice, price);
             }

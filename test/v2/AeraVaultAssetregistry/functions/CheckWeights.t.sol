@@ -4,8 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseAssetRegistry.sol";
 
 contract CheckWeightsTest is TestBaseAssetRegistry {
-    uint256 internal constant MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
-    uint256 internal constant MAX_WEIGHT_CHANGE_RATIO = 10**15;
+    uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
+    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10**15;
 
     IAssetRegistry.AssetWeight[] currentWeights;
     IAssetRegistry.AssetWeight[] targetWeights;
@@ -21,7 +21,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
             targetWeights.push(weights[i]);
         }
 
-        duration = MINIMUM_WEIGHT_CHANGE_DURATION;
+        duration = _MINIMUM_WEIGHT_CHANGE_DURATION;
     }
 
     function test_checkWeights_invalid_whenDurationIsLessThanMinimum() public {
@@ -29,7 +29,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
             assetRegistry.checkWeights(
                 currentWeights,
                 targetWeights,
-                MINIMUM_WEIGHT_CHANGE_DURATION - 1
+                _MINIMUM_WEIGHT_CHANGE_DURATION - 1
             )
         );
     }
@@ -57,9 +57,9 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
     function test_checkWeights_invalid_whenWeightChangeRatioExceedsMaximum()
         public
     {
-        uint256 maximumRatio = MAX_WEIGHT_CHANGE_RATIO * duration;
+        uint256 maximumRatio = _MAX_WEIGHT_CHANGE_RATIO * duration;
         uint256 currentWeight0 = 1e15;
-        uint256 targetWeight0 = (currentWeight0 * (maximumRatio + 1)) / ONE;
+        uint256 targetWeight0 = (currentWeight0 * (maximumRatio + 1)) / _ONE;
         currentWeights[1].weight += (currentWeights[0].weight - currentWeight0);
         targetWeights[1].weight -= (targetWeights[0].weight - targetWeight0);
         currentWeights[0].weight = currentWeight0;

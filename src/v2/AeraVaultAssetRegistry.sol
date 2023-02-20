@@ -6,10 +6,10 @@ import "./interfaces/IAssetRegistry.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
-    uint256 internal constant ONE = 10**18;
+    uint256 internal constant _ONE = 10**18;
 
     /// @notice Minimum period for weight change duration.
-    uint256 internal constant MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
+    uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
 
     /// @notice Largest possible weight change ratio per second.
     /// @dev The increment/decrement factor per one second.
@@ -17,7 +17,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     ///      Weight growth range for n seconds: [1 / Fn - 1, Fn - 1]
     ///      E.g. increment/decrement factor per 2000 seconds is 2
     ///      Weight growth range for 2000 seconds is [-50%, 100%]
-    uint256 internal constant MAX_WEIGHT_CHANGE_RATIO = 10**15;
+    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10**15;
 
     /// STORAGE ///
 
@@ -154,7 +154,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         AssetWeight[] calldata targetWeights,
         uint256 duration
     ) external view override returns (bool) {
-        if (duration < MINIMUM_WEIGHT_CHANGE_DURATION) {
+        if (duration < _MINIMUM_WEIGHT_CHANGE_DURATION) {
             return false;
         }
 
@@ -167,7 +167,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             return false;
         }
 
-        uint256 maximumRatio = MAX_WEIGHT_CHANGE_RATIO * duration;
+        uint256 maximumRatio = _MAX_WEIGHT_CHANGE_RATIO * duration;
 
         uint256 weightSum = 0;
         for (uint256 i = 0; i < numAssets; i++) {
@@ -183,7 +183,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             weightSum += targetWeights[i].weight;
         }
 
-        if (weightSum != ONE) {
+        if (weightSum != _ONE) {
             return false;
         }
 
@@ -224,7 +224,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             if (i == numeraire) {
                 prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
-                    spotPrice: ONE
+                    spotPrice: _ONE
                 });
             } else {
                 (, answer, , , ) = _assets[i].oracle.latestRoundData();
@@ -237,8 +237,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 price = uint256(answer);
                 oracleUnit = 10**_assets[i].oracle.decimals();
 
-                if (oracleUnit != ONE) {
-                    price = (price * ONE) / oracleUnit;
+                if (oracleUnit != _ONE) {
+                    price = (price * _ONE) / oracleUnit;
                 }
 
                 prices[index] = AssetPriceReading({
@@ -301,7 +301,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     {
         return
             currentWeight > targetWeight
-                ? (ONE * currentWeight) / targetWeight
-                : (ONE * targetWeight) / currentWeight;
+                ? (_ONE * currentWeight) / targetWeight
+                : (_ONE * targetWeight) / currentWeight;
     }
 }

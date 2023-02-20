@@ -15,7 +15,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addAsset_fail_whenCallerIsNotOwner() public {
-        hoax(USER);
+        hoax(_USER);
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         assetRegistry.addAsset(newAsset);

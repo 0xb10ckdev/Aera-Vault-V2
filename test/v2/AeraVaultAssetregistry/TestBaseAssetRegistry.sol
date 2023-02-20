@@ -148,7 +148,7 @@ contract TestBaseAssetRegistry is TestBase {
             oracle: AggregatorV2V3Interface(address(new OracleMock(18)))
         });
 
-        IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(ONE));
+        IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(_ONE));
     }
 
     function _generateValidWeights()
@@ -163,11 +163,11 @@ contract TestBaseAssetRegistry is TestBase {
         for (uint256 i = 0; i < numAssets; i++) {
             weights[i] = IAssetRegistry.AssetWeight({
                 asset: registryAssets[i].asset,
-                weight: ONE / numAssets
+                weight: _ONE / numAssets
             });
-            weightSum += ONE / numAssets;
+            weightSum += _ONE / numAssets;
         }
 
-        weights[numAssets - 1].weight += ONE - weightSum;
+        weights[numAssets - 1].weight += _ONE - weightSum;
     }
 }
