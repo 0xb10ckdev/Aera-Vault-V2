@@ -1,0 +1,17 @@
+{
+  "name": "aera-core",
+  "description": "Treasury reinsurance protocol",
+  "version": "0.0.1",
+  "files": [
+    "/src"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "solhint": "^3.4.0",
+    "solhint-plugin-prettier": "^0.0.5"
+  },
+  "scripts": {
+    "lint:sol": "solhint --config ./.solhint.json --max-warnings 0 \"src/**/*.sol\""
+  }
+}
