@@ -40,9 +40,6 @@ contract AeraBalancerExecution is IExecution, Ownable {
     /// @notice vault contract that the execution layer is linked to.
     address public vault;
 
-    /// @notice Indicates that the Execution module has been initialized.
-    bool public initialized;
-
     /// EVENTS ///
 
     /// ERRORS ///
@@ -52,7 +49,6 @@ contract AeraBalancerExecution is IExecution, Ownable {
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
     error Aera__CallerIsNotVault();
-    error Aera__ModuleIsNotInitialized();
     error Aera__SumOfWeightIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
     error Aera__DifferentTokensInPosition(
@@ -68,14 +64,6 @@ contract AeraBalancerExecution is IExecution, Ownable {
     modifier onlyVault() {
         if (msg.sender != vault) {
             revert Aera__CallerIsNotVault();
-        }
-        _;
-    }
-
-    /// @dev Throws if called before the module is initialized.
-    modifier whenInitialized() {
-        if (!initialized) {
-            revert Aera__ModuleIsNotInitialized();
         }
         _;
     }
@@ -139,17 +127,16 @@ contract AeraBalancerExecution is IExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function initialize(address _vault) external override onlyOwner {
-        if (initialized) {
+    function initialize(address vault_) external override onlyOwner {
+        if (vault != address(0)) {
             revert Aera__ModuleIsAlreadyInitialized();
         }
 
-        if (_vault == address(0)) {
+        if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
         }
 
-        initialized = true;
-        vault = _vault;
+        vault = vault_;
     }
 
     /// @inheritdoc IExecution
@@ -186,120 +173,68 @@ contract AeraBalancerExecution is IExecution, Ownable {
         uint256 necessaryTotalValue;
         uint256 minAssetValue = type(uint256).max;
 
-        uint256 targetValue;
-        for (uint256 i = 0; i < numRequests; i++) {
-            targetValue = (totalValue * requests[i].weight) / _ONE;
-            if (values[i] != targetValue) {
-                startAmounts[i] = requests[i].amount;
-                endAmounts[i] =
-                    (totalValue * requests[i].weight) /
-                    spotPrices[i].spotPrice;
+        {
+            uint256 targetValue;
+            for (uint256 i = 0; i < numRequests; i++) {
+                targetValue = (totalValue * requests[i].weight) / _ONE;
+                if (values[i] != targetValue) {
+                    startAmounts[i] = requests[i].amount;
+                    endAmounts[i] =
+                        (totalValue * requests[i].weight) /
+                        spotPrices[i].spotPrice;
 
-                necessaryTotalValue += targetValue;
-                adjustableCount++;
+                    necessaryTotalValue += targetValue;
+                    adjustableCount++;
 
-                if (values[i] < targetValue) {
-                    targetValue = values[i];
-                }
+                    if (values[i] < minAssetValue) {
+                        minAssetValue = values[i];
+                    }
 
-                if (targetValue < minAssetValue) {
-                    minAssetValue = targetValue;
+                    if (targetValue < minAssetValue) {
+                        minAssetValue = targetValue;
+                    }
                 }
             }
-        }
-
-        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
-
-        uint256 adjustableAssetValue;
-        if (minAssetValue > minValue) {
-            adjustableAssetValue =
-                (adjustableCount * (minAssetValue - minValue)) /
-                (_ONE - _MIN_WEIGHT * adjustableCount);
         }
 
         uint256[] memory startWeights = new uint256[](numRequests);
         uint256[] memory endWeights = new uint256[](numRequests);
 
-        necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+        {
+            uint256 adjustableAssetValue;
+            uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
 
-        uint256 adjustableAmount;
-        for (uint256 i = 0; i < numRequests; i++) {
-            adjustableAmount =
-                (adjustableAssetValue * _ONE) /
-                spotPrices[i].spotPrice;
-            if (startAmounts[i] != 0) {
-                startAmounts[i] -= adjustableAmount;
-                startWeights[i] =
-                    (startAmounts[i] * _ONE) /
-                    necessaryTotalValue;
+            if (minAssetValue > minValue) {
+                adjustableAssetValue =
+                    (adjustableCount * (minAssetValue - minValue)) /
+                    (_ONE - _MIN_WEIGHT * adjustableCount);
             }
-            if (endAmounts[i] != 0) {
-                endAmounts[i] -= adjustableAmount;
-                endWeights[i] = (endAmounts[i] * _ONE) / necessaryTotalValue;
+
+            necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+
+            uint256 adjustableAmount;
+            for (uint256 i = 0; i < numRequests; i++) {
+                adjustableAmount =
+                    (adjustableAssetValue * _ONE) /
+                    spotPrices[i].spotPrice;
+                if (startAmounts[i] != 0) {
+                    startAmounts[i] -= adjustableAmount;
+                    startWeights[i] =
+                        (startAmounts[i] * _ONE) /
+                        necessaryTotalValue;
+                }
+                if (endAmounts[i] != 0) {
+                    endAmounts[i] -= adjustableAmount;
+                    endWeights[i] =
+                        (endAmounts[i] * _ONE) /
+                        necessaryTotalValue;
+                }
             }
         }
+
+        _adjustPool(requests, startAmounts, startWeights);
 
         IERC20[] memory poolTokens = _getPoolTokens();
-        uint256[] memory poolHoldings = _getPoolHoldings();
-
-        uint256 numPoolTokens = poolTokens.length;
-        bool isNecessaryToken;
-        for (uint256 i = 0; i < numPoolTokens; i++) {
-            isNecessaryToken = false;
-            for (uint256 j = 0; j < numRequests; j++) {
-                if (poolTokens[i] == requests[j].asset) {
-                    isNecessaryToken = true;
-
-                    if (startAmounts[j] > poolHoldings[i]) {
-                        _depositTokenToPool(
-                            poolTokens[i],
-                            startAmounts[j] - poolHoldings[i]
-                        );
-                    } else if (poolHoldings[i] > startAmounts[j]) {
-                        _withdrawTokenFromPool(
-                            poolTokens[i],
-                            poolHoldings[i] - startAmounts[j]
-                        );
-                    }
-
-                    break;
-                }
-            }
-
-            if (isNecessaryToken) {
-                continue;
-            }
-
-            _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
-        }
-
-        poolTokens = _getPoolTokens();
-        poolHoldings = _getPoolHoldings();
-        numPoolTokens = poolTokens.length;
-        bool isRegistered;
-        for (uint256 i = 0; i < numRequests; i++) {
-            isRegistered = false;
-            if (startAmounts[i] != 0) {
-                for (uint256 j = 0; j < numPoolTokens; j++) {
-                    if (requests[i].asset == poolTokens[j]) {
-                        isRegistered = true;
-                        break;
-                    }
-                }
-            }
-
-            if (isRegistered) {
-                continue;
-            }
-
-            _bindAndDepositToken(
-                requests[i].asset,
-                startAmounts[i],
-                startWeights[i]
-            );
-        }
-
-        poolTokens = _getPoolTokens();
 
         pool.updateWeightsGradually(
             block.timestamp,
@@ -312,7 +247,16 @@ contract AeraBalancerExecution is IExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function claimNow() external override onlyVault {}
+    function claimNow() external override onlyVault {
+        IERC20[] memory poolTokens = _getPoolTokens();
+        uint256[] memory poolHoldings = _getPoolHoldings();
+        uint256 numPoolTokens = poolTokens.length;
+
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
+            poolTokens[i].safeTransfer(vault, poolHoldings[i]);
+        }
+    }
 
     /// @inheritdoc IExecution
     function sweep(IERC20 token) external override onlyOwner {
@@ -453,6 +397,84 @@ contract AeraBalancerExecution is IExecution, Ownable {
         poolHoldings = new uint256[](holdings.length - 1);
         for (uint256 i = 0; i < numPoolTokens; i++) {
             poolHoldings[i] = holdings[i + 1];
+        }
+    }
+
+    function _adjustPool(
+        AssetRebalanceRequest[] calldata requests,
+        uint256[] memory startAmounts,
+        uint256[] memory startWeights
+    ) internal {
+        uint256 numRequests = requests.length;
+        IERC20[] memory poolTokens = _getPoolTokens();
+        uint256[] memory poolHoldings = _getPoolHoldings();
+
+        uint256 numPoolTokens = poolTokens.length;
+        bool isNecessaryToken;
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            isNecessaryToken = false;
+            for (uint256 j = 0; j < numRequests; j++) {
+                if (poolTokens[i] == requests[j].asset) {
+                    isNecessaryToken = true;
+
+                    if (startAmounts[j] > poolHoldings[i]) {
+                        poolTokens[i].safeTransferFrom(
+                            vault,
+                            address(this),
+                            startAmounts[j] - poolHoldings[i]
+                        );
+                        _depositTokenToPool(
+                            poolTokens[i],
+                            startAmounts[j] - poolHoldings[i]
+                        );
+                    } else if (poolHoldings[i] > startAmounts[j]) {
+                        _withdrawTokenFromPool(
+                            poolTokens[i],
+                            poolHoldings[i] - startAmounts[j]
+                        );
+                    }
+
+                    break;
+                }
+            }
+
+            if (isNecessaryToken) {
+                continue;
+            }
+
+            _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
+        }
+
+        poolTokens = _getPoolTokens();
+        poolHoldings = _getPoolHoldings();
+        numPoolTokens = poolTokens.length;
+        bool isRegistered;
+        for (uint256 i = 0; i < numRequests; i++) {
+            isRegistered = false;
+            if (startAmounts[i] != 0) {
+                for (uint256 j = 0; j < numPoolTokens; j++) {
+                    if (requests[i].asset == poolTokens[j]) {
+                        isRegistered = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isRegistered) {
+                continue;
+            }
+
+            poolTokens[i].safeTransferFrom(
+                vault,
+                address(this),
+                startAmounts[i]
+            );
+
+            _bindAndDepositToken(
+                requests[i].asset,
+                startAmounts[i],
+                startWeights[i]
+            );
         }
     }
 }
