@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.17;
 
+import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./interfaces/IAssetRegistry.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
-    uint256 internal constant _ONE = 10**18;
+    uint256 internal constant _ONE = 10 ** 18;
 
     /// @notice Minimum period for weight change duration.
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
@@ -17,7 +18,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     ///      Weight growth range for n seconds: [1 / Fn - 1, Fn - 1]
     ///      E.g. increment/decrement factor per 2000 seconds is 2
     ///      Weight growth range for 2000 seconds is [-50%, 100%]
-    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10**15;
+    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10 ** 15;
 
     /// STORAGE ///
 
@@ -83,11 +84,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     }
 
     /// @inheritdoc IAssetRegistry
-    function addAsset(AssetInformation calldata asset)
-        external
-        override
-        onlyOwner
-    {
+    function addAsset(
+        AssetInformation calldata asset
+    ) external override onlyOwner {
         if (address(asset.oracle) == address(0)) {
             revert Aera__OracleIsZeroAddress(address(asset.asset));
         }
@@ -212,9 +211,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             numAssets - numYieldAssets
         );
 
+        uint256 numeraireDecimals = IERC20Metadata(
+            address(_assets[numeraire].asset)
+        ).decimals();
+
+        uint256 oracleDecimals;
         uint256 price;
         int256 answer;
-        uint256 oracleUnit;
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
             if (_assets[i].isERC4626) {
@@ -224,7 +227,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             if (i == numeraire) {
                 prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
-                    spotPrice: _ONE
+                    spotPrice: 10 ** numeraireDecimals
                 });
             } else {
                 (, answer, , , ) = _assets[i].oracle.latestRoundData();
@@ -235,10 +238,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 }
 
                 price = uint256(answer);
-                oracleUnit = 10**_assets[i].oracle.decimals();
+                oracleDecimals = _assets[i].oracle.decimals();
 
-                if (oracleUnit != _ONE) {
-                    price = (price * _ONE) / oracleUnit;
+                if (oracleDecimals != numeraireDecimals) {
+                    price =
+                        (price * 10 ** numeraireDecimals) /
+                        10 ** oracleDecimals;
                 }
 
                 prices[index] = AssetPriceReading({
@@ -259,9 +264,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @dev Will only be called by constructor() and addAsset().
     /// @param asset New asset details.
     /// @param index Index of the new asset in the array.
-    function _insertAsset(AssetInformation memory asset, uint256 index)
-        internal
-    {
+    function _insertAsset(
+        AssetInformation memory asset,
+        uint256 index
+    ) internal {
         uint256 numAssets = _assets.length;
 
         if (index == numAssets) {
@@ -294,11 +300,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     /// @param currentWeight Current weight.
     /// @param targetWeight Target weight.
     /// @return ratio Change ratio(>1) from current weight to target weight.
-    function _getWeightChangeRatio(uint256 currentWeight, uint256 targetWeight)
-        internal
-        pure
-        returns (uint256 ratio)
-    {
+    function _getWeightChangeRatio(
+        uint256 currentWeight,
+        uint256 targetWeight
+    ) internal pure returns (uint256 ratio) {
         return
             currentWeight > targetWeight
                 ? (_ONE * currentWeight) / targetWeight
