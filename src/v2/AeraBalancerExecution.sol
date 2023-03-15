@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.17;
 
+import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
@@ -13,7 +14,7 @@ import "./interfaces/IExecution.sol";
 contract AeraBalancerExecution is IExecution, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 internal constant _ONE = 10**18;
+    uint256 internal constant _ONE = 10 ** 18;
 
     /// @notice Mininum weight of pool tokens in Balancer Pool.
     uint256 private constant _MIN_WEIGHT = 0.01e18;
@@ -137,6 +138,34 @@ contract AeraBalancerExecution is IExecution, Ownable {
         }
 
         vault = vault_;
+
+        IERC20[] memory poolTokens = _getPoolTokens();
+        uint256 numPoolTokens = poolTokens.length;
+        uint256[] memory balances = new uint256[](numPoolTokens);
+        uint256[] memory maxAmountsIn = new uint256[](numPoolTokens + 1);
+
+        maxAmountsIn[0] = type(uint256).max;
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            poolTokens[i].safeTransferFrom(owner(), address(this), 1);
+            _setAllowance(poolTokens[i], address(bVault), 1);
+
+            balances[i] = 1;
+            maxAmountsIn[i + 1] = 1;
+        }
+
+        bytes memory initUserData = abi.encode(IBVault.JoinKind.INIT, balances);
+
+        IERC20[] memory tokens;
+        (tokens, , ) = bVault.getPoolTokens(poolId);
+        IBVault.JoinPoolRequest memory joinPoolRequest = IBVault
+            .JoinPoolRequest({
+                assets: tokens,
+                maxAmountsIn: maxAmountsIn,
+                userData: initUserData,
+                fromInternalBalance: false
+            });
+
+        bVault.joinPool(poolId, address(this), address(this), joinPoolRequest);
     }
 
     /// @inheritdoc IExecution
@@ -150,87 +179,53 @@ contract AeraBalancerExecution is IExecution, Ownable {
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
             .spotPrices();
 
+        (
+            uint256[] memory startAmounts,
+            uint256[] memory endAmounts,
+            uint256 adjustableAssetValue,
+            uint256 adjustedTotalValue
+        ) = _calcAmountsAndValues(requests, spotPrices);
+
         uint256 numRequests = requests.length;
-        uint256[] memory values = new uint256[](numRequests);
-        uint256 totalValue = 0;
-
-        for (uint256 i = 0; i < numRequests; i++) {
-            if (requests[i].asset != spotPrices[i].asset) {
-                revert Aera__DifferentTokensInPosition(
-                    address(requests[i].asset),
-                    address(spotPrices[i].asset),
-                    i
-                );
-            }
-
-            values[i] = (requests[i].amount * spotPrices[i].spotPrice) / _ONE;
-            totalValue += values[i];
-        }
-
-        uint256[] memory startAmounts = new uint256[](numRequests);
-        uint256[] memory endAmounts = new uint256[](numRequests);
-        uint256 adjustableCount;
-        uint256 necessaryTotalValue;
-        uint256 minAssetValue = type(uint256).max;
-
-        {
-            uint256 targetValue;
-            for (uint256 i = 0; i < numRequests; i++) {
-                targetValue = (totalValue * requests[i].weight) / _ONE;
-                if (values[i] != targetValue) {
-                    startAmounts[i] = requests[i].amount;
-                    endAmounts[i] =
-                        (totalValue * requests[i].weight) /
-                        spotPrices[i].spotPrice;
-
-                    necessaryTotalValue += targetValue;
-                    adjustableCount++;
-
-                    if (values[i] < minAssetValue) {
-                        minAssetValue = values[i];
-                    }
-
-                    if (targetValue < minAssetValue) {
-                        minAssetValue = targetValue;
-                    }
-                }
-            }
-        }
 
         uint256[] memory startWeights = new uint256[](numRequests);
         uint256[] memory endWeights = new uint256[](numRequests);
 
-        {
-            uint256 adjustableAssetValue;
-            uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
-
-            if (minAssetValue > minValue) {
-                adjustableAssetValue =
-                    (adjustableCount * (minAssetValue - minValue)) /
-                    (_ONE - _MIN_WEIGHT * adjustableCount);
+        uint256 adjustableAmount;
+        for (uint256 i = 0; i < numRequests; i++) {
+            adjustableAmount =
+                (adjustableAssetValue *
+                    (10 **
+                        IERC20Metadata(address(requests[i].asset))
+                            .decimals())) /
+                spotPrices[i].spotPrice;
+            if (startAmounts[i] != 0) {
+                startAmounts[i] -= adjustableAmount;
+                startWeights[i] =
+                    ((startAmounts[i] * spotPrices[i].spotPrice) * _ONE) /
+                    (10 **
+                        IERC20Metadata(address(requests[i].asset)).decimals()) /
+                    adjustedTotalValue;
             }
-
-            necessaryTotalValue -= adjustableAssetValue * adjustableCount;
-
-            uint256 adjustableAmount;
-            for (uint256 i = 0; i < numRequests; i++) {
-                adjustableAmount =
-                    (adjustableAssetValue * _ONE) /
-                    spotPrices[i].spotPrice;
-                if (startAmounts[i] != 0) {
-                    startAmounts[i] -= adjustableAmount;
-                    startWeights[i] =
-                        (startAmounts[i] * _ONE) /
-                        necessaryTotalValue;
-                }
-                if (endAmounts[i] != 0) {
-                    endAmounts[i] -= adjustableAmount;
-                    endWeights[i] =
-                        (endAmounts[i] * _ONE) /
-                        necessaryTotalValue;
-                }
+            if (endAmounts[i] != 0) {
+                endAmounts[i] -= adjustableAmount;
+                endWeights[i] =
+                    (endAmounts[i] * spotPrices[i].spotPrice * _ONE) /
+                    (10 **
+                        IERC20Metadata(address(requests[i].asset)).decimals()) /
+                    adjustedTotalValue;
             }
         }
+
+        uint256 sumStartWeights;
+        uint256 sumEndWeights;
+        for (uint256 i = 0; i < numRequests; i++) {
+            sumStartWeights += startWeights[i];
+            sumEndWeights += endWeights[i];
+        }
+
+        startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
+        endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
 
         _adjustPool(requests, startAmounts, startWeights);
 
@@ -253,7 +248,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         uint256 numPoolTokens = poolTokens.length;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
+            _withdrawTokenFromPool(poolTokens[i], poolHoldings[i]);
             poolTokens[i].safeTransfer(vault, poolHoldings[i]);
         }
     }
@@ -275,7 +270,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
 
     /// @inheritdoc IExecution
     function assets() public view override returns (IERC20[] memory assets) {
-        (assets, , ) = bVault.getPoolTokens(poolId);
+        assets = _getPoolTokens();
     }
 
     /// INTERNAL FUNCTIONS ///
@@ -306,7 +301,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         uint256 amount,
         uint256 weight
     ) internal {
-        pool.addToken(token, address(this), weight, 0, address(this));
+        pool.addToken(token, address(this), _ONE, 0, address(this));
 
         _depositTokenToPool(token, amount);
     }
@@ -322,6 +317,8 @@ contract AeraBalancerExecution is IExecution, Ownable {
     /// @param token The token to deposit.
     /// @param amount The amount of token to deposit.
     function _depositTokenToPool(IERC20 token, uint256 amount) internal {
+        _setAllowance(token, address(bVault), amount);
+
         /// Set managed balance of token as amount
         /// i.e. Deposit amount of token to pool from Execution module
         _updatePoolBalance(token, amount, IBVault.PoolBalanceOpKind.UPDATE);
@@ -400,38 +397,181 @@ contract AeraBalancerExecution is IExecution, Ownable {
         }
     }
 
+    /// @notice Reset allowance of token for a spender.
+    /// @dev Will only be called by setAllowance() and depositUnderlyingAsset().
+    /// @param token Token of address to set allowance.
+    /// @param spender Address to give spend approval to.
+    function _clearAllowance(IERC20 token, address spender) internal {
+        // slither-disable-next-line calls-loop
+        uint256 allowance = token.allowance(address(this), spender);
+        if (allowance > 0) {
+            token.safeDecreaseAllowance(spender, allowance);
+        }
+    }
+
+    /// @notice Set allowance of token for a spender.
+    /// @dev Will only be called by initialDeposit(), depositTokens(),
+    ///      depositToYieldTokens() and depositUnderlyingAsset().
+    /// @param token Token of address to set allowance.
+    /// @param spender Address to give spend approval to.
+    /// @param amount Amount to approve for spending.
+    function _setAllowance(
+        IERC20 token,
+        address spender,
+        uint256 amount
+    ) internal {
+        _clearAllowance(token, spender);
+        token.safeIncreaseAllowance(spender, amount);
+    }
+
+    function _calcAmountsAndValues(
+        AssetRebalanceRequest[] memory requests,
+        IAssetRegistry.AssetPriceReading[] memory spotPrices
+    )
+        internal
+        returns (
+            uint256[] memory startAmounts,
+            uint256[] memory endAmounts,
+            uint256 adjustableAssetValue,
+            uint256 necessaryTotalValue
+        )
+    {
+        uint256 numRequests = requests.length;
+
+        uint256[] memory values = new uint256[](numRequests);
+        uint256 totalValue = 0;
+
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (requests[i].asset != spotPrices[i].asset) {
+                revert Aera__DifferentTokensInPosition(
+                    address(requests[i].asset),
+                    address(spotPrices[i].asset),
+                    i
+                );
+            }
+
+            values[i] =
+                (requests[i].amount * spotPrices[i].spotPrice) /
+                (10 ** IERC20Metadata(address(requests[i].asset)).decimals());
+            totalValue += values[i];
+        }
+
+        startAmounts = new uint256[](numRequests);
+        endAmounts = new uint256[](numRequests);
+        uint256 adjustableCount;
+        uint256 minAssetValue = type(uint256).max;
+
+        {
+            uint256 targetValue;
+            for (uint256 i = 0; i < numRequests; i++) {
+                targetValue = (totalValue * requests[i].weight) / _ONE;
+                if (values[i] != targetValue) {
+                    startAmounts[i] = requests[i].amount;
+                    endAmounts[i] =
+                        ((totalValue * requests[i].weight) *
+                            (10 **
+                                IERC20Metadata(address(requests[i].asset))
+                                    .decimals())) /
+                        _ONE /
+                        spotPrices[i].spotPrice;
+
+                    necessaryTotalValue += targetValue;
+                    adjustableCount++;
+
+                    if (values[i] < minAssetValue) {
+                        minAssetValue = values[i];
+                    }
+
+                    if (targetValue < minAssetValue) {
+                        minAssetValue = targetValue;
+                    }
+                }
+            }
+        }
+
+        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
+
+        if (minAssetValue > minValue) {
+            adjustableAssetValue =
+                (((minAssetValue - minValue)) * _ONE) /
+                (_ONE - _MIN_WEIGHT * adjustableCount);
+        }
+
+        necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+    }
+
     function _adjustPool(
         AssetRebalanceRequest[] calldata requests,
         uint256[] memory startAmounts,
         uint256[] memory startWeights
     ) internal {
         uint256 numRequests = requests.length;
+
         IERC20[] memory poolTokens = _getPoolTokens();
         uint256[] memory poolHoldings = _getPoolHoldings();
 
         uint256 numPoolTokens = poolTokens.length;
+
+        bool isRegistered;
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (startAmounts[i] == 0) {
+                continue;
+            }
+
+            isRegistered = false;
+
+            for (uint256 j = 0; j < numPoolTokens; j++) {
+                if (requests[i].asset == poolTokens[j]) {
+                    if (startAmounts[i] > poolHoldings[j]) {
+                        poolTokens[j].safeTransferFrom(
+                            vault,
+                            address(this),
+                            startAmounts[i] - poolHoldings[j]
+                        );
+                        _depositTokenToPool(
+                            poolTokens[j],
+                            startAmounts[i] - poolHoldings[j]
+                        );
+                    } else if (poolHoldings[j] > startAmounts[i]) {
+                        _withdrawTokenFromPool(
+                            poolTokens[j],
+                            poolHoldings[j] - startAmounts[i]
+                        );
+                    }
+
+                    isRegistered = true;
+                    break;
+                }
+            }
+
+            if (isRegistered) {
+                continue;
+            }
+
+            requests[i].asset.safeTransferFrom(
+                vault,
+                address(this),
+                startAmounts[i]
+            );
+
+            _bindAndDepositToken(
+                requests[i].asset,
+                startAmounts[i],
+                startWeights[i]
+            );
+        }
+
+        poolTokens = _getPoolTokens();
+        poolHoldings = _getPoolHoldings();
+        numPoolTokens = poolTokens.length;
+
         bool isNecessaryToken;
         for (uint256 i = 0; i < numPoolTokens; i++) {
             isNecessaryToken = false;
             for (uint256 j = 0; j < numRequests; j++) {
                 if (poolTokens[i] == requests[j].asset) {
-                    isNecessaryToken = true;
-
-                    if (startAmounts[j] > poolHoldings[i]) {
-                        poolTokens[i].safeTransferFrom(
-                            vault,
-                            address(this),
-                            startAmounts[j] - poolHoldings[i]
-                        );
-                        _depositTokenToPool(
-                            poolTokens[i],
-                            startAmounts[j] - poolHoldings[i]
-                        );
-                    } else if (poolHoldings[i] > startAmounts[j]) {
-                        _withdrawTokenFromPool(
-                            poolTokens[i],
-                            poolHoldings[i] - startAmounts[j]
-                        );
+                    if (startAmounts[j] > 0) {
+                        isNecessaryToken = true;
                     }
 
                     break;
@@ -443,38 +583,6 @@ contract AeraBalancerExecution is IExecution, Ownable {
             }
 
             _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
-        }
-
-        poolTokens = _getPoolTokens();
-        poolHoldings = _getPoolHoldings();
-        numPoolTokens = poolTokens.length;
-        bool isRegistered;
-        for (uint256 i = 0; i < numRequests; i++) {
-            isRegistered = false;
-            if (startAmounts[i] != 0) {
-                for (uint256 j = 0; j < numPoolTokens; j++) {
-                    if (requests[i].asset == poolTokens[j]) {
-                        isRegistered = true;
-                        break;
-                    }
-                }
-            }
-
-            if (isRegistered) {
-                continue;
-            }
-
-            poolTokens[i].safeTransferFrom(
-                vault,
-                address(this),
-                startAmounts[i]
-            );
-
-            _bindAndDepositToken(
-                requests[i].asset,
-                startAmounts[i],
-                startWeights[i]
-            );
         }
     }
 }
