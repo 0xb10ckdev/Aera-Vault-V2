@@ -9,29 +9,29 @@ import "../../../src/v2/interfaces/IAssetRegistry.sol";
 import "../../../src/v2/interfaces/IExecution.sol";
 import "../../../src/v2/AeraBalancerExecution.sol";
 import "../../../src/v2/AeraVaultAssetRegistry.sol";
-import "../../utils/ERC20Mock.sol";
-import {ERC4626Mock} from "../../utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
 
 contract TestBaseBalancerExecution is TestBase {
+    address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal _BVAULT_ADDRESS =
+        0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+
     AeraBalancerExecution balancerExecution;
     AeraVaultAssetRegistry assetRegistry;
     IAssetRegistry.AssetInformation[] assets;
     IERC20[] erc20Assets;
-    address numeraireAsset;
     uint256 numeraire;
-    uint256 nonNumeraire;
-    uint256 numAssets;
 
     function setUp() public virtual {
+        vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
+
         _deploy();
     }
 
     function _deploy() internal {
-        address balancerVaultMock = deployCode(
-            "BalancerVaultMock.sol",
-            abi.encode(address(0))
-        );
+        _init();
 
         address managedPoolAddRemoveTokenLib = deployCode(
             "ManagedPoolAddRemoveTokenLib.sol"
@@ -41,29 +41,18 @@ contract TestBaseBalancerExecution is TestBase {
 
         address protocolFeePercentagesProvider = deployCode(
             "ProtocolFeePercentagesProvider.sol",
-            abi.encode(balancerVaultMock, _ONE, _ONE)
+            abi.encode(_BVAULT_ADDRESS, _ONE, _ONE)
+        );
+
+        bytes memory bytecode = abi.encodePacked(
+            _getManagedPoolFactoryCreationCode(
+                managedPoolAddRemoveTokenLib,
+                circuitBreakerLib
+            ),
+            abi.encode(_BVAULT_ADDRESS, protocolFeePercentagesProvider)
         );
 
         address managedPoolFactory;
-        string memory creationCodeStr = vm.readFile(
-            "./.managed-pool-factory.json"
-        );
-        creationCodeStr = replace(
-            creationCodeStr,
-            "ManagedPoolAddRemoveTokenLib____________",
-            toString(managedPoolAddRemoveTokenLib)
-        );
-        creationCodeStr = replace(
-            creationCodeStr,
-            "CircuitBreakerLib_______________________",
-            toString(circuitBreakerLib)
-        );
-
-        bytes memory creationCode = fromHex(creationCodeStr);
-        bytes memory bytecode = abi.encodePacked(
-            creationCode,
-            abi.encode(balancerVaultMock, protocolFeePercentagesProvider)
-        );
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -74,13 +63,15 @@ contract TestBaseBalancerExecution is TestBase {
             )
         }
 
-        _createAssets(4, 2);
-
         assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
 
-        uint256[] memory weights = new uint256[](2);
-        weights[0] = 1;
-        weights[1] = 1;
+        uint256[] memory weights = new uint256[](3);
+        uint256 weightSum;
+        for (uint256 i = 0; i < weights.length; i++) {
+            weights[i] = _ONE / 3;
+            weightSum += weights[i];
+        }
+        weights[0] = weights[0] + _ONE - weightSum;
 
         IExecution.NewVaultParams memory vaultParams = IExecution
             .NewVaultParams({
@@ -89,105 +80,65 @@ contract TestBaseBalancerExecution is TestBase {
                 symbol: "BALANCER EXECUTION",
                 poolTokens: erc20Assets,
                 weights: weights,
-                swapFeePercentage: 0,
+                swapFeePercentage: 1e12,
                 assetRegistry: address(assetRegistry),
                 description: "Test Execution"
             });
         balancerExecution = new AeraBalancerExecution(vaultParams);
-    }
 
-    function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
-        for (uint256 i = 0; i < numERC20; i++) {
-            (
-                ERC20Mock erc20,
-                IAssetRegistry.AssetInformation memory asset
-            ) = _createAsset();
-            erc20Assets.push(IERC20(address(erc20)));
-
-            if (i == 0) {
-                numeraireAsset = address(asset.asset);
-                asset.oracle = AggregatorV2V3Interface(address(0));
-            }
-
-            assets.push(asset);
-
-            if (i < numERC4626) {
-                ERC4626Mock erc4626 = new ERC4626Mock(
-                    erc20,
-                    erc20.name(),
-                    erc20.symbol()
-                );
-                assets.push(
-                    IAssetRegistry.AssetInformation({
-                        asset: IERC20(address(erc4626)),
-                        isERC4626: true,
-                        withdrawable: true,
-                        oracle: AggregatorV2V3Interface(
-                            address(new OracleMock(18))
-                        )
-                    })
-                );
-            }
+        for (uint256 i = 0; i < 3; i++) {
+            erc20Assets[i].approve(address(balancerExecution), 1);
         }
 
-        numAssets = numERC20 + numERC4626;
+        balancerExecution.initialize(address(this));
+    }
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            for (uint256 j = numAssets - 1; j > i; j--) {
-                if (assets[j].asset < assets[j - 1].asset) {
-                    IAssetRegistry.AssetInformation memory temp = assets[j];
-                    assets[j] = assets[j - 1];
-                    assets[j - 1] = temp;
-                }
-            }
+    function _init() internal {
+        erc20Assets.push(IERC20(_WBTC_ADDRESS));
+        erc20Assets.push(IERC20(_USDC_ADDRESS));
+        erc20Assets.push(IERC20(_WETH_ADDRESS));
 
-            if (address(assets[i].asset) == numeraireAsset) {
-                numeraire = i;
-            }
+        // USDC
+        numeraire = 1;
+
+        for (uint256 i = 0; i < 3; i++) {
+            deal(address(erc20Assets[i]), address(this), 1_000_000e18);
+
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: erc20Assets[i],
+                    isERC4626: false,
+                    withdrawable: true,
+                    oracle: AggregatorV2V3Interface(
+                        i == numeraire ? address(0) : address(new OracleMock(6))
+                    )
+                })
+            );
         }
-
-        nonNumeraire = (numeraire + 1) % numAssets;
     }
 
-    function _createAsset()
-        internal
-        returns (
-            ERC20Mock erc20,
-            IAssetRegistry.AssetInformation memory newAsset
-        )
-    {
-        erc20 = new ERC20Mock("Token", "TOKEN", 18, 1e30);
-        newAsset = IAssetRegistry.AssetInformation({
-            asset: IERC20(address(erc20)),
-            isERC4626: false,
-            withdrawable: true,
-            oracle: AggregatorV2V3Interface(address(new OracleMock(18)))
-        });
+    function _getManagedPoolFactoryCreationCode(
+        address managedPoolAddRemoveTokenLib,
+        address circuitBreakerLib
+    ) internal returns (bytes memory) {
+        string memory creationCodeStr = vm.readFile(
+            "./.managed-pool-factory.json"
+        );
+        creationCodeStr = _replace(
+            creationCodeStr,
+            "ManagedPoolAddRemoveTokenLib____________",
+            _toString(managedPoolAddRemoveTokenLib)
+        );
+        creationCodeStr = _replace(
+            creationCodeStr,
+            "CircuitBreakerLib_______________________",
+            _toString(circuitBreakerLib)
+        );
 
-        IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(_ONE));
+        return _fromHex(creationCodeStr);
     }
 
-    function _generateValidWeights()
-        internal
-        returns (IAssetRegistry.AssetWeight[] memory weights)
-    {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
-        weights = new IAssetRegistry.AssetWeight[](numAssets);
-
-        uint256 weightSum;
-        for (uint256 i = 0; i < numAssets; i++) {
-            weights[i] = IAssetRegistry.AssetWeight({
-                asset: registryAssets[i].asset,
-                weight: _ONE / numAssets
-            });
-            weightSum += _ONE / numAssets;
-        }
-
-        weights[numAssets - 1].weight += _ONE - weightSum;
-    }
-
-    function fromHexChar(uint8 c) public pure returns (uint8) {
+    function _fromHexChar(uint8 c) internal pure returns (uint8) {
         if (bytes1(c) >= bytes1("0") && bytes1(c) <= bytes1("9")) {
             return c - uint8(bytes1("0"));
         }
@@ -201,21 +152,21 @@ contract TestBaseBalancerExecution is TestBase {
     }
 
     // Convert an hexadecimal string to raw bytes
-    function fromHex(string memory s) public view returns (bytes memory) {
+    function _fromHex(string memory s) internal view returns (bytes memory) {
         bytes memory ss = bytes(s);
         require(ss.length % 2 == 0); // length must be even
         bytes memory r = new bytes(ss.length / 2);
         for (uint i = 0; i < ss.length / 2; ++i) {
             r[i] = bytes1(
-                fromHexChar(uint8(ss[2 * i])) *
+                _fromHexChar(uint8(ss[2 * i])) *
                     16 +
-                    fromHexChar(uint8(ss[2 * i + 1]))
+                    _fromHexChar(uint8(ss[2 * i + 1]))
             );
         }
         return r;
     }
 
-    function replace(
+    function _replace(
         string memory subject,
         string memory search,
         string memory replacement
@@ -307,11 +258,13 @@ contract TestBaseBalancerExecution is TestBase {
         }
     }
 
-    function toString(address account) public pure returns (string memory) {
-        return toString(abi.encodePacked(account));
+    function _toString(address account) internal pure returns (string memory) {
+        return _toString(abi.encodePacked(account));
     }
 
-    function toString(bytes memory data) public pure returns (string memory) {
+    function _toString(
+        bytes memory data
+    ) internal pure returns (string memory) {
         bytes memory alphabet = "0123456789abcdef";
 
         bytes memory str = new bytes(data.length * 2);
