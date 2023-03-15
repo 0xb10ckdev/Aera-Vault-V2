@@ -301,7 +301,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         uint256 amount,
         uint256 weight
     ) internal {
-        pool.addToken(token, address(this), _ONE, 0, address(this));
+        pool.addToken(token, address(this), weight, 0, address(this));
 
         _depositTokenToPool(token, amount);
     }
