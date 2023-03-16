@@ -296,12 +296,8 @@ contract AeraBalancerExecution is IExecution, Ownable {
         }
     }
 
-    function _bindAndDepositToken(
-        IERC20 token,
-        uint256 amount,
-        uint256 weight
-    ) internal {
-        pool.addToken(token, address(this), weight, 0, address(this));
+    function _bindAndDepositToken(IERC20 token, uint256 amount) internal {
+        pool.addToken(token, address(this), _MIN_WEIGHT, 0, address(this));
 
         _depositTokenToPool(token, amount);
     }
@@ -512,6 +508,25 @@ contract AeraBalancerExecution is IExecution, Ownable {
 
         uint256 numPoolTokens = poolTokens.length;
 
+        // Reset weights to avoid MIN_WEIGHT error while binding.
+        {
+            uint256[] memory avgWeights = new uint256[](numPoolTokens);
+            uint256 avgWeightSum;
+
+            for (uint256 i = 0; i < numPoolTokens; i++) {
+                avgWeights[i] = _ONE / numPoolTokens;
+                avgWeightSum += avgWeights[i];
+            }
+            avgWeights[0] = avgWeights[0] + _ONE - avgWeightSum;
+
+            pool.updateWeightsGradually(
+                block.timestamp,
+                block.timestamp,
+                poolTokens,
+                avgWeights
+            );
+        }
+
         bool isRegistered;
         for (uint256 i = 0; i < numRequests; i++) {
             if (startAmounts[i] == 0) {
@@ -554,11 +569,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
                 startAmounts[i]
             );
 
-            _bindAndDepositToken(
-                requests[i].asset,
-                startAmounts[i],
-                startWeights[i]
-            );
+            _bindAndDepositToken(requests[i].asset, startAmounts[i]);
         }
 
         poolTokens = _getPoolTokens();
