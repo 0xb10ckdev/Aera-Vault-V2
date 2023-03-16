@@ -227,7 +227,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
         endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
 
-        _adjustPool(requests, startAmounts, startWeights);
+        _adjustPool(requests, startAmounts);
 
         IERC20[] memory poolTokens = _getPoolTokens();
 
@@ -498,8 +498,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
 
     function _adjustPool(
         AssetRebalanceRequest[] calldata requests,
-        uint256[] memory startAmounts,
-        uint256[] memory startWeights
+        uint256[] memory startAmounts
     ) internal {
         uint256 numRequests = requests.length;
 
