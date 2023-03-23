@@ -114,5 +114,10 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
                 })
             );
         }
+
+        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
+            int256(15_000e6)
+        );
+        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
     }
 }

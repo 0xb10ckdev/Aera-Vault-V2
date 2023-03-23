@@ -7,13 +7,131 @@ import {IVault} from "../../../../src/v2/dependencies/balancer-labs/interfaces/c
 import "../TestBaseBalancerExecution.sol";
 
 contract StartRebalanceTest is TestBaseBalancerExecution {
-    function test_startRebalance_with_3_assets_success() public {
-        IExecution.AssetRebalanceRequest[]
-            memory requests = new IExecution.AssetRebalanceRequest[](3);
+    function test_startRebalance_fail_whenCallerIsNotOwner() public {
+        vm.startPrank(_USER);
 
-        deal(address(erc20Assets[0]), address(this), 5e8);
-        deal(address(erc20Assets[1]), address(this), 80_000e6);
-        deal(address(erc20Assets[2]), address(this), 100e18);
+        vm.expectRevert(AeraBalancerExecution.Aera__CallerIsNotVault.selector);
+        balancerExecution.startRebalance(
+            _generateRequestWith2Assets(),
+            block.timestamp,
+            block.timestamp + 10000
+        );
+    }
+
+    function test_startRebalance_fail_whenRebalancingIsOnGoing() public {
+        _startRebalance(_generateRequestWith2Assets());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
+                balancerExecution.epochEndTime()
+            )
+        );
+
+        balancerExecution.startRebalance(
+            _generateRequestWith2Assets(),
+            block.timestamp,
+            block.timestamp + 10000
+        );
+    }
+
+    function test_startRebalance_fail_whenSumOfWeightIsNotOne() public {
+        IExecution.AssetRebalanceRequest[]
+            memory requests = _generateRequestWith2Assets();
+        requests[0].weight--;
+
+        vm.expectRevert(
+            AeraBalancerExecution.Aera__SumOfWeightIsNotOne.selector
+        );
+
+        balancerExecution.startRebalance(
+            requests,
+            block.timestamp,
+            block.timestamp + 10000
+        );
+    }
+
+    function test_startRebalance_fail_whenWeightChangeEndBeforeStart() public {
+        vm.expectRevert(
+            AeraBalancerExecution.Aera__WeightChangeEndBeforeStart.selector
+        );
+
+        balancerExecution.startRebalance(
+            _generateRequestWith2Assets(),
+            block.timestamp + 100,
+            block.timestamp + 10
+        );
+    }
+
+    function test_startRebalance_fail_whenTokenPositionIsDifferent() public {
+        IExecution.AssetRebalanceRequest[]
+            memory requests = _generateRequestWith2Assets();
+        IERC20 asset = requests[0].asset;
+        requests[0].asset = requests[1].asset;
+        requests[1].asset = asset;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraBalancerExecution.Aera__DifferentTokensInPosition.selector,
+                requests[0].asset,
+                asset,
+                0
+            )
+        );
+
+        balancerExecution.startRebalance(
+            requests,
+            block.timestamp,
+            block.timestamp + 10000
+        );
+    }
+
+    function test_startRebalance_with_2_assets_success() public {
+        _rebalanceWith2Assets();
+    }
+
+    function test_startRebalance_with_3_assets_success() public {
+        _rebalanceWith3Assets();
+    }
+
+    function test_startRebalance_with_3_assets_after_2_assets_success() public {
+        _rebalanceWith2Assets();
+        _rebalanceWith3Assets();
+    }
+
+    function _rebalanceWith2Assets() internal {
+        _rebalance(_generateRequestWith2Assets());
+    }
+
+    function _rebalanceWith3Assets() internal {
+        _rebalance(_generateRequestWith3Assets());
+    }
+
+    function _generateRequestWith2Assets()
+        internal
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        requests = new IExecution.AssetRebalanceRequest[](2);
+
+        // WBTC
+        requests[0] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[0],
+            amount: 5e8,
+            weight: 0.69e18
+        });
+        // USDC
+        requests[1] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[1],
+            amount: 80_000e6,
+            weight: 0.31e18
+        });
+    }
+
+    function _generateRequestWith3Assets()
+        internal
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        requests = new IExecution.AssetRebalanceRequest[](3);
 
         // WBTC
         requests[0] = IExecution.AssetRebalanceRequest({
@@ -33,14 +151,25 @@ contract StartRebalanceTest is TestBaseBalancerExecution {
             amount: 100e18,
             weight: 0.35e18
         });
+    }
 
-        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
-            int256(15_000e6)
-        );
-        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
+    function _rebalance(
+        IExecution.AssetRebalanceRequest[] memory requests
+    ) internal {
+        _startRebalance(requests);
 
-        for (uint256 i = 0; i < 3; i++) {
-            assets[i].asset.approve(
+        vm.warp(balancerExecution.epochEndTime());
+
+        _swap(_getTargetAmounts());
+
+        balancerExecution.claimNow();
+    }
+
+    function _startRebalance(
+        IExecution.AssetRebalanceRequest[] memory requests
+    ) internal {
+        for (uint256 i = 0; i < requests.length; i++) {
+            requests[i].asset.approve(
                 address(balancerExecution),
                 type(uint256).max
             );
@@ -50,61 +179,6 @@ contract StartRebalanceTest is TestBaseBalancerExecution {
         uint256 endTime = startTime + 10000;
 
         balancerExecution.startRebalance(requests, startTime, endTime);
-
-        vm.warp(endTime);
-
-        _swap(_getTargetAmounts());
-
-        balancerExecution.claimNow();
-    }
-
-    function test_startRebalance_with_2_assets_success() public {
-        IExecution.AssetRebalanceRequest[]
-            memory requests = new IExecution.AssetRebalanceRequest[](2);
-
-        deal(address(erc20Assets[0]), address(this), 5e8);
-        deal(address(erc20Assets[1]), address(this), 80_000e6);
-        deal(address(erc20Assets[2]), address(this), 0);
-
-        // WBTC
-        requests[0] = IExecution.AssetRebalanceRequest({
-            asset: erc20Assets[0],
-            amount: 5e8,
-            weight: 0.69e18
-        });
-        // USDC
-        requests[1] = IExecution.AssetRebalanceRequest({
-            asset: erc20Assets[1],
-            amount: 80_000e6,
-            weight: 0.31e18
-        });
-
-        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
-            int256(15_000e6)
-        );
-        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
-
-        for (uint256 i = 0; i < 2; i++) {
-            assets[i].asset.approve(
-                address(balancerExecution),
-                type(uint256).max
-            );
-        }
-
-        uint256 startTime = block.timestamp + 10;
-        uint256 endTime = startTime + 10000;
-        balancerExecution.startRebalance(requests, startTime, endTime);
-
-        vm.warp(endTime);
-
-        _swap(_getTargetAmounts());
-
-        balancerExecution.claimNow();
-    }
-
-    function test_startRebalance_with_3_assets_after_2_assets_success() public {
-        test_startRebalance_with_2_assets_success();
-        test_startRebalance_with_3_assets_success();
     }
 
     // Simulate swaps
