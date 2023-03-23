@@ -4,6 +4,9 @@ pragma solidity ^0.8.17;
 import "solmate/tokens/ERC20.sol";
 import {TestBase} from "../../utils/TestBase.sol";
 import {Deployer} from "../../utils/Deployer.sol";
+import {IManagedPool} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
+import {IAsset} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
+import {IVault} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
 import "../../../src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "../../../src/v2/dependencies/openzeppelin/IERC20.sol";
 import "../../../src/v2/interfaces/IAssetRegistry.sol";
@@ -28,12 +31,42 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
 
+        _init();
+
         _deploy();
     }
 
-    function _deploy() internal {
-        _init();
+    function _init() internal {
+        erc20Assets.push(IERC20(_WBTC_ADDRESS));
+        erc20Assets.push(IERC20(_USDC_ADDRESS));
+        erc20Assets.push(IERC20(_WETH_ADDRESS));
 
+        // USDC
+        numeraire = 1;
+
+        for (uint256 i = 0; i < 3; i++) {
+            deal(address(erc20Assets[i]), address(this), 1_000_000e18);
+            deal(address(erc20Assets[i]), _USER, 1_000_000e18);
+
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: erc20Assets[i],
+                    isERC4626: false,
+                    withdrawable: true,
+                    oracle: AggregatorV2V3Interface(
+                        i == numeraire ? address(0) : address(new OracleMock(6))
+                    )
+                })
+            );
+        }
+
+        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
+            int256(15_000e6)
+        );
+        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
+    }
+
+    function _deploy() internal {
         address managedPoolAddRemoveTokenLib = deploy(
             "ManagedPoolAddRemoveTokenLib.sol"
         );
@@ -91,33 +124,193 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
         balancerExecution.initialize(address(this));
     }
 
-    function _init() internal {
-        erc20Assets.push(IERC20(_WBTC_ADDRESS));
-        erc20Assets.push(IERC20(_USDC_ADDRESS));
-        erc20Assets.push(IERC20(_WETH_ADDRESS));
+    function _generateRequestWith2Assets()
+        internal
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        requests = new IExecution.AssetRebalanceRequest[](2);
 
+        // WBTC
+        requests[0] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[0],
+            amount: 5e8,
+            weight: 0.69e18
+        });
         // USDC
-        numeraire = 1;
+        requests[1] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[1],
+            amount: 80_000e6,
+            weight: 0.31e18
+        });
+    }
 
-        for (uint256 i = 0; i < 3; i++) {
-            deal(address(erc20Assets[i]), address(this), 1_000_000e18);
-            deal(address(erc20Assets[i]), _USER, 1_000_000e18);
+    function _generateRequestWith3Assets()
+        internal
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        requests = new IExecution.AssetRebalanceRequest[](3);
 
-            assets.push(
-                IAssetRegistry.AssetInformation({
-                    asset: erc20Assets[i],
-                    isERC4626: false,
-                    withdrawable: true,
-                    oracle: AggregatorV2V3Interface(
-                        i == numeraire ? address(0) : address(new OracleMock(6))
-                    )
-                })
+        // WBTC
+        requests[0] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[0],
+            amount: 5e8,
+            weight: 0.34e18
+        });
+        // USDC
+        requests[1] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[1],
+            amount: 80_000e6,
+            weight: 0.31e18
+        });
+        // WETH
+        requests[2] = IExecution.AssetRebalanceRequest({
+            asset: erc20Assets[2],
+            amount: 100e18,
+            weight: 0.35e18
+        });
+    }
+
+    function _rebalance(
+        IExecution.AssetRebalanceRequest[] memory requests
+    ) internal {
+        _startRebalance(requests);
+
+        vm.warp(balancerExecution.epochEndTime());
+
+        _swap(_getTargetAmounts());
+
+        balancerExecution.claimNow();
+    }
+
+    function _startRebalance(
+        IExecution.AssetRebalanceRequest[] memory requests
+    ) internal {
+        for (uint256 i = 0; i < requests.length; i++) {
+            requests[i].asset.approve(
+                address(balancerExecution),
+                type(uint256).max
             );
         }
 
-        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
-            int256(15_000e6)
-        );
-        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
+        uint256 startTime = block.timestamp + 10;
+        uint256 endTime = startTime + 10000;
+
+        balancerExecution.startRebalance(requests, startTime, endTime);
+    }
+
+    // Simulate swaps
+    function _swap(uint256[] memory targetAmounts) internal {
+        vm.startPrank(_USER);
+
+        for (uint256 i = 0; i < erc20Assets.length; i++) {
+            erc20Assets[i].approve(_BVAULT_ADDRESS, type(uint256).max);
+        }
+
+        IVault.FundManagement memory fundManagement = IVault.FundManagement({
+            sender: _USER,
+            fromInternalBalance: true,
+            recipient: payable(_USER),
+            toInternalBalance: true
+        });
+
+        IExecution.AssetValue[] memory holdings;
+
+        for (uint256 i = 0; i < targetAmounts.length - 1; i++) {
+            targetAmounts[i] = (targetAmounts[i] * (_ONE - 1e12)) / _ONE;
+            while (true) {
+                holdings = balancerExecution.holdings();
+
+                if (holdings[i].value < targetAmounts[i]) {
+                    uint256 necessaryAmount = targetAmounts[i] -
+                        holdings[i].value;
+                    IVault(_BVAULT_ADDRESS).swap(
+                        IVault.SingleSwap({
+                            poolId: balancerExecution.poolId(),
+                            kind: IVault.SwapKind.GIVEN_IN,
+                            assetIn: IAsset(address(erc20Assets[i])),
+                            assetOut: IAsset(address(erc20Assets[i + 1])),
+                            amount: necessaryAmount <
+                                (holdings[i].value * 3) / 10
+                                ? necessaryAmount
+                                : (holdings[i].value * 3) / 10,
+                            userData: "0x"
+                        }),
+                        fundManagement,
+                        0,
+                        block.timestamp + 100
+                    );
+                } else if (holdings[i].value > targetAmounts[i]) {
+                    uint256 necessaryAmount = holdings[i].value -
+                        targetAmounts[i];
+                    IVault(_BVAULT_ADDRESS).swap(
+                        IVault.SingleSwap({
+                            poolId: balancerExecution.poolId(),
+                            kind: IVault.SwapKind.GIVEN_OUT,
+                            assetIn: IAsset(address(erc20Assets[i + 1])),
+                            assetOut: IAsset(address(erc20Assets[i])),
+                            amount: necessaryAmount < holdings[i].value / 4
+                                ? necessaryAmount
+                                : holdings[i].value / 4,
+                            userData: "0x"
+                        }),
+                        fundManagement,
+                        type(uint256).max,
+                        block.timestamp + 100
+                    );
+                } else {
+                    break;
+                }
+            }
+        }
+
+        vm.stopPrank();
+    }
+
+    function _getTargetAmounts()
+        internal
+        returns (uint256[] memory targetAmounts)
+    {
+        IERC20[] memory poolTokens = balancerExecution.assets();
+        IExecution.AssetValue[] memory holdings = balancerExecution.holdings();
+        IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
+            .spotPrices();
+        uint256[] memory values = new uint256[](poolTokens.length);
+        uint256 totalValue;
+
+        for (uint256 i = 0; i < poolTokens.length; i++) {
+            for (uint256 j = 0; j < spotPrices.length; j++) {
+                if (poolTokens[i] == spotPrices[j].asset) {
+                    values[i] =
+                        (holdings[i].value * spotPrices[j].spotPrice) /
+                        (10 **
+                            IERC20Metadata(address(poolTokens[i])).decimals());
+                    totalValue += values[i];
+
+                    break;
+                }
+            }
+        }
+
+        uint256[] memory poolWeights = IManagedPool(
+            address(balancerExecution.pool())
+        ).getNormalizedWeights();
+
+        targetAmounts = new uint256[](poolTokens.length);
+
+        for (uint256 i = 0; i < poolTokens.length; i++) {
+            for (uint256 j = 0; j < spotPrices.length; j++) {
+                if (poolTokens[i] == spotPrices[j].asset) {
+                    targetAmounts[i] =
+                        ((totalValue * poolWeights[i]) *
+                            (10 **
+                                IERC20Metadata(address(poolTokens[i]))
+                                    .decimals())) /
+                        _ONE /
+                        spotPrices[j].spotPrice;
+
+                    break;
+                }
+            }
+        }
     }
 }
