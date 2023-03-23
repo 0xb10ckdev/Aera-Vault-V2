@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "../TestBaseBalancerExecution.sol";
 
 contract StartRebalanceTest is TestBaseBalancerExecution {
-    function test_startRebalance_fail_whenCallerIsNotOwner() public {
+    function test_startRebalance_fail_whenCallerIsNotVault() public {
         vm.startPrank(_USER);
 
         vm.expectRevert(AeraBalancerExecution.Aera__CallerIsNotVault.selector);
