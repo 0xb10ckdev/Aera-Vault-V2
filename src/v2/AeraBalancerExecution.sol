@@ -38,8 +38,11 @@ contract AeraBalancerExecution is IExecution, Ownable {
     // slither-disable-next-line immutable-states
     string public description;
 
-    /// @notice vault contract that the execution layer is linked to.
+    /// @notice Vault contract that the execution layer is linked to.
     address public vault;
+
+    /// @notice Timestamp at when rebalancing ends.
+    uint256 public epochEndTime;
 
     /// EVENTS ///
 
@@ -50,6 +53,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
     error Aera__CallerIsNotVault();
+    error Aera__RebalancingIsOnGoing(uint256 endTime);
     error Aera__SumOfWeightIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
     error Aera__DifferentTokensInPosition(
@@ -166,14 +170,20 @@ contract AeraBalancerExecution is IExecution, Ownable {
             });
 
         bVault.joinPool(poolId, address(this), address(this), joinPoolRequest);
+
+        pool.setSwapEnabled(true);
     }
 
     /// @inheritdoc IExecution
-    function claimAndRebalanceGradually(
+    function startRebalance(
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
         uint256 endTime
     ) external override onlyVault {
+        if (epochEndTime > 0) {
+            revert Aera__RebalancingIsOnGoing(epochEndTime);
+        }
+
         _checkWeights(requests, startTime, endTime);
 
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
@@ -231,6 +241,8 @@ contract AeraBalancerExecution is IExecution, Ownable {
 
         IERC20[] memory poolTokens = _getPoolTokens();
 
+        epochEndTime = endTime;
+
         pool.updateWeightsGradually(
             block.timestamp,
             block.timestamp,
@@ -242,15 +254,17 @@ contract AeraBalancerExecution is IExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function claimNow() external override onlyVault {
-        IERC20[] memory poolTokens = _getPoolTokens();
-        uint256[] memory poolHoldings = _getPoolHoldings();
-        uint256 numPoolTokens = poolTokens.length;
-
-        for (uint256 i = 0; i < numPoolTokens; i++) {
-            _withdrawTokenFromPool(poolTokens[i], poolHoldings[i]);
-            poolTokens[i].safeTransfer(vault, poolHoldings[i]);
+    function endRebalance() external override onlyVault {
+        if (block.timestamp < epochEndTime) {
+            revert Aera__RebalancingIsOnGoing(epochEndTime);
         }
+
+        _claim();
+    }
+
+    /// @inheritdoc IExecution
+    function claimNow() external override onlyVault {
+        _claim();
     }
 
     /// @inheritdoc IExecution
@@ -273,7 +287,40 @@ contract AeraBalancerExecution is IExecution, Ownable {
         assets = _getPoolTokens();
     }
 
+    /// @inheritdoc IExecution
+    function holdings()
+        public
+        view
+        override
+        returns (AssetValue[] memory holdings)
+    {
+        IERC20[] memory poolTokens = _getPoolTokens();
+        uint256[] memory poolHoldings = _getPoolHoldings();
+        uint256 numPoolTokens = poolTokens.length;
+        holdings = new AssetValue[](numPoolTokens);
+
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            holdings[i] = AssetValue({
+                asset: poolTokens[i],
+                value: poolHoldings[i]
+            });
+        }
+    }
+
     /// INTERNAL FUNCTIONS ///
+
+    function _claim() internal {
+        IERC20[] memory poolTokens = _getPoolTokens();
+        uint256[] memory poolHoldings = _getPoolHoldings();
+        uint256 numPoolTokens = poolTokens.length;
+
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            _withdrawTokenFromPool(poolTokens[i], poolHoldings[i]);
+            poolTokens[i].safeTransfer(vault, poolHoldings[i]);
+        }
+
+        epochEndTime = 0;
+    }
 
     function _checkWeights(
         AssetRebalanceRequest[] calldata requests,
