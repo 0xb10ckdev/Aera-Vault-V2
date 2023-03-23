@@ -101,6 +101,7 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
 
         for (uint256 i = 0; i < 3; i++) {
             deal(address(erc20Assets[i]), address(this), 1_000_000e18);
+            deal(address(erc20Assets[i]), _USER, 1_000_000e18);
 
             assets.push(
                 IAssetRegistry.AssetInformation({

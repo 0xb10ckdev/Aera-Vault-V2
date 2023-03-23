@@ -23,7 +23,6 @@ contract Deployer is Test {
         return deployCode(name);
     }
 
-    /// @dev deploy contract with value on construction
     function deploy(
         string memory name,
         bytes memory args,
