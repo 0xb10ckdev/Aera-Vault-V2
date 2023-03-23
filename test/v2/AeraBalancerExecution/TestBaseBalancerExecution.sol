@@ -24,6 +24,7 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
 
     AeraBalancerExecution balancerExecution;
     AeraVaultAssetRegistry assetRegistry;
+    address balancerManagedPoolFactory;
     IAssetRegistry.AssetInformation[] assets;
     IERC20[] erc20Assets;
     uint256 numeraire;
@@ -33,7 +34,15 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
 
         _init();
 
-        _deploy();
+        _deployAssetRegistry();
+        _deployBalancerManagedPoolFactory();
+        _deployBalancerExecution();
+
+        for (uint256 i = 0; i < 3; i++) {
+            erc20Assets[i].approve(address(balancerExecution), 1);
+        }
+
+        balancerExecution.initialize(address(this));
     }
 
     function _init() internal {
@@ -66,7 +75,11 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
         IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
     }
 
-    function _deploy() internal {
+    function _deployAssetRegistry() internal {
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+    }
+
+    function _deployBalancerManagedPoolFactory() internal {
         address managedPoolAddRemoveTokenLib = deploy(
             "ManagedPoolAddRemoveTokenLib.sol"
         );
@@ -88,14 +101,21 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
             addr: circuitBreakerLib
         });
 
-        address managedPoolFactory = deploy(
+        balancerManagedPoolFactory = deploy(
             "ManagedPoolFactory",
             libraries,
             abi.encode(_BVAULT_ADDRESS, protocolFeePercentagesProvider)
         );
+    }
 
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+    function _deployBalancerExecution() internal {
+        balancerExecution = new AeraBalancerExecution(_generateVaultParams());
+    }
 
+    function _generateVaultParams()
+        internal
+        returns (IExecution.NewVaultParams memory vaultParams)
+    {
         uint256[] memory weights = new uint256[](3);
         uint256 weightSum;
         for (uint256 i = 0; i < weights.length; i++) {
@@ -104,24 +124,16 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
         }
         weights[0] = weights[0] + _ONE - weightSum;
 
-        IExecution.NewVaultParams memory vaultParams = IExecution
-            .NewVaultParams({
-                factory: managedPoolFactory,
-                name: "Balancer Execution",
-                symbol: "BALANCER EXECUTION",
-                poolTokens: erc20Assets,
-                weights: weights,
-                swapFeePercentage: 1e12,
-                assetRegistry: address(assetRegistry),
-                description: "Test Execution"
-            });
-        balancerExecution = new AeraBalancerExecution(vaultParams);
-
-        for (uint256 i = 0; i < 3; i++) {
-            erc20Assets[i].approve(address(balancerExecution), 1);
-        }
-
-        balancerExecution.initialize(address(this));
+        vaultParams = IExecution.NewVaultParams({
+            factory: balancerManagedPoolFactory,
+            name: "Balancer Execution",
+            symbol: "BALANCER EXECUTION",
+            poolTokens: erc20Assets,
+            weights: weights,
+            swapFeePercentage: 1e12,
+            assetRegistry: address(assetRegistry),
+            description: "Test Execution"
+        });
     }
 
     function _generateRequestWith2Assets()
@@ -168,18 +180,6 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
             amount: 100e18,
             weight: 0.35e18
         });
-    }
-
-    function _rebalance(
-        IExecution.AssetRebalanceRequest[] memory requests
-    ) internal {
-        _startRebalance(requests);
-
-        vm.warp(balancerExecution.epochEndTime());
-
-        _swap(_getTargetAmounts());
-
-        balancerExecution.claimNow();
     }
 
     function _startRebalance(
