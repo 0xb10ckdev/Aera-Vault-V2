@@ -28,6 +28,8 @@ interface IBManagedPool {
         uint256[] calldata endWeights
     ) external;
 
+    function setSwapEnabled(bool swapEnabled) external;
+
     function getPoolId() external view returns (bytes32);
 
     function getVault() external view returns (IBVault);
