@@ -80,15 +80,6 @@ interface IExecution {
         view
         returns (IAssetRegistry assetRegistry);
 
-    /// @notice Return Balancer Vault.
-    function bVault() external view returns (IBVault bVault);
-
-    /// @notice Return Balancer Managed Pool.
-    function pool() external view returns (IBManagedPool pool);
-
-    /// @notice Return Pool ID of Balancer Pool on Vault.
-    function poolId() external view returns (bytes32 poolId);
-
     /// @notice Return currently listed assets in Balancer pool.
     /// @return assets List of assets.
     function assets() external view returns (IERC20[] memory assets);
