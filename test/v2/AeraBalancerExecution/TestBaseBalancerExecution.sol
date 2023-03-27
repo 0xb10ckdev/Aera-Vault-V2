@@ -10,7 +10,7 @@ import {IVault} from "../../../../src/v2/dependencies/balancer-labs/interfaces/c
 import "../../../src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "../../../src/v2/dependencies/openzeppelin/IERC20.sol";
 import "../../../src/v2/interfaces/IAssetRegistry.sol";
-import "../../../src/v2/interfaces/IExecution.sol";
+import "../../../src/v2/interfaces/IBalancerExecution.sol";
 import "../../../src/v2/AeraBalancerExecution.sol";
 import "../../../src/v2/AeraVaultAssetRegistry.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
@@ -114,7 +114,7 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
 
     function _generateVaultParams()
         internal
-        returns (IExecution.NewVaultParams memory vaultParams)
+        returns (IBalancerExecution.NewVaultParams memory vaultParams)
     {
         uint256[] memory weights = new uint256[](3);
         uint256 weightSum;
@@ -124,7 +124,7 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
         }
         weights[0] = weights[0] + _ONE - weightSum;
 
-        vaultParams = IExecution.NewVaultParams({
+        vaultParams = IBalancerExecution.NewVaultParams({
             factory: balancerManagedPoolFactory,
             name: "Balancer Execution",
             symbol: "BALANCER EXECUTION",

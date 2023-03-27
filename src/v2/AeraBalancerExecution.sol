@@ -5,13 +5,13 @@ import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
+import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
 import "./interfaces/IBVault.sol";
-import "./interfaces/IExecution.sol";
 
 /// @title Aera Balancer Execution.
-contract AeraBalancerExecution is IExecution, Ownable {
+contract AeraBalancerExecution is IBalancerExecution, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 10 ** 18;
@@ -131,7 +131,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         assetRegistry = IAssetRegistry(vaultParams.assetRegistry);
     }
 
-    /// @inheritdoc IExecution
+    /// @inheritdoc IBalancerExecution
     function initialize(address vault_) external override onlyOwner {
         if (vault != address(0)) {
             revert Aera__ModuleIsAlreadyInitialized();
@@ -282,7 +282,7 @@ contract AeraBalancerExecution is IExecution, Ownable {
         token.safeTransfer(owner(), amount);
     }
 
-    /// @inheritdoc IExecution
+    /// @inheritdoc IBalancerExecution
     function assets() public view override returns (IERC20[] memory assets) {
         assets = _getPoolTokens();
     }

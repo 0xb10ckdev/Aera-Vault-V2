@@ -8,26 +8,6 @@ import "./IBVault.sol";
 
 /// @title Interface for execution module.
 interface IExecution {
-    // Use struct parameter to avoid stack too deep error.
-    /// @param factory Balancer Managed Pool Factory address.
-    /// @param name Name of Pool Token.
-    /// @param symbol Symbol of Pool Token.
-    /// @param poolTokens Pool token addresses.
-    /// @param weights Token weights.
-    /// @param swapFeePercentage Pool swap fee.
-    /// @param assetRegistry The address of asset registry.
-    /// @param description Simple vault text description.
-    struct NewVaultParams {
-        address factory;
-        string name;
-        string symbol;
-        IERC20[] poolTokens;
-        uint256[] weights;
-        uint256 swapFeePercentage;
-        address assetRegistry;
-        string description;
-    }
-
     /// @param asset Address of an asset.
     /// @param amount Amount of an asset to rebalance.
     /// @param weight Target weight of an asset.
@@ -43,10 +23,6 @@ interface IExecution {
         IERC20 asset;
         uint256 value;
     }
-
-    /// @notice Initialize Vault with first deposit.
-    /// @param vault Address of vault contract.
-    function initialize(address vault) external;
 
     /// @notice Attempt to change the distribution of ERC20 assets in the vault
     ///         to a target distribution.
@@ -72,17 +48,6 @@ interface IExecution {
     /// @notice Get the current vault contract that the execution layer is linked to.
     /// @return vault Address of linked vault contract.
     function vault() external view returns (address vault);
-
-    /// @notice Return the address of vault's asset registry.
-    /// @return assetRegistry The address of asset registry.
-    function assetRegistry()
-        external
-        view
-        returns (IAssetRegistry assetRegistry);
-
-    /// @notice Return currently listed assets in Balancer pool.
-    /// @return assets List of assets.
-    function assets() external view returns (IERC20[] memory assets);
 
     /// @notice Return amount of each asset in the execution module.
     function holdings() external view returns (AssetValue[] memory holdings);

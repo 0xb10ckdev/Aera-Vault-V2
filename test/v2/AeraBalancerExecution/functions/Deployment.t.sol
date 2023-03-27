@@ -26,7 +26,8 @@ contract DeploymentTest is TestBaseBalancerExecution {
     {
         _deployAssetRegistry();
 
-        IExecution.NewVaultParams memory vaultParams = _generateVaultParams();
+        IBalancerExecution.NewVaultParams
+            memory vaultParams = _generateVaultParams();
         vaultParams.description = "";
 
         vm.expectRevert(
@@ -38,7 +39,8 @@ contract DeploymentTest is TestBaseBalancerExecution {
     function test_balancerExecutionDeployment_success() public {
         _deployAssetRegistry();
 
-        IExecution.NewVaultParams memory vaultParams = _generateVaultParams();
+        IBalancerExecution.NewVaultParams
+            memory vaultParams = _generateVaultParams();
         balancerExecution = new AeraBalancerExecution(vaultParams);
 
         assertEq(balancerExecution.description(), vaultParams.description);
