@@ -4,6 +4,9 @@ pragma solidity ^0.8.17;
 import {Test} from "forge-std/Test.sol";
 import {stdJson} from "forge-std/Script.sol";
 
+/// @title Deployer Contract
+/// @dev It deploys contract of a given name with arguments.
+///      It supports deployment of contract with external libraries. 
 contract Deployer is Test {
     using stdJson for string;
 
