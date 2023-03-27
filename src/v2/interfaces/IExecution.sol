@@ -8,6 +8,8 @@ import "./IBVault.sol";
 
 /// @title Interface for execution module.
 interface IExecution {
+    /// TYPES ///
+
     /// @param asset Address of an asset.
     /// @param amount Amount of an asset to rebalance.
     /// @param weight Target weight of an asset.
@@ -23,6 +25,14 @@ interface IExecution {
         IERC20 asset;
         uint256 value;
     }
+
+    /// ERRORS ///
+
+    error Aera__CallerIsNotVault();
+    error Aera__SumOfWeightIsNotOne();
+    error Aera__WeightChangeEndBeforeStart();
+
+    /// FUNCTIONS ///
 
     /// @notice Attempt to change the distribution of ERC20 assets in the vault
     ///         to a target distribution.

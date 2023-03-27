@@ -1,20 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "../../utils/TestBaseExecution/functions/StartRebalance.sol";
 import "../TestBaseBalancerExecution.sol";
 
-contract StartRebalanceTest is TestBaseBalancerExecution {
-    function test_startRebalance_fail_whenCallerIsNotVault() public {
-        vm.startPrank(_USER);
-
-        vm.expectRevert(AeraBalancerExecution.Aera__CallerIsNotVault.selector);
-        balancerExecution.startRebalance(
-            _generateRequestWith2Assets(),
-            block.timestamp,
-            block.timestamp + 10000
-        );
-    }
-
+contract StartRebalanceTest is
+    BaseStartRebalanceTest,
+    TestBaseBalancerExecution
+{
     function test_startRebalance_fail_whenRebalancingIsOnGoing() public {
         _startRebalance(_generateRequestWith2Assets());
 
@@ -29,34 +22,6 @@ contract StartRebalanceTest is TestBaseBalancerExecution {
             _generateRequestWith2Assets(),
             block.timestamp,
             block.timestamp + 10000
-        );
-    }
-
-    function test_startRebalance_fail_whenSumOfWeightIsNotOne() public {
-        IExecution.AssetRebalanceRequest[]
-            memory requests = _generateRequestWith2Assets();
-        requests[0].weight--;
-
-        vm.expectRevert(
-            AeraBalancerExecution.Aera__SumOfWeightIsNotOne.selector
-        );
-
-        balancerExecution.startRebalance(
-            requests,
-            block.timestamp,
-            block.timestamp + 10000
-        );
-    }
-
-    function test_startRebalance_fail_whenWeightChangeEndBeforeStart() public {
-        vm.expectRevert(
-            AeraBalancerExecution.Aera__WeightChangeEndBeforeStart.selector
-        );
-
-        balancerExecution.startRebalance(
-            _generateRequestWith2Assets(),
-            block.timestamp + 100,
-            block.timestamp + 10
         );
     }
 

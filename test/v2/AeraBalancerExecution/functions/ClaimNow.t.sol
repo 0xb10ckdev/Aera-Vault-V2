@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "../../utils/TestBaseExecution/functions/ClaimNow.sol";
 import "../TestBaseBalancerExecution.sol";
 
-contract ClaimNowTest is TestBaseBalancerExecution {
+contract ClaimNowTest is BaseClaimNowTest, TestBaseBalancerExecution {
     event ClaimNow();
-
-    function test_claimNow_fail_whenCallerIsNotVault() public {
-        _startRebalance(_generateRequestWith3Assets());
-
-        vm.startPrank(_USER);
-
-        vm.expectRevert(AeraBalancerExecution.Aera__CallerIsNotVault.selector);
-        balancerExecution.claimNow();
-    }
 
     function test_claimNow_success() public {
         _startRebalance(_generateRequestWith3Assets());

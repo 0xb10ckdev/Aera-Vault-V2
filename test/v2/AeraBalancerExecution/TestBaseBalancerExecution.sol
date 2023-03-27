@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "solmate/tokens/ERC20.sol";
-import {TestBase} from "../../utils/TestBase.sol";
 import {Deployer} from "../../utils/Deployer.sol";
 import {IManagedPool} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
 import {IAsset} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
@@ -13,9 +11,10 @@ import "../../../src/v2/interfaces/IAssetRegistry.sol";
 import "../../../src/v2/interfaces/IBalancerExecution.sol";
 import "../../../src/v2/AeraBalancerExecution.sol";
 import "../../../src/v2/AeraVaultAssetRegistry.sol";
+import "../utils/TestBaseExecution/TestBaseExecution.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
 
-contract TestBaseBalancerExecution is Deployer, TestBase {
+contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
     address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -26,7 +25,6 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
     AeraVaultAssetRegistry assetRegistry;
     address balancerManagedPoolFactory;
     IAssetRegistry.AssetInformation[] assets;
-    IERC20[] erc20Assets;
     uint256 numeraire;
 
     event StartRebalance(
@@ -49,6 +47,8 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
         }
 
         balancerExecution.initialize(address(this));
+
+        execution = IExecution(address(balancerExecution));
     }
 
     function _init() internal {

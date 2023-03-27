@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "../../utils/TestBaseExecution/functions/EndRebalance.sol";
 import "../TestBaseBalancerExecution.sol";
 
-contract EndRebalanceTest is TestBaseBalancerExecution {
+contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
     event EndRebalance();
-
-    function test_endRebalance_fail_whenCallerIsNotVault() public {
-        _startRebalance(_generateRequestWith3Assets());
-
-        vm.startPrank(_USER);
-
-        vm.expectRevert(AeraBalancerExecution.Aera__CallerIsNotVault.selector);
-        balancerExecution.endRebalance();
-    }
 
     function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
         _startRebalance(_generateRequestWith3Assets());

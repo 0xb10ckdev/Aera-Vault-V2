@@ -76,10 +76,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     error Aera__DescriptionIsEmpty();
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
-    error Aera__CallerIsNotVault();
     error Aera__RebalancingIsOnGoing(uint256 endTime);
-    error Aera__SumOfWeightIsNotOne();
-    error Aera__WeightChangeEndBeforeStart();
     error Aera__DifferentTokensInPosition(
         address actual,
         address sortedToken,
