@@ -210,7 +210,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             revert Aera__RebalancingIsOnGoing(epochEndTime);
         }
 
-        _checkWeights(requests, startTime, endTime);
+        _checkRequests(requests, startTime, endTime);
 
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
             .spotPrices();
@@ -345,6 +345,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// INTERNAL FUNCTIONS ///
 
+    /// @notice Claim all funds from Balancer Pool.
+    /// @dev Will only be called by endRebalance() and claimNow().
     function _claim() internal {
         IERC20[] memory poolTokens = _getPoolTokens();
         uint256[] memory poolHoldings = _getPoolHoldings();
@@ -358,7 +360,12 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         epochEndTime = 0;
     }
 
-    function _checkWeights(
+    /// @notice Check if the requests are valid.
+    /// @dev Will only be called startRebalance().
+    /// @param requests Struct details for requests.
+    /// @param startTime Timestamp at which weight movement should start.
+    /// @param endTime Timestamp at which the weights should reach target values.
+    function _checkRequests(
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
         uint256 endTime
@@ -379,12 +386,20 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
     }
 
+    /// @notice Register a token to Balancer pool and deposit to the pool.
+    /// @dev Will only be called _adjustPool().
+    /// @param token Token to register.
+    /// @param amount Amount to deposit.
     function _bindAndDepositToken(IERC20 token, uint256 amount) internal {
         pool.addToken(token, address(this), _MIN_WEIGHT, 0, address(this));
 
         _depositTokenToPool(token, amount);
     }
 
+    /// @notice Withdraw a token from Balancer pool and unregister from the pool.
+    /// @dev Will only be called _adjustPool().
+    /// @param token Token to unregister.
+    /// @param amount Amount to withdraw.
     function _unbindAndWithdrawToken(IERC20 token, uint256 amount) internal {
         _withdrawTokenFromPool(token, amount);
 
@@ -415,7 +430,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         /// i.e. Move amount from cash balance to managed balance
         /// and withdraw token amount from the pool to Execution module
         _updatePoolBalance(token, amount, IBVault.PoolBalanceOpKind.WITHDRAW);
-        /// Adjust managed balance of the pool as the zero array
+        /// Adjust managed balance of the pool as the zero
         _updatePoolBalance(token, 0, IBVault.PoolBalanceOpKind.UPDATE);
     }
 
@@ -503,6 +518,15 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         token.safeIncreaseAllowance(spender, amount);
     }
 
+    /// @notice Calculate the amounts and adjustable values for rebalancing.
+    /// @dev Will only be called by startRebalance().
+    /// @param requests Struct details for requests.
+    /// @param spotPrices Spot prices of requested assets.
+    /// @return startAmounts Start amount of each assets to rebalance as requests.
+    /// @return endAmounts End amount of each assets after rebalance as requests.
+    /// @return adjustableAssetValue Adjustable value of assets before start rebalance.
+    ///                              It's a value of assets that will not participate in the rebalancing.
+    /// @return necessaryTotalValue Total value of assets that will be rebalanced.
     function _calcAmountsAndValues(
         AssetRebalanceRequest[] memory requests,
         IAssetRegistry.AssetPriceReading[] memory spotPrices
@@ -579,6 +603,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         necessaryTotalValue -= adjustableAssetValue * adjustableCount;
     }
 
+    /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
+    /// @dev Will only be called by startRebalance().
+    /// @param requests Struct details for requests.
+    /// @param startAmounts Start amount of each assets to rebalance.
     function _adjustPool(
         AssetRebalanceRequest[] calldata requests,
         uint256[] memory startAmounts
