@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseBalancerExecution.sol";
 
 contract ClaimNowTest is TestBaseBalancerExecution {
+    event ClaimNow();
+
     function test_claimNow_fail_whenCallerIsNotVault() public {
         _startRebalance(_generateRequestWith3Assets());
 
@@ -26,6 +28,9 @@ contract ClaimNowTest is TestBaseBalancerExecution {
         for (uint256 i = 0; i < holdings.length; i++) {
             balances[i] = holdings[i].asset.balanceOf(address(this));
         }
+
+        vm.expectEmit(true, true, true, true, address(balancerExecution));
+        emit ClaimNow();
 
         balancerExecution.claimNow();
 

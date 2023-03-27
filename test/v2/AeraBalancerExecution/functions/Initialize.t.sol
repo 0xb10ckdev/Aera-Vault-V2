@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseBalancerExecution.sol";
 
 contract InitializeTest is TestBaseBalancerExecution {
+    event Initialize(address vault);
+
     function setUp() public override {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
 
@@ -45,6 +47,9 @@ contract InitializeTest is TestBaseBalancerExecution {
         for (uint256 i = 0; i < 3; i++) {
             erc20Assets[i].approve(address(balancerExecution), 1);
         }
+
+        vm.expectEmit(true, true, true, true, address(balancerExecution));
+        emit Initialize(address(this));
 
         balancerExecution.initialize(address(this));
     }

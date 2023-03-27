@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 import "../TestBaseBalancerExecution.sol";
 
 contract EndRebalanceTest is TestBaseBalancerExecution {
+    event EndRebalance();
+
     function test_endRebalance_fail_whenCallerIsNotVault() public {
         _startRebalance(_generateRequestWith3Assets());
 
@@ -38,6 +40,9 @@ contract EndRebalanceTest is TestBaseBalancerExecution {
         for (uint256 i = 0; i < holdings.length; i++) {
             balances[i] = holdings[i].asset.balanceOf(address(this));
         }
+
+        vm.expectEmit(true, true, true, true, address(balancerExecution));
+        emit EndRebalance();
 
         balancerExecution.endRebalance();
 

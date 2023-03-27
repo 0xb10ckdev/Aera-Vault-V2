@@ -29,6 +29,12 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
     IERC20[] erc20Assets;
     uint256 numeraire;
 
+    event StartRebalance(
+        IExecution.AssetRebalanceRequest[] requests,
+        uint256 startTime,
+        uint256 endTime
+    );
+
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
 
@@ -194,6 +200,9 @@ contract TestBaseBalancerExecution is Deployer, TestBase {
 
         uint256 startTime = block.timestamp + 10;
         uint256 endTime = startTime + 10000;
+
+        vm.expectEmit(true, true, true, true, address(balancerExecution));
+        emit StartRebalance(requests, startTime, endTime);
 
         balancerExecution.startRebalance(requests, startTime, endTime);
     }

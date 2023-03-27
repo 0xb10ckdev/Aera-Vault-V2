@@ -46,6 +46,30 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// EVENTS ///
 
+    /// @notice Emitted when module is initialized.
+    /// @param vault Address of vault contract.
+    event Initialize(address vault);
+
+    /// @notice Emitted when rebalancing is started.
+    /// @param requests Struct details for requests.
+    /// @param startTime Timestamp at which weight movement should start.
+    /// @param endTime Timestamp at which the weights should reach target values.
+    event StartRebalance(
+        AssetRebalanceRequest[] requests,
+        uint256 startTime,
+        uint256 endTime
+    );
+
+    /// @notice Emitted when endRebalance is called.
+    event EndRebalance();
+
+    /// @notice Emitted when claimNow is called.
+    event ClaimNow();
+
+    /// @notice Emitted when sweep is called.
+    /// @param asset Address of an asset.
+    event Sweep(IERC20 asset);
+
     /// ERRORS ///
 
     error Aera__AssetRegistryIsZeroAddress();
@@ -172,6 +196,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         bVault.joinPool(poolId, address(this), address(this), joinPoolRequest);
 
         pool.setSwapEnabled(true);
+
+        emit Initialize(vault);
     }
 
     /// @inheritdoc IExecution
@@ -227,15 +253,17 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             }
         }
 
-        uint256 sumStartWeights;
-        uint256 sumEndWeights;
-        for (uint256 i = 0; i < numRequests; i++) {
-            sumStartWeights += startWeights[i];
-            sumEndWeights += endWeights[i];
-        }
+        {
+            uint256 sumStartWeights;
+            uint256 sumEndWeights;
+            for (uint256 i = 0; i < numRequests; i++) {
+                sumStartWeights += startWeights[i];
+                sumEndWeights += endWeights[i];
+            }
 
-        startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
-        endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
+            startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
+            endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
+        }
 
         _adjustPool(requests, startAmounts);
 
@@ -251,6 +279,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         );
 
         pool.updateWeightsGradually(startTime, endTime, poolTokens, endWeights);
+
+        emit StartRebalance(requests, startTime, endTime);
     }
 
     /// @inheritdoc IExecution
@@ -260,11 +290,15 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
 
         _claim();
+
+        emit EndRebalance();
     }
 
     /// @inheritdoc IExecution
     function claimNow() external override onlyVault {
         _claim();
+
+        emit ClaimNow();
     }
 
     /// @inheritdoc IExecution
@@ -280,6 +314,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(owner(), amount);
+
+        emit Sweep(token);
     }
 
     /// @inheritdoc IBalancerExecution

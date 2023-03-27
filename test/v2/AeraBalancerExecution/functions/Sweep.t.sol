@@ -7,6 +7,8 @@ import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 contract SweepTest is TestBaseBalancerExecution {
     IERC20 erc20;
 
+    event Sweep(IERC20 erc20);
+
     function setUp() public override {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
 
@@ -47,6 +49,9 @@ contract SweepTest is TestBaseBalancerExecution {
         erc20.transfer(address(balancerExecution), 10e18);
 
         uint256 balance = erc20.balanceOf(address(this));
+
+        vm.expectEmit(true, true, true, true, address(balancerExecution));
+        emit Sweep(erc20);
 
         balancerExecution.sweep(erc20);
 
