@@ -74,6 +74,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     error Aera__AssetRegistryIsZeroAddress();
     error Aera__DescriptionIsEmpty();
+    error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
     error Aera__RebalancingIsOnGoing(uint256 endTime);
@@ -112,10 +113,31 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             revert Aera__DescriptionIsEmpty();
         }
 
-        uint256 numPoolTokens = vaultParams.poolTokens.length;
+        IAssetRegistry.AssetInformation[] memory assets = IAssetRegistry(
+            vaultParams.assetRegistry
+        ).assets();
 
+        uint256 numPoolTokens = vaultParams.poolTokens.length;
+        uint256 numAssets = assets.length;
         address[] memory assetManagers = new address[](numPoolTokens);
+        uint256 assetIndex = 0;
+
         for (uint256 i = 0; i < numPoolTokens; i++) {
+            for (; assetIndex < numAssets; assetIndex++) {
+                if (
+                    vaultParams.poolTokens[i] == assets[i].asset &&
+                    !assets[i].isERC4626
+                ) {
+                    break;
+                }
+            }
+
+            if (assetIndex == numAssets) {
+                revert Aera__PoolTokenIsNotRegistered(
+                    vaultParams.poolTokens[i]
+                );
+            }
+
             assetManagers[i] = address(this);
         }
 

@@ -2,30 +2,25 @@
 pragma solidity ^0.8.17;
 
 import "../TestBaseBalancerExecution.sol";
+import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 
 contract DeploymentTest is TestBaseBalancerExecution {
-    function setUp() public override {
-        vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
-
-        _init();
-
-        _deployBalancerManagedPoolFactory();
-    }
-
     function test_balancerExecutionDeployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
+        IBalancerExecution.NewVaultParams
+            memory vaultParams = _generateVaultParams();
+        vaultParams.assetRegistry = address(0);
+
         vm.expectRevert(
             AeraBalancerExecution.Aera__AssetRegistryIsZeroAddress.selector
         );
-        new AeraBalancerExecution(_generateVaultParams());
+        new AeraBalancerExecution(vaultParams);
     }
 
     function test_balancerExecutionDeployment_fail_whenDescriptionIsEmpty()
         public
     {
-        _deployAssetRegistry();
-
         IBalancerExecution.NewVaultParams
             memory vaultParams = _generateVaultParams();
         vaultParams.description = "";
@@ -36,9 +31,27 @@ contract DeploymentTest is TestBaseBalancerExecution {
         new AeraBalancerExecution(vaultParams);
     }
 
-    function test_balancerExecutionDeployment_success() public {
-        _deployAssetRegistry();
+    function test_balancerExecutionDeployment__fail_whenPoolTokenIsNotRegistered()
+        public
+    {
+        IERC20 erc20 = IERC20(
+            address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
+        );
 
+        IBalancerExecution.NewVaultParams
+            memory vaultParams = _generateVaultParams();
+        vaultParams.poolTokens[0] = erc20;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraBalancerExecution.Aera__PoolTokenIsNotRegistered.selector,
+                erc20
+            )
+        );
+        new AeraBalancerExecution(vaultParams);
+    }
+
+    function test_balancerExecutionDeployment_success() public {
         IBalancerExecution.NewVaultParams
             memory vaultParams = _generateVaultParams();
         balancerExecution = new AeraBalancerExecution(vaultParams);
