@@ -8,13 +8,6 @@ abstract contract BaseSweepTest is TestBaseExecution {
 
     event Sweep(IERC20 erc20);
 
-    function test_sweep_fail_whenCallerIsNotOwner() public virtual {
-        vm.startPrank(_USER);
-
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        execution.sweep(erc20);
-    }
-
     function test_sweep_success() public virtual {
         vm.prank(_USER);
         erc20.transfer(address(execution), 10e18);

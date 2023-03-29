@@ -321,7 +321,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function sweep(IERC20 token) external override onlyOwner {
+    function sweep(IERC20 token) external override {
         IERC20[] memory poolAssets = assets();
         uint256 numPoolAssets = poolAssets.length;
 
@@ -707,7 +707,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         bool isNecessaryToken;
         for (uint256 i = 0; i < numPoolTokens; i++) {
+
             isNecessaryToken = false;
+
             for (uint256 j = 0; j < numRequests; j++) {
                 if (poolTokens[i] == requests[j].asset) {
                     if (startAmounts[j] > 0) {
