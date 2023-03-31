@@ -267,15 +267,15 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
                     startAmounts[i] -= adjustableAmount;
                     startWeights[i] =
                         (startAmounts[i] * spotPrice * _ONE) /
-                        assetUnit /
-                        adjustedTotalValue;
+                        adjustedTotalValue /
+                        assetUnit;
                 }
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
                     endWeights[i] =
                         (endAmounts[i] * spotPrice * _ONE) /
-                        assetUnit /
-                        adjustedTotalValue;
+                        adjustedTotalValue /
+                        assetUnit;
                 }
             }
         }
