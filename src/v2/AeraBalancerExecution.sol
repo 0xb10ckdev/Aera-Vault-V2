@@ -689,7 +689,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
                             poolToken,
                             startAmount - poolHolding
                         );
-                    } else if (poolHolding > startAmount) {
+                    } else if (startAmount < poolHolding) {
                         _withdrawTokenFromPool(
                             poolToken,
                             poolHolding - startAmount
