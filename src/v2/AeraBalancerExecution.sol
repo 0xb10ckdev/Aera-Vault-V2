@@ -234,41 +234,49 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
             .spotPrices();
 
+        uint256 numRequests = requests.length;
+
+        uint256[] memory assetUnits = new uint256[](numRequests);
+
+        for (uint256 i = 0; i < numRequests; i++) {
+            assetUnits[i] =
+                10 ** IERC20Metadata(address(requests[i].asset)).decimals();
+        }
+
         (
             uint256[] memory startAmounts,
             uint256[] memory endAmounts,
             uint256 adjustableAssetValue,
             uint256 adjustedTotalValue
-        ) = _calcAmountsAndValues(requests, spotPrices);
-
-        uint256 numRequests = requests.length;
+        ) = _calcAmountsAndValues(requests, spotPrices, assetUnits);
 
         uint256[] memory startWeights = new uint256[](numRequests);
         uint256[] memory endWeights = new uint256[](numRequests);
 
-        uint256 adjustableAmount;
-        for (uint256 i = 0; i < numRequests; i++) {
-            adjustableAmount =
-                (adjustableAssetValue *
-                    (10 **
-                        IERC20Metadata(address(requests[i].asset))
-                            .decimals())) /
-                spotPrices[i].spotPrice;
-            if (startAmounts[i] != 0) {
-                startAmounts[i] -= adjustableAmount;
-                startWeights[i] =
-                    ((startAmounts[i] * spotPrices[i].spotPrice) * _ONE) /
-                    (10 **
-                        IERC20Metadata(address(requests[i].asset)).decimals()) /
-                    adjustedTotalValue;
-            }
-            if (endAmounts[i] != 0) {
-                endAmounts[i] -= adjustableAmount;
-                endWeights[i] =
-                    (endAmounts[i] * spotPrices[i].spotPrice * _ONE) /
-                    (10 **
-                        IERC20Metadata(address(requests[i].asset)).decimals()) /
-                    adjustedTotalValue;
+        {
+            uint256 adjustableAmount;
+            uint256 spotPrice;
+            uint256 assetUnit;
+            for (uint256 i = 0; i < numRequests; i++) {
+                spotPrice = spotPrices[i].spotPrice;
+                assetUnit = assetUnits[i];
+                adjustableAmount =
+                    (adjustableAssetValue * assetUnit) /
+                    spotPrice;
+                if (startAmounts[i] != 0) {
+                    startAmounts[i] -= adjustableAmount;
+                    startWeights[i] =
+                        (startAmounts[i] * spotPrice * _ONE) /
+                        assetUnit /
+                        adjustedTotalValue;
+                }
+                if (endAmounts[i] != 0) {
+                    endAmounts[i] -= adjustableAmount;
+                    endWeights[i] =
+                        (endAmounts[i] * spotPrice * _ONE) /
+                        assetUnit /
+                        adjustedTotalValue;
+                }
             }
         }
 
@@ -541,14 +549,16 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
     /// @param spotPrices Spot prices of requested assets.
+    /// @param assetUnits Units in asset decimals.
     /// @return startAmounts Start amount of each assets to rebalance as requests.
     /// @return endAmounts End amount of each assets after rebalance as requests.
     /// @return adjustableAssetValue Adjustable value of assets before start rebalance.
     ///                              It's a value of assets that will not participate in the rebalancing.
     /// @return necessaryTotalValue Total value of assets that will be rebalanced.
     function _calcAmountsAndValues(
-        AssetRebalanceRequest[] memory requests,
-        IAssetRegistry.AssetPriceReading[] memory spotPrices
+        AssetRebalanceRequest[] calldata requests,
+        IAssetRegistry.AssetPriceReading[] memory spotPrices,
+        uint256[] memory assetUnits
     )
         internal
         returns (
@@ -574,7 +584,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
             values[i] =
                 (requests[i].amount * spotPrices[i].spotPrice) /
-                (10 ** IERC20Metadata(address(requests[i].asset)).decimals());
+                assetUnits[i];
             totalValue += values[i];
         }
 
@@ -590,11 +600,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
                 if (values[i] != targetValue) {
                     startAmounts[i] = requests[i].amount;
                     endAmounts[i] =
-                        ((totalValue * requests[i].weight) *
-                            (10 **
-                                IERC20Metadata(address(requests[i].asset))
-                                    .decimals())) /
-                        _ONE /
+                        (targetValue * assetUnits[i]) /
                         spotPrices[i].spotPrice;
 
                     necessaryTotalValue += targetValue;
@@ -657,29 +663,36 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
 
         bool isRegistered;
+        uint256 startAmount;
+        uint256 poolHolding;
+        IERC20 poolToken;
         for (uint256 i = 0; i < numRequests; i++) {
             if (startAmounts[i] == 0) {
                 continue;
             }
 
             isRegistered = false;
+            startAmount = startAmounts[i];
 
             for (uint256 j = 0; j < numPoolTokens; j++) {
                 if (requests[i].asset == poolTokens[j]) {
-                    if (startAmounts[i] > poolHoldings[j]) {
-                        poolTokens[j].safeTransferFrom(
+                    poolHolding = poolHoldings[j];
+                    poolToken = poolTokens[j];
+
+                    if (startAmount > poolHolding) {
+                        poolToken.safeTransferFrom(
                             vault,
                             address(this),
-                            startAmounts[i] - poolHoldings[j]
+                            startAmount - poolHolding
                         );
                         _depositTokenToPool(
-                            poolTokens[j],
-                            startAmounts[i] - poolHoldings[j]
+                            poolToken,
+                            startAmount - poolHolding
                         );
-                    } else if (poolHoldings[j] > startAmounts[i]) {
+                    } else if (poolHolding > startAmount) {
                         _withdrawTokenFromPool(
-                            poolTokens[j],
-                            poolHoldings[j] - startAmounts[i]
+                            poolToken,
+                            poolHolding - startAmount
                         );
                     }
 
@@ -695,10 +708,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             requests[i].asset.safeTransferFrom(
                 vault,
                 address(this),
-                startAmounts[i]
+                startAmount
             );
 
-            _bindAndDepositToken(requests[i].asset, startAmounts[i]);
+            _bindAndDepositToken(requests[i].asset, startAmount);
         }
 
         poolTokens = _getPoolTokens();
@@ -707,7 +720,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         bool isNecessaryToken;
         for (uint256 i = 0; i < numPoolTokens; i++) {
-
             isNecessaryToken = false;
 
             for (uint256 j = 0; j < numRequests; j++) {
