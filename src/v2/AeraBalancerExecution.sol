@@ -388,7 +388,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
 
         if (weightSum != _ONE) {
-            revert Aera__SumOfWeightIsNotOne();
+            revert Aera__SumOfWeightsIsNotOne();
         }
 
         startTime = Math.max(block.timestamp, startTime);

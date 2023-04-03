@@ -15,11 +15,11 @@ abstract contract BaseStartRebalanceTest is TestBaseExecution {
         );
     }
 
-    function test_startRebalance_fail_whenSumOfWeightIsNotOne() public virtual {
+    function test_startRebalance_fail_whenSumOfWeightsIsNotOne() public virtual {
         IExecution.AssetRebalanceRequest[] memory requests = _generateRequest();
         requests[0].weight--;
 
-        vm.expectRevert(IExecution.Aera__SumOfWeightIsNotOne.selector);
+        vm.expectRevert(IExecution.Aera__SumOfWeightsIsNotOne.selector);
 
         execution.startRebalance(
             requests,

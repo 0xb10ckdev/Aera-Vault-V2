@@ -47,7 +47,7 @@ interface IExecution {
     /// ERRORS ///
 
     error Aera__CallerIsNotVault();
-    error Aera__SumOfWeightIsNotOne();
+    error Aera__SumOfWeightsIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
 
     /// FUNCTIONS ///
