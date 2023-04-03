@@ -8,7 +8,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
     function test_balancerExecutionDeployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
-        IBalancerExecution.NewVaultParams
+        IBalancerExecution.NewBalancerExecutionParams
             memory vaultParams = _generateVaultParams();
         vaultParams.assetRegistry = address(0);
 
@@ -21,7 +21,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
     function test_balancerExecutionDeployment_fail_whenDescriptionIsEmpty()
         public
     {
-        IBalancerExecution.NewVaultParams
+        IBalancerExecution.NewBalancerExecutionParams
             memory vaultParams = _generateVaultParams();
         vaultParams.description = "";
 
@@ -38,7 +38,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
             address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
         );
 
-        IBalancerExecution.NewVaultParams
+        IBalancerExecution.NewBalancerExecutionParams
             memory vaultParams = _generateVaultParams();
         vaultParams.poolTokens[0] = erc20;
 
@@ -52,7 +52,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
     }
 
     function test_balancerExecutionDeployment_success() public {
-        IBalancerExecution.NewVaultParams
+        IBalancerExecution.NewBalancerExecutionParams
             memory vaultParams = _generateVaultParams();
         balancerExecution = new AeraBalancerExecution(vaultParams);
 

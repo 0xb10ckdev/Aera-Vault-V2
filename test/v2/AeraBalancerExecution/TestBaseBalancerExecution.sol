@@ -120,7 +120,9 @@ contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
 
     function _generateVaultParams()
         internal
-        returns (IBalancerExecution.NewVaultParams memory vaultParams)
+        returns (
+            IBalancerExecution.NewBalancerExecutionParams memory vaultParams
+        )
     {
         uint256[] memory weights = new uint256[](3);
         uint256 weightSum;
@@ -130,7 +132,7 @@ contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
         }
         weights[0] = weights[0] + _ONE - weightSum;
 
-        vaultParams = IBalancerExecution.NewVaultParams({
+        vaultParams = IBalancerExecution.NewBalancerExecutionParams({
             factory: balancerManagedPoolFactory,
             name: "Balancer Execution",
             symbol: "BALANCER EXECUTION",

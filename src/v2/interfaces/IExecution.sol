@@ -10,17 +10,17 @@ import "./IBVault.sol";
 interface IExecution {
     /// TYPES ///
 
-    /// @param asset Address of an asset.
-    /// @param amount Amount of an asset to rebalance.
-    /// @param weight Target weight of an asset.
+    /// @param asset Address of asset.
+    /// @param amount Amount of asset to rebalance.
+    /// @param weight Target weight of asset.
     struct AssetRebalanceRequest {
         IERC20 asset;
         uint256 amount;
         uint256 weight;
     }
 
-    /// @param asset Address of an asset.
-    /// @param value Value of an asset.
+    /// @param asset Address of asset.
+    /// @param value Value of asset.
     struct AssetValue {
         IERC20 asset;
         uint256 value;
@@ -48,7 +48,7 @@ interface IExecution {
     /// @notice Claim funds from prior rebalance.
     function endRebalance() external;
 
-    /// @notice Return funds from previous rebalancing epoch to vault.
+    /// @notice Return all funds in execution module to vault.
     function claimNow() external;
 
     /// @notice Return a non-listed asset to the owner.

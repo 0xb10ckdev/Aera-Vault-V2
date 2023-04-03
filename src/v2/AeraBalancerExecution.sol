@@ -28,14 +28,13 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @notice Balancer Managed Pool.
     IBManagedPool public immutable pool;
 
-    /// @notice Pool ID of Balancer Pool on Vault.
+    /// @notice Pool ID of underlying Balancer Pool.
     bytes32 public immutable poolId;
 
     /// STORAGE ///
 
-    /// @notice Describes vault purpose and modeling assumptions for differentiating between vaults.
+    /// @notice Describes execution module and which custody vault it is intended for.
     /// @dev string cannot be immutable bytecode but only set in constructor.
-    // slither-disable-next-line immutable-states
     string public description;
 
     /// @notice Vault contract that the execution layer is linked to.
@@ -47,11 +46,11 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// EVENTS ///
 
     /// @notice Emitted when module is initialized.
-    /// @param vault Address of vault contract.
+    /// @param vault Address of Aera vault contract.
     event Initialize(address vault);
 
     /// @notice Emitted when rebalancing is started.
-    /// @param requests Struct details for requests.
+    /// @param requests Each request specifies amount of asset to rebalance and target weight.
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
     event StartRebalance(
@@ -104,7 +103,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     ///       If swapFeePercentage is greater than the minimum and less than the maximum.
     ///       If the total sum of weights is one.
     /// @param vaultParams Struct vault parameter.
-    constructor(NewVaultParams memory vaultParams) {
+    constructor(NewBalancerExecutionParams memory vaultParams) {
         if (vaultParams.assetRegistry == address(0)) {
             revert Aera__AssetRegistryIsZeroAddress();
         }
@@ -254,6 +253,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         uint256[] memory endWeights = new uint256[](numRequests);
 
         {
+            // It is an amount of asset that will not participate in the rebalancing.
             uint256 adjustableAmount;
             uint256 spotPrice;
             uint256 assetUnit;
@@ -388,7 +388,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @notice Check if the requests are valid.
-    /// @dev Will only be called startRebalance().
+    /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
@@ -414,7 +414,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @notice Register a token to Balancer pool and deposit to the pool.
-    /// @dev Will only be called _adjustPool().
+    /// @dev Will only be called by _adjustPool().
     /// @param token Token to register.
     /// @param amount Amount to deposit.
     function _bindAndDepositToken(IERC20 token, uint256 amount) internal {
@@ -424,7 +424,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @notice Withdraw a token from Balancer pool and unregister from the pool.
-    /// @dev Will only be called _adjustPool().
+    /// @dev Will only be called by _adjustPool().
     /// @param token Token to unregister.
     /// @param amount Amount to withdraw.
     function _unbindAndWithdrawToken(IERC20 token, uint256 amount) internal {
@@ -440,11 +440,11 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     function _depositTokenToPool(IERC20 token, uint256 amount) internal {
         _setAllowance(token, address(bVault), amount);
 
-        /// Set managed balance of token as amount
-        /// i.e. Deposit amount of token to pool from Execution module
+        // Set managed balance of token as amount
+        // i.e. Deposit amount of token to pool from Execution module
         _updatePoolBalance(token, amount, IBVault.PoolBalanceOpKind.UPDATE);
-        /// Decrease managed balance and increase cash balance of the token in the pool
-        /// i.e. Move amount from managed balance to cash balance
+        // Decrease managed balance and increase cash balance of the token in the pool
+        // i.e. Move amount from managed balance to cash balance
         _updatePoolBalance(token, amount, IBVault.PoolBalanceOpKind.DEPOSIT);
     }
 
@@ -453,15 +453,20 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @param token The token to withdraw.
     /// @param amount The amount of token to withdraw.
     function _withdrawTokenFromPool(IERC20 token, uint256 amount) internal {
-        /// Decrease cash balance and increase managed balance of the pool
-        /// i.e. Move amount from cash balance to managed balance
-        /// and withdraw token amount from the pool to Execution module
+        // Decrease cash balance and increase managed balance of the pool
+        // i.e. Move amount from cash balance to managed balance
+        // and withdraw token amount from the pool to Execution module
         _updatePoolBalance(token, amount, IBVault.PoolBalanceOpKind.WITHDRAW);
-        /// Adjust managed balance of the pool as the zero
+        // Set managed balance of pool to zero
         _updatePoolBalance(token, 0, IBVault.PoolBalanceOpKind.UPDATE);
     }
 
-    /// @dev PoolBalanceOpKind has three kinds
+    /// @notice Update token balance of Balancer Pool.
+    /// @dev Will only be called by _depositTokenToPool() and _withdrawTokenFromPool().
+    /// @param token Address of pool token.
+    /// @param amount Amount of pool token.
+    /// @param kind Kind of pool balance operation.
+    ///             PoolBalanceOpKind has three kinds
     /// Withdrawal - decrease the Pool's cash, but increase its managed balance,
     ///              leaving the total balance unchanged.
     /// Deposit - increase the Pool's cash, but decrease its managed balance,
@@ -494,6 +499,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         IERC20[] memory tokens;
         (tokens, , ) = bVault.getPoolTokens(poolId);
 
+        // Exclude the first token(pool share).
         uint256 numPoolTokens = tokens.length - 1;
         poolTokens = new IERC20[](numPoolTokens);
         for (uint256 i = 0; i < numPoolTokens; i++) {
@@ -523,7 +529,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
-        // slither-disable-next-line calls-loop
         uint256 allowance = token.allowance(address(this), spender);
         if (allowance > 0) {
             token.safeDecreaseAllowance(spender, allowance);
@@ -631,7 +636,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
     /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
-    /// @param startAmounts Start amount of each assets to rebalance.
+    /// @param startAmounts Adjusted start amount of each assets to rebalance.
+    ///                     It rebalances the minimal necessary amounts of assets.
     function _adjustPool(
         AssetRebalanceRequest[] calldata requests,
         uint256[] memory startAmounts

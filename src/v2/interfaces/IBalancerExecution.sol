@@ -9,12 +9,12 @@ interface IBalancerExecution is IExecution {
     /// @param factory Balancer Managed Pool Factory address.
     /// @param name Name of Pool Token.
     /// @param symbol Symbol of Pool Token.
-    /// @param poolTokens Pool token addresses.
+    /// @param poolTokens Initial pool token addresses.
     /// @param weights Token weights.
     /// @param swapFeePercentage Pool swap fee.
-    /// @param assetRegistry The address of asset registry.
-    /// @param description Simple vault text description.
-    struct NewVaultParams {
+    /// @param assetRegistry Asset Registry address.
+    /// @param description Simple text describing execution module.
+    struct NewBalancerExecutionParams {
         address factory;
         string name;
         string symbol;
@@ -25,8 +25,10 @@ interface IBalancerExecution is IExecution {
         string description;
     }
 
-    /// @notice Initialize Vault with first deposit.
-    /// @param vault Address of vault contract.
+    /// @notice Initialize Balancer pool and make first deposit.
+    /// @dev Need to have a positive allowance for tokens that were provided
+    ///      as `poolTokens` to the constructor.
+    /// @param vault Address of Aera vault contract.
     function initialize(address vault) external;
 
     /// @notice Return the address of vault's asset registry.
@@ -43,10 +45,10 @@ interface IBalancerExecution is IExecution {
     /// @notice Return Balancer Vault.
     function bVault() external view returns (IBVault bVault);
 
-    /// @notice Return Balancer Managed Pool.
+    /// @notice Return address of underlying Balancer Pool
     function pool() external view returns (IBManagedPool pool);
 
-    /// @notice Return Pool ID of Balancer Pool on Vault.
+    /// @notice Return Pool ID of underlying Balancer Pool.
     function poolId() external view returns (bytes32 poolId);
 
     /// @notice Timestamp at when rebalancing ends.

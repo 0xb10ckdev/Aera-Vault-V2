@@ -6,7 +6,7 @@ import {stdJson} from "forge-std/Script.sol";
 
 /// @title Deployer Contract
 /// @dev It deploys contract of a given name with arguments.
-///      It supports deployment of contract with external libraries. 
+///      Used to support deployment of contracts with external linked libraries. 
 contract Deployer is Test {
     using stdJson for string;
 
