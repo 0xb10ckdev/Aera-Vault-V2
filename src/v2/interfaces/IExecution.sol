@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
+pragma solidity 0.8.18;
 
 import "../dependencies/openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
