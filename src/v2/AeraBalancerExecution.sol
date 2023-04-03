@@ -212,7 +212,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
 
-        _checkRequests(requests, startTime, endTime);
+        _validateRequests(requests, startTime, endTime);
 
         IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
             .spotPrices();
@@ -376,7 +376,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @param requests Struct details for requests.
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
-    function _checkRequests(
+    function _validateRequests(
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
         uint256 endTime
