@@ -10,7 +10,7 @@ contract ClaimNowTest is BaseClaimNowTest, TestBaseBalancerExecution {
     function test_claimNow_success() public {
         _startRebalance(_generateRequestWith3Assets());
 
-        vm.warp(balancerExecution.epochEndTime() - 100);
+        vm.warp(balancerExecution.rebalanceEndTime() - 100);
 
         _swap(_getTargetAmounts());
 

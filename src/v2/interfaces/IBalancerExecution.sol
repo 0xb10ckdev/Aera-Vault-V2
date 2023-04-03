@@ -52,5 +52,8 @@ interface IBalancerExecution is IExecution {
     function poolId() external view returns (bytes32 poolId);
 
     /// @notice Timestamp at when rebalancing ends.
-    function epochEndTime() external view returns (uint256 epochEndTime);
+    function rebalanceEndTime()
+        external
+        view
+        returns (uint256 rebalanceEndTime);
 }

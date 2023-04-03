@@ -41,7 +41,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     address public vault;
 
     /// @notice Timestamp at when rebalancing ends.
-    uint256 public epochEndTime;
+    uint256 public rebalanceEndTime;
 
     /// EVENTS ///
 
@@ -224,8 +224,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         uint256 startTime,
         uint256 endTime
     ) external override onlyVault {
-        if (epochEndTime > 0) {
-            revert Aera__RebalancingIsOnGoing(epochEndTime);
+        if (rebalanceEndTime > 0) {
+            revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
 
         _checkRequests(requests, startTime, endTime);
@@ -296,7 +296,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         IERC20[] memory poolTokens = _getPoolTokens();
 
-        epochEndTime = endTime;
+        rebalanceEndTime = endTime;
 
         pool.updateWeightsGradually(
             block.timestamp,
@@ -312,8 +312,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// @inheritdoc IExecution
     function endRebalance() external override onlyVault {
-        if (block.timestamp < epochEndTime) {
-            revert Aera__RebalancingIsOnGoing(epochEndTime);
+        if (block.timestamp < rebalanceEndTime) {
+            revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
 
         _claim();
@@ -384,7 +384,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             poolTokens[i].safeTransfer(vault, poolHoldings[i]);
         }
 
-        epochEndTime = 0;
+        rebalanceEndTime = 0;
     }
 
     /// @notice Check if the requests are valid.

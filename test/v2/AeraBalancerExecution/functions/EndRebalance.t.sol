@@ -13,7 +13,7 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
-                balancerExecution.epochEndTime()
+                balancerExecution.rebalanceEndTime()
             )
         );
         balancerExecution.endRebalance();
@@ -22,7 +22,7 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
     function test_endRebalance_success() public {
         _startRebalance(_generateRequestWith3Assets());
 
-        vm.warp(balancerExecution.epochEndTime());
+        vm.warp(balancerExecution.rebalanceEndTime());
 
         _swap(_getTargetAmounts());
 

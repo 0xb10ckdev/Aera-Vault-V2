@@ -14,7 +14,7 @@ contract StartRebalanceTest is
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
-                balancerExecution.epochEndTime()
+                balancerExecution.rebalanceEndTime()
             )
         );
 
