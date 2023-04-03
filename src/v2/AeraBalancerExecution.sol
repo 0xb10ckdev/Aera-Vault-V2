@@ -230,7 +230,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             uint256[] memory startAmounts,
             uint256[] memory endAmounts,
             uint256 adjustableAssetValue,
-            uint256 adjustedTotalValue
+            uint256 necessaryTotalValue
         ) = _calcAmountsAndValues(requests, spotPrices, assetUnits);
 
         uint256[] memory startWeights = new uint256[](numRequests);
@@ -251,14 +251,14 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
                     startAmounts[i] -= adjustableAmount;
                     startWeights[i] =
                         (startAmounts[i] * spotPrice * _ONE) /
-                        adjustedTotalValue /
+                        necessaryTotalValue /
                         assetUnit;
                 }
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
                     endWeights[i] =
                         (endAmounts[i] * spotPrice * _ONE) /
-                        adjustedTotalValue /
+                        necessaryTotalValue /
                         assetUnit;
                 }
             }
