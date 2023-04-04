@@ -8,6 +8,14 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
     event EndRebalance();
 
     function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
+                0
+            )
+        );
+        balancerExecution.endRebalance();
+
         _startRebalance(_generateRequestWith3Assets());
 
         vm.expectRevert(
