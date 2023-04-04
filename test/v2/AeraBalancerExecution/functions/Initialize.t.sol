@@ -4,8 +4,6 @@ pragma solidity 0.8.19;
 import "../TestBaseBalancerExecution.sol";
 
 contract InitializeTest is TestBaseBalancerExecution {
-    event Initialize(address vault);
-
     function setUp() public override {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
 

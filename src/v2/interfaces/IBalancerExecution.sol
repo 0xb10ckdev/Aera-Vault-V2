@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "./IBalancerExecutionEvents.sol";
 import "./IBMerkleOrchard.sol";
 import "./IExecution.sol";
 
 /// @title Interface for BalancerExecution module.
-interface IBalancerExecution is IExecution {
+interface IBalancerExecution is IExecution, IBalancerExecutionEvents {
     // Use struct parameter to avoid stack too deep error.
     /// @param factory Balancer Managed Pool Factory address.
     /// @param name Name of Pool Token.

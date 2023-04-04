@@ -4,8 +4,9 @@ pragma solidity 0.8.19;
 import {TestBase} from "../../../utils/TestBase.sol";
 import "../../../../src/v2/dependencies/openzeppelin/IERC20.sol";
 import "../../../../src/v2/interfaces/IExecution.sol";
+import "../../../../src/v2/interfaces/IExecutionEvents.sol";
 
-abstract contract TestBaseExecution is TestBase {
+abstract contract TestBaseExecution is TestBase, IExecutionEvents {
     IExecution execution;
     IERC20[] erc20Assets;
 

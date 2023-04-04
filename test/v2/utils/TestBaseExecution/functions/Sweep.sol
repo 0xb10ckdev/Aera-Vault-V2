@@ -6,8 +6,6 @@ import "../TestBaseExecution.sol";
 abstract contract BaseSweepTest is TestBaseExecution {
     IERC20 erc20;
 
-    event Sweep(IERC20 erc20);
-
     function test_sweep_success() public virtual {
         vm.prank(_USER);
         erc20.transfer(address(execution), 10e18);

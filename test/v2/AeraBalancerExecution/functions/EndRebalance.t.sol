@@ -5,8 +5,6 @@ import "../../utils/TestBaseExecution/functions/EndRebalance.sol";
 import "../TestBaseBalancerExecution.sol";
 
 contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
-    event EndRebalance();
-
     function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
         vm.expectRevert(
             abi.encodeWithSelector(

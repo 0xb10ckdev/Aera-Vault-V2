@@ -5,8 +5,6 @@ import "../../utils/TestBaseExecution/functions/ClaimNow.sol";
 import "../TestBaseBalancerExecution.sol";
 
 contract ClaimNowTest is BaseClaimNowTest, TestBaseBalancerExecution {
-    event ClaimNow();
-
     function test_claimNow_success() public {
         _startRebalance(_generateRequestWith3Assets());
 

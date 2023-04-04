@@ -47,16 +47,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @notice Timestamp at when rebalancing ends.
     uint256 public rebalanceEndTime;
 
-    /// EVENTS ///
-
-    /// @notice Emitted when module is initialized.
-    /// @param vault Address of Aera vault contract.
-    event Initialize(address vault);
-
-    /// @notice Emitted when sweep is called.
-    /// @param asset Address of an asset.
-    event Sweep(IERC20 asset);
-
     /// ERRORS ///
 
     error Aera__AssetRegistryIsZeroAddress();

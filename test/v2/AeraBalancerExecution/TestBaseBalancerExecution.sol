@@ -9,12 +9,17 @@ import "../../../src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interfac
 import "../../../src/v2/dependencies/openzeppelin/IERC20.sol";
 import "../../../src/v2/interfaces/IAssetRegistry.sol";
 import "../../../src/v2/interfaces/IBalancerExecution.sol";
+import "../../../src/v2/interfaces/IBalancerExecutionEvents.sol";
 import "../../../src/v2/AeraBalancerExecution.sol";
 import "../../../src/v2/AeraVaultAssetRegistry.sol";
 import "../utils/TestBaseExecution/TestBaseExecution.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
 
-contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
+contract TestBaseBalancerExecution is
+    TestBaseExecution,
+    Deployer,
+    IBalancerExecutionEvents
+{
     address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -28,12 +33,6 @@ contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
     address balancerManagedPoolFactory;
     IAssetRegistry.AssetInformation[] assets;
     uint256 numeraire;
-
-    event StartRebalance(
-        IExecution.AssetRebalanceRequest[] requests,
-        uint256 startTime,
-        uint256 endTime
-    );
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
