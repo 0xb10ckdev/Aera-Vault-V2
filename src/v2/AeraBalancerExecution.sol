@@ -343,8 +343,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         override
         returns (AssetValue[] memory holdings)
     {
-        IERC20[] memory poolTokens = _getPoolTokens();
-        uint256[] memory poolHoldings = _getPoolHoldings();
+        (
+            IERC20[] memory poolTokens,
+            uint256[] memory poolHoldings
+        ) = _getPoolTokensData();
         uint256 numPoolTokens = poolTokens.length;
         holdings = new AssetValue[](numPoolTokens);
 
@@ -361,8 +363,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     /// @notice Claim all funds from Balancer Pool.
     /// @dev Will only be called by endRebalance() and claimNow().
     function _claim() internal {
-        IERC20[] memory poolTokens = _getPoolTokens();
-        uint256[] memory poolHoldings = _getPoolHoldings();
+        (
+            IERC20[] memory poolTokens,
+            uint256[] memory poolHoldings
+        ) = _getPoolTokensData();
         uint256 numPoolTokens = poolTokens.length;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
@@ -529,19 +533,23 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
     }
 
-    /// @notice Get balances of tokens of Balancer Pool.
+    /// @notice Get token data of Balancer Pool.
+    /// @return poolTokens IERC20 tokens of Balancer Pool.
     /// @return poolHoldings Balances of tokens in Balancer Pool.
-    function _getPoolHoldings()
+    function _getPoolTokensData()
         internal
         view
-        returns (uint256[] memory poolHoldings)
+        returns (IERC20[] memory poolTokens, uint256[] memory poolHoldings)
     {
+        IERC20[] memory tokens;
         uint256[] memory holdings;
-        (, holdings, ) = bVault.getPoolTokens(poolId);
+        (tokens, holdings, ) = bVault.getPoolTokens(poolId);
 
         uint256 numPoolTokens = holdings.length - 1;
-        poolHoldings = new uint256[](holdings.length - 1);
+        poolTokens = new IERC20[](numPoolTokens);
+        poolHoldings = new uint256[](numPoolTokens);
         for (uint256 i = 0; i < numPoolTokens; i++) {
+            poolTokens[i] = tokens[i + 1];
             poolHoldings[i] = holdings[i + 1];
         }
     }
@@ -658,8 +666,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     ) internal {
         uint256 numRequests = requests.length;
 
-        IERC20[] memory poolTokens = _getPoolTokens();
-        uint256[] memory poolHoldings = _getPoolHoldings();
+        (
+            IERC20[] memory poolTokens,
+            uint256[] memory poolHoldings
+        ) = _getPoolTokensData();
 
         uint256 numPoolTokens = poolTokens.length;
 
@@ -734,8 +744,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             _bindAndDepositToken(requests[i].asset, startAmount);
         }
 
-        poolTokens = _getPoolTokens();
-        poolHoldings = _getPoolHoldings();
+        (poolTokens, poolHoldings) = _getPoolTokensData();
         numPoolTokens = poolTokens.length;
 
         bool isNecessaryToken;
