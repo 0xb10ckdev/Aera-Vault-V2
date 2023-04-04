@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
+import "./IBMerkleOrchard.sol";
 import "./IExecution.sol";
 
 /// @title Interface for BalancerExecution module.
@@ -13,6 +14,7 @@ interface IBalancerExecution is IExecution {
     /// @param weights Token weights.
     /// @param swapFeePercentage Pool swap fee.
     /// @param assetRegistry Asset Registry address.
+    /// @param merkleOrchard Balancer Merkle Orchard address.
     /// @param description Simple text describing execution module.
     struct NewBalancerExecutionParams {
         address factory;
@@ -22,6 +24,7 @@ interface IBalancerExecution is IExecution {
         uint256[] weights;
         uint256 swapFeePercentage;
         address assetRegistry;
+        address merkleOrchard;
         string description;
     }
 
@@ -30,6 +33,18 @@ interface IBalancerExecution is IExecution {
     ///      as `poolTokens` to the constructor.
     /// @param vault Address of Aera vault contract.
     function initialize(address vault) external;
+
+    /// @notice Claim Balancer rewards.
+    /// @dev It calls claimDistributions() function of Balancer MerkleOrchard.
+    ///      Once this function is called, the tokens will be transferred to
+    ///      the Vault and it can be distributed via sweep function.
+    /// @param claims An array of claims provided as a claim struct.
+    ///        See https://docs.balancer.fi/products/merkle-orchard/claiming-tokens#claiming-from-the-contract-directly.
+    /// @param tokens An array consisting of tokens to be claimed.
+    function claimRewards(
+        IBMerkleOrchard.Claim[] memory claims,
+        IERC20[] memory tokens
+    ) external;
 
     /// @notice Return the address of vault's asset registry.
     /// @return assetRegistry The address of asset registry.

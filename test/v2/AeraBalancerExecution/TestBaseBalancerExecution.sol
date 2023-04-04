@@ -20,6 +20,8 @@ contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
     address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address internal _BVAULT_ADDRESS =
         0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+    address internal _MERKLE_ORCHARDS =
+        0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
 
     AeraBalancerExecution balancerExecution;
     AeraVaultAssetRegistry assetRegistry;
@@ -140,6 +142,7 @@ contract TestBaseBalancerExecution is TestBaseExecution, Deployer {
             weights: weights,
             swapFeePercentage: 1e12,
             assetRegistry: address(assetRegistry),
+            merkleOrchard: _MERKLE_ORCHARDS,
             description: "Test Execution"
         });
     }

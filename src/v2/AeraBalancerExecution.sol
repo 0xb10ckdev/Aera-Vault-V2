@@ -8,6 +8,7 @@ import "./dependencies/openzeppelin/SafeERC20.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
+import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
 
 /// @title Aera Balancer Execution.
@@ -30,6 +31,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// @notice Pool ID of underlying Balancer Pool.
     bytes32 public immutable poolId;
+
+    /// @notice Balancer Merkle Orchard.
+    IBMerkleOrchard public immutable merkleOrchard;
 
     /// STORAGE ///
 
@@ -155,6 +159,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         poolId = pool.getPoolId();
         description = vaultParams.description;
         assetRegistry = IAssetRegistry(vaultParams.assetRegistry);
+        merkleOrchard = IBMerkleOrchard(vaultParams.merkleOrchard);
     }
 
     /// @inheritdoc IBalancerExecution
@@ -310,6 +315,14 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         _claim();
 
         emit ClaimNow();
+    }
+
+    /// @inheritdoc IBalancerExecution
+    function claimRewards(
+        IBMerkleOrchard.Claim[] calldata claims,
+        IERC20[] calldata tokens
+    ) external override onlyOwner {
+        merkleOrchard.claimDistributions(owner(), claims, tokens);
     }
 
     /// @inheritdoc IExecution
