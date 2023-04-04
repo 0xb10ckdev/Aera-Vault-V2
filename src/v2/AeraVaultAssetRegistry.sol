@@ -7,7 +7,7 @@ import "./interfaces/IAssetRegistry.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
-    uint256 internal constant _ONE = 10 ** 18;
+    uint256 internal constant _ONE = 1e18;
 
     /// @notice Minimum period for weight change duration.
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
@@ -18,7 +18,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     ///      Weight growth range for n seconds: [1 / Fn - 1, Fn - 1]
     ///      E.g. increment/decrement factor per 2000 seconds is 2
     ///      Weight growth range for 2000 seconds is [-50%, 100%]
-    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10 ** 15;
+    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 0.001e18;
 
     /// STORAGE ///
 

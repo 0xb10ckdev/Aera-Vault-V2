@@ -15,7 +15,7 @@ import "./interfaces/IBVault.sol";
 contract AeraBalancerExecution is IBalancerExecution, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 internal constant _ONE = 10 ** 18;
+    uint256 internal constant _ONE = 1e18;
 
     /// @notice Mininum weight of pool tokens in Balancer Pool.
     uint256 private constant _MIN_WEIGHT = 0.01e18;
