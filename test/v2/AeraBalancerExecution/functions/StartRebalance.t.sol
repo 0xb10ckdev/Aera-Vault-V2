@@ -25,29 +25,6 @@ contract StartRebalanceTest is
         );
     }
 
-    function test_startRebalance_fail_whenTokenPositionIsDifferent() public {
-        IExecution.AssetRebalanceRequest[]
-            memory requests = _generateRequestWith2Assets();
-        IERC20 asset = requests[0].asset;
-        requests[0].asset = requests[1].asset;
-        requests[1].asset = asset;
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraBalancerExecution.Aera__DifferentTokensInPosition.selector,
-                requests[0].asset,
-                asset,
-                0
-            )
-        );
-
-        balancerExecution.startRebalance(
-            requests,
-            block.timestamp,
-            block.timestamp + 10000
-        );
-    }
-
     function test_startRebalance_with_2_assets_success() public {
         _startRebalance(_generateRequestWith2Assets());
     }

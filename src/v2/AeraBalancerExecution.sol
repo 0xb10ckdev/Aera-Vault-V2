@@ -65,11 +65,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
     error Aera__RebalancingIsOnGoing(uint256 endTime);
-    error Aera__DifferentTokensInPosition(
-        address actual,
-        address sortedToken,
-        uint256 index
-    );
     error Aera__CannotSweepPoolAsset();
 
     /// MODIFIERS ///
@@ -219,17 +214,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         _validateRequests(requests, startTime, endTime);
 
-        IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
-            .spotPrices();
-
-        uint256 numRequests = requests.length;
-
-        uint256[] memory assetUnits = new uint256[](numRequests);
-
-        for (uint256 i = 0; i < numRequests; i++) {
-            assetUnits[i] =
-                10 ** IERC20Metadata(address(requests[i].asset)).decimals();
-        }
+        (
+            IAssetRegistry.AssetPriceReading[] memory spotPrices,
+            uint256[] memory assetUnits
+        ) = _getSpotPricesAndUnits(requests);
 
         (
             uint256[] memory startAmounts,
@@ -238,6 +226,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             uint256 necessaryTotalValue
         ) = _calcAmountsAndValues(requests, spotPrices, assetUnits);
 
+        uint256 numRequests = requests.length;
         uint256[] memory startWeights = new uint256[](numRequests);
         uint256[] memory endWeights = new uint256[](numRequests);
 
@@ -410,6 +399,42 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         }
     }
 
+    /// @notice Get spot prices and units of requested assets.
+    /// @dev Will only be called by startRebalance().
+    /// @param requests Each request specifies amount of asset to rebalance and target weight.
+    /// @return spotPrices Spot prices of assets.
+    /// @return assetUnits Units of assets.
+    function _getSpotPricesAndUnits(
+        AssetRebalanceRequest[] calldata requests
+    )
+        internal
+        returns (
+            IAssetRegistry.AssetPriceReading[] memory spotPrices,
+            uint256[] memory assetUnits
+        )
+    {
+        IAssetRegistry.AssetPriceReading[]
+            memory assetSpotPrices = assetRegistry.spotPrices();
+
+        uint256 numRequests = requests.length;
+        uint256 numAssetSpotPrices = assetSpotPrices.length;
+
+        spotPrices = new IAssetRegistry.AssetPriceReading[](numRequests);
+        assetUnits = new uint256[](numRequests);
+
+        for (uint256 i = 0; i < numRequests; i++) {
+            assetUnits[i] =
+                10 ** IERC20Metadata(address(requests[i].asset)).decimals();
+
+            for (uint256 j = 0; j < numAssetSpotPrices; j++) {
+                if (requests[i].asset == assetSpotPrices[j].asset) {
+                    spotPrices[i] = assetSpotPrices[j];
+                    break;
+                }
+            }
+        }
+    }
+
     /// @notice Register a token to Balancer pool and deposit to the pool.
     /// @dev Will only be called by _adjustPool().
     /// @param token Token to register.
@@ -576,14 +601,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         uint256 totalValue = 0;
 
         for (uint256 i = 0; i < numRequests; i++) {
-            if (requests[i].asset != spotPrices[i].asset) {
-                revert Aera__DifferentTokensInPosition(
-                    address(requests[i].asset),
-                    address(spotPrices[i].asset),
-                    i
-                );
-            }
-
             values[i] =
                 (requests[i].amount * spotPrices[i].spotPrice) /
                 assetUnits[i];
