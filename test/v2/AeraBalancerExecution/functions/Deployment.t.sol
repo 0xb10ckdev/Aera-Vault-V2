@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity 0.8.19;
 
 import "../TestBaseBalancerExecution.sol";
 import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
