@@ -66,10 +66,4 @@ interface IBalancerExecution is IExecution, IBalancerExecutionEvents {
 
     /// @notice Return Pool ID of underlying Balancer Pool.
     function poolId() external view returns (bytes32 poolId);
-
-    /// @notice Timestamp at when rebalancing ends.
-    function rebalanceEndTime()
-        external
-        view
-        returns (uint256 rebalanceEndTime);
 }

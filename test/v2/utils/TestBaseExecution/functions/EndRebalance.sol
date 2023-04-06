@@ -10,4 +10,28 @@ abstract contract BaseEndRebalanceTest is TestBaseExecution {
         vm.expectRevert(IExecution.Aera__CallerIsNotVault.selector);
         execution.endRebalance();
     }
+
+    function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IExecution.Aera__RebalancingIsOnGoing.selector,
+                0
+            )
+        );
+        execution.endRebalance();
+
+        for (uint256 i = 0; i < erc20Assets.length; i++) {
+            erc20Assets[i].approve(address(execution), type(uint256).max);
+        }
+
+        _startRebalance();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IExecution.Aera__RebalancingIsOnGoing.selector,
+                execution.rebalanceEndTime()
+            )
+        );
+        execution.endRebalance();
+    }
 }

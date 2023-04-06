@@ -8,23 +8,6 @@ contract StartRebalanceTest is
     BaseStartRebalanceTest,
     TestBaseBalancerExecution
 {
-    function test_startRebalance_fail_whenRebalancingIsOnGoing() public {
-        _startRebalance(_generateRequestWith2Assets());
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
-                balancerExecution.rebalanceEndTime()
-            )
-        );
-
-        balancerExecution.startRebalance(
-            _generateRequestWith2Assets(),
-            block.timestamp,
-            block.timestamp + 10000
-        );
-    }
-
     function test_startRebalance_with_2_assets_success() public {
         _startRebalance(_generateRequestWith2Assets());
     }
@@ -37,5 +20,13 @@ contract StartRebalanceTest is
         _startRebalance(_generateRequestWith2Assets());
         balancerExecution.claimNow();
         _startRebalance(_generateRequestWith3Assets());
+    }
+
+    function _generateRequest()
+        internal
+        override
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        return _generateRequestWith2Assets();
     }
 }

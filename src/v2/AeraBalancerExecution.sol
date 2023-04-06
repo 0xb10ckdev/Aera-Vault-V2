@@ -54,7 +54,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
-    error Aera__RebalancingIsOnGoing(uint256 endTime);
     error Aera__CannotSweepPoolAsset();
 
     /// MODIFIERS ///

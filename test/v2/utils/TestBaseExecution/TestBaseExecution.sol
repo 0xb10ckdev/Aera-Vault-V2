@@ -12,6 +12,7 @@ abstract contract TestBaseExecution is TestBase, IExecutionEvents {
 
     function _generateRequest()
         internal
+        virtual
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {
         requests = new IExecution.AssetRebalanceRequest[](2);
@@ -23,5 +24,13 @@ abstract contract TestBaseExecution is TestBase, IExecutionEvents {
                 weight: 0.5e18
             });
         }
+    }
+
+    function _startRebalance() internal {
+        execution.startRebalance(
+            _generateRequest(),
+            block.timestamp + 10,
+            block.timestamp + 10000
+        );
     }
 }

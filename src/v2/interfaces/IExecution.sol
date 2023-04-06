@@ -32,6 +32,7 @@ interface IExecution is IExecutionEvents {
     error Aera__CallerIsNotVault();
     error Aera__SumOfWeightsIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
+    error Aera__RebalancingIsOnGoing(uint256 endTime);
 
     /// FUNCTIONS ///
 
@@ -62,4 +63,10 @@ interface IExecution is IExecutionEvents {
 
     /// @notice Return amount of each asset in the execution module.
     function holdings() external view returns (AssetValue[] memory holdings);
+
+    /// @notice Timestamp at when rebalancing ends.
+    function rebalanceEndTime()
+        external
+        view
+        returns (uint256 rebalanceEndTime);
 }

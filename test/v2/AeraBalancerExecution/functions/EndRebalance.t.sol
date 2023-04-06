@@ -5,26 +5,6 @@ import "../../utils/TestBaseExecution/functions/EndRebalance.sol";
 import "../TestBaseBalancerExecution.sol";
 
 contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
-    function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
-                0
-            )
-        );
-        balancerExecution.endRebalance();
-
-        _startRebalance(_generateRequestWith3Assets());
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraBalancerExecution.Aera__RebalancingIsOnGoing.selector,
-                balancerExecution.rebalanceEndTime()
-            )
-        );
-        balancerExecution.endRebalance();
-    }
-
     function test_endRebalance_success() public {
         _startRebalance(_generateRequestWith3Assets());
 
@@ -50,5 +30,13 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
                 balances[i] + holdings[i].value
             );
         }
+    }
+
+    function _generateRequest()
+        internal
+        override
+        returns (IExecution.AssetRebalanceRequest[] memory requests)
+    {
+        return _generateRequestWith2Assets();
     }
 }
