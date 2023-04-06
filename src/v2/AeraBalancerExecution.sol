@@ -419,6 +419,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
             assetUnits[i] =
                 10 ** IERC20Metadata(address(requests[i].asset)).decimals();
 
+            // It will revert with division by 0 error
+            // when there's no match since price is 0.
             for (uint256 j = 0; j < numAssetSpotPrices; j++) {
                 if (requests[i].asset == assetSpotPrices[j].asset) {
                     spotPrices[i] = assetSpotPrices[j];
