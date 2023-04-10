@@ -305,7 +305,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// @inheritdoc IExecution
     function sweep(IERC20 token) external override {
-        IERC20[] memory poolAssets = assets();
+        (IERC20[] memory poolAssets, , ) = bVault.getPoolTokens(poolId);
         uint256 numPoolAssets = poolAssets.length;
 
         for (uint256 i = 0; i < numPoolAssets; i++) {
@@ -375,7 +375,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
         uint256 endTime
-    ) internal {
+    ) internal view {
         uint256 numRequests = requests.length;
         uint256 weightSum = 0;
         for (uint256 i = 0; i < numRequests; i++) {
@@ -401,6 +401,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         AssetRebalanceRequest[] calldata requests
     )
         internal
+        view
         returns (
             IAssetRegistry.AssetPriceReading[] memory spotPrices,
             uint256[] memory assetUnits
@@ -587,6 +588,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         uint256[] memory assetUnits
     )
         internal
+        pure
         returns (
             uint256[] memory startAmounts,
             uint256[] memory endAmounts,
