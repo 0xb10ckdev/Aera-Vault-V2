@@ -36,15 +36,15 @@ interface ICustody {
 
     function resumeVault() external;
 
-    function endRebalance() external;
-
-    function endRebalanceEarly() external;
-
     function startRebalance(
         AssetValue[] memory assetWeights,
         uint256 startTime,
         uint256 endTime
     ) external;
+
+    function endRebalance() external;
+
+    function endRebalanceEarly() external;
 
     function claimGuardianFees() external;
 

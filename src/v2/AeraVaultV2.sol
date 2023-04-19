@@ -31,6 +31,12 @@ contract AeraVaultV2 is ICustody, Ownable {
 
     bool public isPaused;
 
+    /// @notice Fee earned amount for each guardian.
+    mapping(address => AssetValue[]) public guardiansFee;
+    
+    /// @notice Total guardian fee earned amount.
+    AssetValue[] public guardiansFeeTotal;
+
     /// @notice Last timestamp where guardian fee index was locked.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
@@ -43,7 +49,14 @@ contract AeraVaultV2 is ICustody, Ownable {
     error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotGuardian();
     error Aera__CallerIsNotOwnerOrGuardian();
-    error Aera__AssetIsNotRegistered(IERC20 poolToken);
+    error Aera__AssetIsNotRegistered(IERC20 asset);
+    error Aera__AmountExceedsAvailable(
+        IERC20 asset,
+        uint256 amount,
+        uint256 available
+    );
+    error Aera__VaultIsPaused();
+    error Aera__VaultIsNotPaused();
     error Aera__CannotSweepRegisteredAsset(IERC20 asset);
 
     /// MODIFIERS ///
@@ -60,6 +73,22 @@ contract AeraVaultV2 is ICustody, Ownable {
     modifier onlyOwnerOrGuardian() {
         if (msg.sender != owner() && msg.sender != guardian) {
             revert Aera__CallerIsNotOwnerOrGuardian();
+        }
+        _;
+    }
+
+    /// @dev Throws if called after the vault is paused.
+    modifier whenNotPaused() {
+        if (isPaused) {
+            revert Aera__VaultIsPaused();
+        }
+        _;
+    }
+
+    /// @dev Throws if called after the vault is resumed.
+    modifier whenPaused() {
+        if (!isPaused) {
+            revert Aera__VaultIsNotPaused();
         }
         _;
     }
@@ -129,18 +158,49 @@ contract AeraVaultV2 is ICustody, Ownable {
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
 
+        uint256[] memory withdrawAmounts = new uint256[](numAssets);
+
         for (uint256 i = 0; i < numAmounts; i++) {
             for (uint256 j = 0; j < numAssets; j++) {
                 if (assets[j].asset < amounts[i].asset) {
                     continue;
                 } else if (assets[j].asset == amounts[i].asset) {
+                    withdrawAmounts[j] = amounts[i].value;
                     break;
                 } else {
                     revert Aera__AssetIsNotRegistered(amounts[i].asset);
                 }
             }
+        }
 
-            amounts[i].asset.safeTransfer(owner(), amounts[i].value);
+        bool claimed;
+        uint256 fee;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            fee = (assetAmounts[i].value * feeIndex * guardianFee) / _ONE;
+
+            if (
+                !claimed &&
+                assets[i].asset.balanceOf(address(this)) <
+                withdrawAmounts[i] + fee
+            ) {
+                if (!force) {
+                    revert Aera__AmountExceedsAvailable(
+                        assets[i].asset,
+                        withdrawAmounts[i] + fee,
+                        assets[i].asset.balanceOf(address(this))
+                    );
+                }
+
+                execution.claimNow();
+                claimed = true;
+            }
+
+            assets[i].asset.safeTransfer(guardian, fee);
+
+            if (withdrawAmounts[i] > 0) {
+                assets[i].asset.safeTransfer(owner(), withdrawAmounts[i]);
+            }
         }
     }
 
@@ -164,7 +224,9 @@ contract AeraVaultV2 is ICustody, Ownable {
         execution = IExecution(newExecution);
     }
 
-    function finalize() external override onlyOwner {}
+    function finalize() external override onlyOwner {
+        execution.claimNow();
+    }
 
     function sweep(IERC20 token, uint256 amount) external override {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
@@ -180,28 +242,40 @@ contract AeraVaultV2 is ICustody, Ownable {
         token.safeTransfer(owner(), amount);
     }
 
-    function pauseVault() external override onlyOwner {
+    function pauseVault() external override onlyOwner whenNotPaused {
         execution.claimNow();
         isPaused = true;
     }
 
-    function resumeVault() external override onlyOwner {
+    function resumeVault() external override onlyOwner whenPaused {
         isPaused = false;
-    }
-
-    function endRebalance() external override onlyOwnerOrGuardian {
-        execution.endRebalance();
-    }
-
-    function endRebalanceEarly() external override onlyOwnerOrGuardian {
-        execution.claimNow();
     }
 
     function startRebalance(
         AssetValue[] memory assetWeights,
         uint256 startTime,
         uint256 endTime
-    ) external override {}
+    ) external override onlyGuardian whenNotPaused {
+        // execution.startRebalance(requests, startTime, endTime);
+    }
+
+    function endRebalance()
+        external
+        override
+        onlyOwnerOrGuardian
+        whenNotPaused
+    {
+        execution.endRebalance();
+    }
+
+    function endRebalanceEarly()
+        external
+        override
+        onlyOwnerOrGuardian
+        whenNotPaused
+    {
+        execution.claimNow();
+    }
 
     function claimGuardianFees() external override {}
 
