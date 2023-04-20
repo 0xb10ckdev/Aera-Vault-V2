@@ -32,6 +32,7 @@ interface IExecution is IExecutionEvents {
     error Aera__CallerIsNotVault();
     error Aera__SumOfWeightsIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
+    error Aera__RebalancingHasNotStarted();
     error Aera__RebalancingIsOnGoing(uint256 endTime);
 
     /// FUNCTIONS ///

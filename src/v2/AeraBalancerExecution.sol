@@ -279,7 +279,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
     /// @inheritdoc IExecution
     function endRebalance() external override onlyVault {
-        if (rebalanceEndTime == 0 || block.timestamp < rebalanceEndTime) {
+        if (rebalanceEndTime == 0) {
+            revert Aera__RebalancingHasNotStarted();
+        }
+        if (block.timestamp < rebalanceEndTime) {
             revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
 
