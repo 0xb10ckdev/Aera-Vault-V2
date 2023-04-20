@@ -295,8 +295,7 @@ contract TestBaseBalancerExecution is
                 if (poolTokens[i] == spotPrices[j].asset) {
                     values[i] =
                         (holdings[i].value * spotPrices[j].spotPrice) /
-                        (10 **
-                            IERC20Metadata(address(poolTokens[i])).decimals());
+                        _getScaler(poolTokens[i]);
                     totalValue += values[i];
 
                     break;
@@ -315,9 +314,7 @@ contract TestBaseBalancerExecution is
                 if (poolTokens[i] == spotPrices[j].asset) {
                     targetAmounts[i] =
                         ((totalValue * poolWeights[i]) *
-                            (10 **
-                                IERC20Metadata(address(poolTokens[i]))
-                                    .decimals())) /
+                            _getScaler(poolTokens[i])) /
                         _ONE /
                         spotPrices[j].spotPrice;
 
@@ -325,5 +322,9 @@ contract TestBaseBalancerExecution is
                 }
             }
         }
+    }
+
+    function _getScaler(IERC20 token) internal returns (uint256) {
+        return 10 ** IERC20Metadata(address(token)).decimals();
     }
 }
