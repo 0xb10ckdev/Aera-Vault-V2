@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
+import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
@@ -12,7 +13,7 @@ import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
 
 /// @title Aera Balancer Execution.
-contract AeraBalancerExecution is IBalancerExecution, Ownable {
+contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 1e18;
@@ -147,7 +148,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @inheritdoc IBalancerExecution
-    function initialize(address vault_) external override onlyOwner {
+    function initialize(
+        address vault_
+    ) external override nonReentrant onlyOwner {
         if (vault != address(0)) {
             revert Aera__ModuleIsAlreadyInitialized();
         }
@@ -196,7 +199,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
         uint256 endTime
-    ) external override onlyVault {
+    ) external override nonReentrant onlyVault {
         if (rebalanceEndTime > 0) {
             revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
@@ -278,7 +281,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function endRebalance() external override onlyVault {
+    function endRebalance() external override nonReentrant onlyVault {
         if (rebalanceEndTime == 0) {
             revert Aera__RebalancingHasNotStarted();
         }
@@ -292,7 +295,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     }
 
     /// @inheritdoc IExecution
-    function claimNow() external override onlyVault {
+    function claimNow() external override nonReentrant onlyVault {
         _claim();
 
         emit ClaimNow();
@@ -302,12 +305,12 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
     function claimRewards(
         IBMerkleOrchard.Claim[] calldata claims,
         IERC20[] calldata tokens
-    ) external override onlyOwner {
+    ) external override nonReentrant onlyOwner {
         merkleOrchard.claimDistributions(owner(), claims, tokens);
     }
 
     /// @inheritdoc IExecution
-    function sweep(IERC20 token) external override {
+    function sweep(IERC20 token) external override nonReentrant {
         (IERC20[] memory poolAssets, , ) = bVault.getPoolTokens(poolId);
         uint256 numPoolAssets = poolAssets.length;
 
