@@ -228,7 +228,17 @@ contract AeraVaultV2 is ICustody, Ownable {
 
     function finalize() external override onlyOwner {
         _updateGuardianFees();
+
         execution.claimNow();
+
+        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
+            .assets();
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+        uint256 numAssetAmounts = assetAmounts.length;
+
+        for (uint256 i = 0; i < numAssetAmounts; i++) {
+            assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
+        }
     }
 
     function sweep(IERC20 token, uint256 amount) external override {
