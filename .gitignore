@@ -1,7 +1,10 @@
 cache/
 out/
 lib/
+node_modules/
 
 coverage*
 
 .DS_Store
+
+.env
