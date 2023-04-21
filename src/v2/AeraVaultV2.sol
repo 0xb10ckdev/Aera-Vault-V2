@@ -270,7 +270,44 @@ contract AeraVaultV2 is ICustody, Ownable {
         uint256 endTime
     ) external override onlyGuardian whenNotPaused {
         _updateGuardianFees();
-        // execution.startRebalance(requests, startTime, endTime);
+
+        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
+            .assets();
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+
+        uint256 numAssetWeights = assetWeights.length;
+        uint256 numAssets = assets.length;
+
+        IExecution.AssetRebalanceRequest[]
+            memory requests = new IExecution.AssetRebalanceRequest[](
+                numAssetWeights
+            );
+
+        for (uint256 i = 0; i < numAssetWeights; i++) {
+            for (uint256 j = 0; j < numAssets; j++) {
+                if (assets[j].asset < assetWeights[i].asset) {
+                    continue;
+                } else if (assets[j].asset == assetWeights[i].asset) {
+                    requests[i] = IExecution.AssetRebalanceRequest(
+                        assetWeights[i].asset,
+                        assetAmounts[j].value,
+                        assetWeights[i].value
+                    );
+
+                    _setAllowance(
+                        assetWeights[i].asset,
+                        address(execution),
+                        assetAmounts[j].value
+                    );
+
+                    break;
+                } else {
+                    revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
+                }
+            }
+        }
+
+        execution.startRebalance(requests, startTime, endTime);
     }
 
     function endRebalance()
@@ -280,6 +317,7 @@ contract AeraVaultV2 is ICustody, Ownable {
         whenNotPaused
     {
         _updateGuardianFees();
+
         execution.endRebalance();
     }
 
@@ -290,6 +328,7 @@ contract AeraVaultV2 is ICustody, Ownable {
         whenNotPaused
     {
         _updateGuardianFees();
+
         execution.claimNow();
     }
 
