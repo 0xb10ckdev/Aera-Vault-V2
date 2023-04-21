@@ -57,6 +57,7 @@ contract AeraVaultV2 is ICustody, Ownable {
     );
     error Aera__VaultIsPaused();
     error Aera__VaultIsNotPaused();
+    error Aera__NoAvailableFeeForCaller(address caller);
     error Aera__CannotSweepRegisteredAsset(IERC20 asset);
 
     /// MODIFIERS ///
@@ -332,7 +333,42 @@ contract AeraVaultV2 is ICustody, Ownable {
         execution.claimNow();
     }
 
-    function claimGuardianFees() external override {}
+    function claimGuardianFees() external override {
+        if (msg.sender == guardian) {
+            _updateGuardianFees();
+        }
+
+        if (guardiansFee[msg.sender].length == 0) {
+            revert Aera__NoAvailableFeeForCaller(msg.sender);
+        }
+
+        AssetValue[] memory fees = guardiansFee[msg.sender];
+        uint256 numFees = fees.length;
+        uint256 availableFee;
+        bool allFeeClaimed = true;
+
+        for (uint256 i = 0; i < numFees; i++) {
+            if (fees[i].value == 0) {
+                continue;
+            }
+
+            availableFee = Math.max(
+                fees[i].asset.balanceOf(address(this)),
+                fees[i].value
+            );
+            guardiansFeeTotal[fees[i].asset] -= availableFee;
+            guardiansFee[msg.sender][i].value -= availableFee;
+            fees[i].asset.safeTransfer(msg.sender, availableFee);
+
+            if (guardiansFee[msg.sender][i].value > 0) {
+                allFeeClaimed = false;
+            }
+        }
+
+        if (allFeeClaimed && msg.sender != guardian) {
+            delete guardiansFee[msg.sender];
+        }
+    }
 
     function holdings()
         public
