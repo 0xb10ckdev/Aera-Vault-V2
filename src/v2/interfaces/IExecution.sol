@@ -55,8 +55,16 @@ interface IExecution is IExecutionEvents {
     function claimNow() external;
 
     /// @notice Return a non-listed asset to the owner.
-    /// @param asset Address of an asset.
-    function sweep(IERC20 asset) external;
+    /// @param asset Address of asset.
+    /// @param amount Amount of asset.
+    function sweep(IERC20 asset, uint256 amount) external;
+
+    /// @notice Return the address of vault's asset registry.
+    /// @return assetRegistry The address of asset registry.
+    function assetRegistry()
+        external
+        view
+        returns (IAssetRegistry assetRegistry);
 
     /// @notice Get the current vault contract that the execution layer is linked to.
     /// @return vault Address of linked vault contract.

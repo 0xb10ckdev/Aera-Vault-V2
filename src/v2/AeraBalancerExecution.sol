@@ -310,7 +310,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc IExecution
-    function sweep(IERC20 token) external override nonReentrant {
+    function sweep(
+        IERC20 token,
+        uint256 amount
+    ) external override nonReentrant {
         (IERC20[] memory poolAssets, , ) = bVault.getPoolTokens(poolId);
         uint256 numPoolAssets = poolAssets.length;
 
@@ -320,10 +323,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             }
         }
 
-        uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(owner(), amount);
 
-        emit Sweep(token);
+        emit Sweep(token, amount);
     }
 
     /// @inheritdoc IBalancerExecution

@@ -47,13 +47,6 @@ interface IBalancerExecution is IExecution, IBalancerExecutionEvents {
         IERC20[] memory tokens
     ) external;
 
-    /// @notice Return the address of vault's asset registry.
-    /// @return assetRegistry The address of asset registry.
-    function assetRegistry()
-        external
-        view
-        returns (IAssetRegistry assetRegistry);
-
     /// @notice Return currently listed assets in Balancer pool.
     /// @return assets List of assets.
     function assets() external view returns (IERC20[] memory assets);
