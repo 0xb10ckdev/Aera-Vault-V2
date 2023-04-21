@@ -669,99 +669,146 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable {
 
         uint256 numPoolTokens = poolTokens.length;
 
-        // Reset weights to avoid MIN_WEIGHT error while binding.
-        {
-            uint256[] memory avgWeights = new uint256[](numPoolTokens);
-            uint256 avgWeightSum;
-
-            for (uint256 i = 0; i < numPoolTokens; i++) {
-                avgWeights[i] = _ONE / numPoolTokens;
-                avgWeightSum += avgWeights[i];
-            }
-            avgWeights[0] = avgWeights[0] + _ONE - avgWeightSum;
-
-            pool.updateWeightsGradually(
-                block.timestamp,
-                block.timestamp,
-                poolTokens,
-                avgWeights
-            );
-        }
+        _resetPoolWeights(poolTokens, numPoolTokens);
 
         bool isRegistered;
+        uint256 index;
         uint256 startAmount;
-        uint256 poolHolding;
-        IERC20 poolToken;
+        IERC20 asset;
         for (uint256 i = 0; i < numRequests; i++) {
-            if (startAmounts[i] == 0) {
-                continue;
-            }
-
-            isRegistered = false;
             startAmount = startAmounts[i];
 
-            for (uint256 j = 0; j < numPoolTokens; j++) {
-                if (requests[i].asset == poolTokens[j]) {
-                    poolHolding = poolHoldings[j];
-                    poolToken = poolTokens[j];
-
-                    if (startAmount > poolHolding) {
-                        poolToken.safeTransferFrom(
-                            vault,
-                            address(this),
-                            startAmount - poolHolding
-                        );
-                        _depositTokenToPool(
-                            poolToken,
-                            startAmount - poolHolding
-                        );
-                    } else if (startAmount < poolHolding) {
-                        _withdrawTokenFromPool(
-                            poolToken,
-                            poolHolding - startAmount
-                        );
-                    }
-
-                    isRegistered = true;
-                    break;
-                }
-            }
-
-            if (isRegistered) {
+            if (startAmount == 0) {
                 continue;
             }
 
-            requests[i].asset.safeTransferFrom(
-                vault,
-                address(this),
-                startAmount
+            asset = requests[i].asset;
+
+            (isRegistered, index) = _isAssetRegisteredToPool(
+                asset,
+                poolTokens,
+                numPoolTokens
             );
 
-            _bindAndDepositToken(requests[i].asset, startAmount);
+            if (isRegistered) {
+                _adjustAssetAmountInPoolToNewRequest(
+                    asset,
+                    startAmount,
+                    poolHoldings[index]
+                );
+            } else {
+                asset.safeTransferFrom(vault, address(this), startAmount);
+
+                _bindAndDepositToken(asset, startAmount);
+            }
         }
 
         (poolTokens, poolHoldings) = _getPoolTokensData();
         numPoolTokens = poolTokens.length;
 
-        bool isNecessaryToken;
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            isNecessaryToken = false;
+            if (
+                !_isTokenNecessary(
+                    poolTokens[i],
+                    requests,
+                    startAmounts,
+                    numRequests
+                )
+            ) {
+                _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
+            }
+        }
+    }
 
-            for (uint256 j = 0; j < numRequests; j++) {
-                if (poolTokens[i] == requests[j].asset) {
-                    if (startAmounts[j] > 0) {
-                        isNecessaryToken = true;
-                    }
+    /// @notice Reset weights of pool tokens.
+    /// @dev Will only be called by _adjustPool().
+    ///      It resets weights to avoid MIN_WEIGHT error while binding.
+    /// @param poolTokens IERC20 tokens of Balancer Pool.
+    /// @param numPoolTokens Number of pool tokens.
+    function _resetPoolWeights(
+        IERC20[] memory poolTokens,
+        uint256 numPoolTokens
+    ) internal {
+        uint256[] memory avgWeights = new uint256[](numPoolTokens);
+        uint256 avgWeightSum;
 
-                    break;
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            avgWeights[i] = _ONE / numPoolTokens;
+            avgWeightSum += avgWeights[i];
+        }
+        avgWeights[0] = avgWeights[0] + _ONE - avgWeightSum;
+
+        pool.updateWeightsGradually(
+            block.timestamp,
+            block.timestamp,
+            poolTokens,
+            avgWeights
+        );
+    }
+
+    /// @notice Check whether asset is registered to Balancer pool or not.
+    /// @dev Will only be called by _adjustPool().
+    /// @param asset Asset to check.
+    /// @param poolTokens IERC20 tokens of Balancer Pool.
+    /// @param numPoolTokens Number of pool tokens.
+    /// @return isRegistered True if asset is registered.
+    /// @return index Index of asset in Balancer pool.
+    function _isAssetRegisteredToPool(
+        IERC20 asset,
+        IERC20[] memory poolTokens,
+        uint256 numPoolTokens
+    ) internal returns (bool isRegistered, uint256 index) {
+        for (uint256 i = 0; i < numPoolTokens; i++) {
+            if (asset == poolTokens[i]) {
+                isRegistered = true;
+                index = i;
+                break;
+            }
+        }
+    }
+
+    /// @notice Check whether asset is necessary in Balancer pool or not.
+    /// @dev Will only be called by _adjustPool().
+    /// @param poolToken IERC20 token to check.
+    /// @param requests Struct details for requests.
+    /// @param startAmounts Start amount of each assets to rebalance.
+    /// @param numRequests Number of requests.
+    /// @return isNecessary True if asset is necessary.
+    function _isTokenNecessary(
+        IERC20 poolToken,
+        AssetRebalanceRequest[] calldata requests,
+        uint256[] memory startAmounts,
+        uint256 numRequests
+    ) internal returns (bool isNecessary) {
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (poolToken == requests[i].asset) {
+                if (startAmounts[i] > 0) {
+                    isNecessary = true;
                 }
+                break;
             }
+        }
+    }
 
-            if (isNecessaryToken) {
-                continue;
-            }
-
-            _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
+    /// @notice Adjust asset amounts in Balancer pool.
+    /// @dev Will only be called by _adjustPool().
+    /// @param asset Asset to adjust.
+    /// @param startAmount Start amount of asset to rebalance.
+    /// @param poolHolding Balance of asset in Balancer Pool.
+    function _adjustAssetAmountInPoolToNewRequest(
+        IERC20 asset,
+        uint256 startAmount,
+        uint256 poolHolding
+    ) internal {
+        if (startAmount > poolHolding) {
+            asset.safeTransferFrom(
+                vault,
+                address(this),
+                startAmount - poolHolding
+            );
+            _depositTokenToPool(asset, startAmount - poolHolding);
+        } else if (startAmount < poolHolding) {
+            _withdrawTokenFromPool(asset, poolHolding - startAmount);
         }
     }
 }
