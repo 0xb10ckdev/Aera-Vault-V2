@@ -3,13 +3,14 @@ pragma solidity 0.8.19;
 
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
+import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
 
 /// @title Aera Vault V2.
-contract AeraVaultV2 is ICustody, Ownable {
+contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 1e18;
@@ -122,7 +123,9 @@ contract AeraVaultV2 is ICustody, Ownable {
         guardianFee = guardianFee_;
     }
 
-    function deposit(AssetValue[] memory amounts) external override onlyOwner {
+    function deposit(
+        AssetValue[] memory amounts
+    ) external override nonReentrant onlyOwner {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAssets = assets.length;
@@ -150,7 +153,7 @@ contract AeraVaultV2 is ICustody, Ownable {
     function withdraw(
         AssetValue[] memory amounts,
         bool force
-    ) external override onlyOwner {
+    ) external override nonReentrant onlyOwner {
         _updateGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
@@ -242,7 +245,10 @@ contract AeraVaultV2 is ICustody, Ownable {
         }
     }
 
-    function sweep(IERC20 token, uint256 amount) external override {
+    function sweep(
+        IERC20 token,
+        uint256 amount
+    ) external override nonReentrant {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAssets = assets.length;
@@ -269,7 +275,7 @@ contract AeraVaultV2 is ICustody, Ownable {
         AssetValue[] memory assetWeights,
         uint256 startTime,
         uint256 endTime
-    ) external override onlyGuardian whenNotPaused {
+    ) external override nonReentrant onlyGuardian whenNotPaused {
         _updateGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
@@ -314,6 +320,7 @@ contract AeraVaultV2 is ICustody, Ownable {
     function endRebalance()
         external
         override
+        nonReentrant
         onlyOwnerOrGuardian
         whenNotPaused
     {
@@ -325,6 +332,7 @@ contract AeraVaultV2 is ICustody, Ownable {
     function endRebalanceEarly()
         external
         override
+        nonReentrant
         onlyOwnerOrGuardian
         whenNotPaused
     {
@@ -333,7 +341,7 @@ contract AeraVaultV2 is ICustody, Ownable {
         execution.claimNow();
     }
 
-    function claimGuardianFees() external override {
+    function claimGuardianFees() external override nonReentrant {
         if (msg.sender == guardian) {
             _updateGuardianFees();
         }
