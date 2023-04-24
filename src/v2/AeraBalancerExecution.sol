@@ -553,7 +553,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Reset allowance of token for a spender.
-    /// @dev Will only be called by setAllowance() and depositUnderlyingAsset().
+    /// @dev Will only be called by _setAllowance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
@@ -564,8 +564,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Set allowance of token for a spender.
-    /// @dev Will only be called by initialDeposit(), depositTokens(),
-    ///      depositToYieldTokens() and depositUnderlyingAsset().
+    /// @dev Will only be called by initialize() and _depositTokenToPool().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     /// @param amount Amount to approve for spending.

@@ -63,6 +63,7 @@ interface IExecution is IExecutionEvents {
     function vault() external view returns (address vault);
 
     /// @notice Return amount of each asset in the execution module.
+    /// @return holdings Amount of each asset.
     function holdings() external view returns (AssetValue[] memory holdings);
 
     /// @notice Timestamp at when rebalancing ends.
