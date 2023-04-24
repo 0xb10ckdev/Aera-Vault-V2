@@ -20,16 +20,21 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     ///      0.0000001% * (365 * 24 * 60 * 60) = 3.1536%
     uint256 private constant _MAX_GUARDIAN_FEE = 10 ** 9;
 
+    /// @notice Guardian fee per second in 18 decimal fixed point format.
     uint256 public immutable guardianFee;
 
     /// STORAGE ///
 
+    /// @notice The address of asset registry.
     IAssetRegistry public assetRegistry;
 
+    /// @notice The address of execution module.
     IExecution public execution;
 
+    /// @notice The address of guardian.
     address public guardian;
 
+    /// @notice Whether custody module is paused or not.
     bool public isPaused;
 
     /// @notice Fee earned amount for each guardian.
@@ -103,6 +108,10 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     ///       If tokens are sorted in ascending order.
     ///       If swapFeePercentage is greater than the minimum and less than the maximum.
     ///       If the total sum of weights is one.
+    /// @param assetRegistry_ The address of asset registry.
+    /// @param execution_ The address of execution module.
+    /// @param guardian_ The address of guardian.
+    /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
     constructor(
         address assetRegistry_,
         address execution_,
@@ -123,6 +132,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         guardianFee = guardianFee_;
     }
 
+    /// @inheritdoc ICustody
     function deposit(
         AssetValue[] memory amounts
     ) external override nonReentrant onlyOwner {
@@ -150,6 +160,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc ICustody
     function withdraw(
         AssetValue[] memory amounts,
         bool force
@@ -207,6 +218,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc ICustody
     function setGuardian(address newGuardian) external override onlyOwner {
         _checkGuardianAddress(newGuardian);
         _updateGuardianFees();
@@ -214,6 +226,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         guardian = newGuardian;
     }
 
+    /// @inheritdoc ICustody
     function setAssetRegistry(
         address newAssetRegistry
     ) external override onlyOwner {
@@ -223,6 +236,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         assetRegistry = IAssetRegistry(newAssetRegistry);
     }
 
+    /// @inheritdoc ICustody
     function setExecution(address newExecution) external override onlyOwner {
         _checkExecutionAddress(newExecution);
         _updateGuardianFees();
@@ -230,6 +244,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution = IExecution(newExecution);
     }
 
+    /// @inheritdoc ICustody
     function finalize() external override onlyOwner {
         _updateGuardianFees();
 
@@ -245,6 +260,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc ICustody
     function sweep(
         IERC20 token,
         uint256 amount
@@ -262,15 +278,18 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         token.safeTransfer(owner(), amount);
     }
 
+    /// @inheritdoc ICustody
     function pauseVault() external override onlyOwner whenNotPaused {
         execution.claimNow();
         isPaused = true;
     }
 
+    /// @inheritdoc ICustody
     function resumeVault() external override onlyOwner whenPaused {
         isPaused = false;
     }
 
+    /// @inheritdoc ICustody
     function startRebalance(
         AssetValue[] memory assetWeights,
         uint256 startTime,
@@ -317,6 +336,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution.startRebalance(requests, startTime, endTime);
     }
 
+    /// @inheritdoc ICustody
     function endRebalance()
         external
         override
@@ -329,6 +349,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution.endRebalance();
     }
 
+    /// @inheritdoc ICustody
     function endRebalanceEarly()
         external
         override
@@ -341,6 +362,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution.claimNow();
     }
 
+    /// @inheritdoc ICustody
     function claimGuardianFees() external override nonReentrant {
         if (msg.sender == guardian) {
             _updateGuardianFees();
@@ -378,6 +400,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc ICustody
     function holdings()
         public
         view
@@ -394,9 +417,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @notice Calculate guardian fee index.
     /// @dev Will only be called by lockGuardianFees().
-    function _getFeeIndex() internal view returns (uint256) {
-        uint256 feeIndex = 0;
-
+    /// @return feeIndex Guardian fee index.
+    function _getFeeIndex() internal view returns (uint256 feeIndex) {
         if (block.timestamp > lastFeeCheckpoint) {
             feeIndex = block.timestamp - lastFeeCheckpoint;
         }
@@ -404,7 +426,10 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         return feeIndex;
     }
 
-    /// @notice Calculate guardian fees.
+    /// @notice Calculate current guardian fees.
+    /// @dev Will only be called by withdraw(), setGuardian(), setAssetRegistry(),
+    ///      setExecution(), finalize(), startRebalance(), endRebalance(),
+    ///      endRebalanceEarly() and claimGuardianFees().
     function _updateGuardianFees() internal {
         if (guardianFee == 0) {
             return;
@@ -445,6 +470,11 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @notice Get total amount of assets in execution and custody module.
+    /// @dev Will only be called by withdraw(), finalize(), startRebalance(),
+    ///      holdings() and _updateGuardianFees().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @return assetAmounts Amount of assets.
     function _getHoldings(
         IAssetRegistry.AssetInformation[] memory assets
     ) internal view returns (AssetValue[] memory assetAmounts) {
@@ -481,7 +511,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Reset allowance of token for a spender.
-    /// @dev Will only be called by setAllowance() and depositUnderlyingAsset().
+    /// @dev Will only be called by _setAllowance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
@@ -492,8 +522,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Set allowance of token for a spender.
-    /// @dev Will only be called by initialDeposit(), depositTokens(),
-    ///      depositToYieldTokens() and depositUnderlyingAsset().
+    /// @dev Will only be called by startRebalance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     /// @param amount Amount to approve for spending.
@@ -507,7 +536,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Check if the address can be a guardian.
-    /// @dev Will only be called by constructor and setGuardian()
+    /// @dev Will only be called by constructor and setGuardian().
     /// @param newGuardian Address to check.
     function _checkGuardianAddress(address newGuardian) internal view {
         if (newGuardian == address(0)) {
