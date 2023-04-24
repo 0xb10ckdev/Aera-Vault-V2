@@ -3,10 +3,11 @@ pragma solidity 0.8.19;
 
 import "../dependencies/openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
+import "./ICustodyEvents.sol";
 import "./IExecution.sol";
 
 /// @title Interface for custody module.
-interface ICustody {
+interface ICustody is ICustodyEvents {
     /// TYPES ///
 
     /// @param asset Address of asset.

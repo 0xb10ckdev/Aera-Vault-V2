@@ -130,6 +130,10 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution = IExecution(execution_);
         guardian = guardian_;
         guardianFee = guardianFee_;
+
+        emit SetAssetRegistry(assetRegistry_);
+        emit SetExecution(execution_);
+        emit SetGuardian(guardian_);
     }
 
     /// @inheritdoc ICustody
@@ -158,6 +162,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 amounts[i].value
             );
         }
+
+        emit Deposit(amounts);
     }
 
     /// @inheritdoc ICustody
@@ -216,6 +222,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 amounts[i].asset.safeTransfer(owner(), amounts[i].value);
             }
         }
+
+        emit Withdraw(amounts, force);
     }
 
     /// @inheritdoc ICustody
@@ -224,6 +232,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         guardian = newGuardian;
+
+        emit SetGuardian(newGuardian);
     }
 
     /// @inheritdoc ICustody
@@ -234,6 +244,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         assetRegistry = IAssetRegistry(newAssetRegistry);
+
+        emit SetAssetRegistry(newAssetRegistry);
     }
 
     /// @inheritdoc ICustody
@@ -242,6 +254,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         execution = IExecution(newExecution);
+
+        emit SetExecution(newExecution);
     }
 
     /// @inheritdoc ICustody
@@ -258,6 +272,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numAssetAmounts; i++) {
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
         }
+
+        emit Finalize();
     }
 
     /// @inheritdoc ICustody
@@ -276,17 +292,23 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
 
         token.safeTransfer(owner(), amount);
+
+        emit Sweep(token, amount);
     }
 
     /// @inheritdoc ICustody
     function pauseVault() external override onlyOwner whenNotPaused {
         execution.claimNow();
         isPaused = true;
+
+        emit PauseVault();
     }
 
     /// @inheritdoc ICustody
     function resumeVault() external override onlyOwner whenPaused {
         isPaused = false;
+
+        emit ResumeVault();
     }
 
     /// @inheritdoc ICustody
@@ -334,6 +356,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
 
         execution.startRebalance(requests, startTime, endTime);
+
+        emit StartRebalance(assetWeights, startTime, endTime);
     }
 
     /// @inheritdoc ICustody
@@ -347,6 +371,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         execution.endRebalance();
+
+        emit EndRebalance();
     }
 
     /// @inheritdoc ICustody
@@ -360,6 +386,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         execution.claimNow();
+
+        emit EndRebalanceEarly();
     }
 
     /// @inheritdoc ICustody
@@ -398,6 +426,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         if (allFeeClaimed && msg.sender != guardian) {
             delete guardiansFee[msg.sender];
         }
+
+        emit ClaimGuardianFees();
     }
 
     /// @inheritdoc ICustody
