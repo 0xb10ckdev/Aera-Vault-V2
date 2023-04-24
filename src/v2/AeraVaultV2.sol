@@ -402,10 +402,13 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         AssetValue[] memory fees = guardiansFee[msg.sender];
         uint256 numFees = fees.length;
+        AssetValue[] memory claimedFees = new AssetValue[](numFees);
         uint256 availableFee;
         bool allFeeClaimed = true;
 
         for (uint256 i = 0; i < numFees; i++) {
+            claimedFees[i].asset = fees[i].asset;
+
             if (fees[i].value == 0) {
                 continue;
             }
@@ -417,6 +420,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             guardiansFeeTotal[fees[i].asset] -= availableFee;
             guardiansFee[msg.sender][i].value -= availableFee;
             fees[i].asset.safeTransfer(msg.sender, availableFee);
+            claimedFees[i].value = availableFee;
 
             if (guardiansFee[msg.sender][i].value > 0) {
                 allFeeClaimed = false;
@@ -427,7 +431,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             delete guardiansFee[msg.sender];
         }
 
-        emit ClaimGuardianFees();
+        emit ClaimGuardianFees(claimedFees);
     }
 
     /// @inheritdoc ICustody

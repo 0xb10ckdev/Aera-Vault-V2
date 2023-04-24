@@ -18,15 +18,15 @@ interface ICustodyEvents {
     /// @notice Emitted when guardian is set.
     /// @param guardian Address of new guardian.
     event SetGuardian(address guardian);
-    
+
     /// @notice Emitted when asset registry is set.
     /// @param assetRegistry Address of new asset registry.
     event SetAssetRegistry(address assetRegistry);
-    
+
     /// @notice Emitted when execution module is set.
     /// @param execution Address of new execution module.
     event SetExecution(address execution);
-    
+
     /// @notice Emitted when vault is finalized.
     event Finalize();
 
@@ -37,7 +37,7 @@ interface ICustodyEvents {
 
     /// @notice Emitted when vault is paused.
     event PauseVault();
-    
+
     /// @notice Emitted when vault is resumed.
     event ResumeVault();
 
@@ -53,10 +53,11 @@ interface ICustodyEvents {
 
     ///@notice Emitted when endRebalance is called.
     event EndRebalance();
-    
+
     ///@notice Emitted when endRebalanceEarly is called.
     event EndRebalanceEarly();
 
     ///@notice Emitted when guardian fees are claimed.
-    event ClaimGuardianFees();
+    /// @param claimedFees Claimed amount of each assets.
+    event ClaimGuardianFees(ICustody.AssetValue[] claimedFees);
 }
