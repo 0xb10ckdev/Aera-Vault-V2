@@ -13,7 +13,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
         vaultParams.assetRegistry = address(0);
 
         vm.expectRevert(
-            AeraBalancerExecution.Aera__AssetRegistryIsZeroAddress.selector
+            IExecution.Aera__AssetRegistryIsZeroAddress.selector
         );
         new AeraBalancerExecution(vaultParams);
     }
