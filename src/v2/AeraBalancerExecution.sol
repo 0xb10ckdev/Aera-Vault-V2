@@ -759,7 +759,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         IERC20 asset,
         IERC20[] memory poolTokens,
         uint256 numPoolTokens
-    ) internal returns (bool isRegistered, uint256 index) {
+    ) internal pure returns (bool isRegistered, uint256 index) {
         for (uint256 i = 0; i < numPoolTokens; i++) {
             if (asset == poolTokens[i]) {
                 isRegistered = true;
@@ -781,7 +781,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         AssetRebalanceRequest[] calldata requests,
         uint256[] memory startAmounts,
         uint256 numRequests
-    ) internal returns (bool isNecessary) {
+    ) internal pure returns (bool isNecessary) {
         for (uint256 i = 0; i < numRequests; i++) {
             if (poolToken == requests[i].asset) {
                 if (startAmounts[i] > 0) {
