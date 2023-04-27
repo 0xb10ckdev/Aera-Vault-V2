@@ -46,26 +46,6 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @notice Last timestamp where guardian fee index was locked.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
-    /// ERRORS ///
-
-    error Aera__AssetRegistryIsZeroAddress();
-    error Aera__ExecutionIsZeroAddress();
-    error Aera__GuardianIsZeroAddress();
-    error Aera__GuardianIsOwner();
-    error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
-    error Aera__CallerIsNotGuardian();
-    error Aera__CallerIsNotOwnerOrGuardian();
-    error Aera__AssetIsNotRegistered(IERC20 asset);
-    error Aera__AmountExceedsAvailable(
-        IERC20 asset,
-        uint256 amount,
-        uint256 available
-    );
-    error Aera__VaultIsPaused();
-    error Aera__VaultIsNotPaused();
-    error Aera__NoAvailableFeeForCaller(address caller);
-    error Aera__CannotSweepRegisteredAsset(IERC20 asset);
-
     /// MODIFIERS ///
 
     /// @dev Throws if called by any account other than the guardian.
@@ -144,16 +124,17 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             .assets();
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
+        bool isRegistered;
 
         for (uint256 i = 0; i < numAmounts; i++) {
-            for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset < amounts[i].asset) {
-                    continue;
-                } else if (assets[j].asset == amounts[i].asset) {
-                    break;
-                } else {
-                    revert Aera__AssetIsNotRegistered(amounts[i].asset);
-                }
+            (isRegistered, ) = _isAssetRegistered(
+                amounts[i].asset,
+                assets,
+                numAssets
+            );
+
+            if (!isRegistered) {
+                revert Aera__AssetIsNotRegistered(amounts[i].asset);
             }
 
             amounts[i].asset.safeTransferFrom(
@@ -179,23 +160,26 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
+        bool isRegistered;
+        uint256 index;
 
         for (uint256 i = 0; i < numAmounts; i++) {
-            for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset < amounts[i].asset) {
-                    continue;
-                } else if (assets[j].asset == amounts[i].asset) {
-                    if (assetAmounts[j].value < amounts[i].value) {
-                        revert Aera__AmountExceedsAvailable(
-                            amounts[i].asset,
-                            amounts[i].value,
-                            assetAmounts[i].value
-                        );
-                    }
-                    break;
-                } else {
-                    revert Aera__AssetIsNotRegistered(amounts[i].asset);
+            (isRegistered, index) = _isAssetRegistered(
+                amounts[i].asset,
+                assets,
+                numAssets
+            );
+
+            if (isRegistered) {
+                if (assetAmounts[index].value < amounts[i].value) {
+                    revert Aera__AmountExceedsAvailable(
+                        amounts[i].asset,
+                        amounts[i].value,
+                        assetAmounts[i].value
+                    );
                 }
+            } else {
+                revert Aera__AssetIsNotRegistered(amounts[i].asset);
             }
         }
 
@@ -285,10 +269,10 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             .assets();
         uint256 numAssets = assets.length;
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (token == assets[i].asset) {
-                revert Aera__CannotSweepRegisteredAsset(token);
-            }
+        (bool isRegistered, ) = _isAssetRegistered(token, assets, numAssets);
+
+        if (isRegistered) {
+            revert Aera__CannotSweepRegisteredAsset();
         }
 
         token.safeTransfer(owner(), amount);
@@ -325,6 +309,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         uint256 numAssetWeights = assetWeights.length;
         uint256 numAssets = assets.length;
+        bool isRegistered;
+        uint256 index;
 
         IExecution.AssetRebalanceRequest[]
             memory requests = new IExecution.AssetRebalanceRequest[](
@@ -332,26 +318,26 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             );
 
         for (uint256 i = 0; i < numAssetWeights; i++) {
-            for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset < assetWeights[i].asset) {
-                    continue;
-                } else if (assets[j].asset == assetWeights[i].asset) {
-                    requests[i] = IExecution.AssetRebalanceRequest(
-                        assetWeights[i].asset,
-                        assetAmounts[j].value,
-                        assetWeights[i].value
-                    );
+            (isRegistered, index) = _isAssetRegistered(
+                assetWeights[i].asset,
+                assets,
+                numAssets
+            );
 
-                    _setAllowance(
-                        assetWeights[i].asset,
-                        address(execution),
-                        assetAmounts[j].value
-                    );
+            if (isRegistered) {
+                requests[i] = IExecution.AssetRebalanceRequest(
+                    assetWeights[i].asset,
+                    assetAmounts[index].value,
+                    assetWeights[i].value
+                );
 
-                    break;
-                } else {
-                    revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
-                }
+                _setAllowance(
+                    assetWeights[i].asset,
+                    address(execution),
+                    assetAmounts[index].value
+                );
+            } else {
+                revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
             }
         }
 
@@ -598,6 +584,31 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     function _checkExecutionAddress(address newExecution) internal pure {
         if (newExecution == address(0)) {
             revert Aera__ExecutionIsZeroAddress();
+        }
+    }
+
+    /// @notice Check whether asset is registered to asset registry or not.
+    /// @dev Will only be called by deposit(), withdraw(), sweep() and startRebalance().
+    /// @param asset Asset to check.
+    /// @param registeredAssets Array of registered assets.
+    /// @param numAssets Number of registered assets.
+    /// @return isRegistered True if asset is registered.
+    /// @return index Index of asset in Balancer pool.
+    function _isAssetRegistered(
+        IERC20 asset,
+        IAssetRegistry.AssetInformation[] memory registeredAssets,
+        uint256 numAssets
+    ) internal pure returns (bool isRegistered, uint256 index) {
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (registeredAssets[i].asset < asset) {
+                continue;
+            } else if (registeredAssets[i].asset == asset) {
+                isRegistered = true;
+                index = i;
+                break;
+            } else {
+                break;
+            }
         }
     }
 }
