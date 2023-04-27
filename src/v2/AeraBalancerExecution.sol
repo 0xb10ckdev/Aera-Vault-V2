@@ -50,7 +50,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
 
     /// ERRORS ///
 
-    error Aera__AssetRegistryIsZeroAddress();
     error Aera__DescriptionIsEmpty();
     error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
     error Aera__ModuleIsAlreadyInitialized();

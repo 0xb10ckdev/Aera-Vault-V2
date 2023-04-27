@@ -17,6 +17,26 @@ interface ICustody is ICustodyEvents {
         uint256 value;
     }
 
+    /// ERRORS ///
+
+    error Aera__AssetRegistryIsZeroAddress();
+    error Aera__ExecutionIsZeroAddress();
+    error Aera__GuardianIsZeroAddress();
+    error Aera__GuardianIsOwner();
+    error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
+    error Aera__CallerIsNotGuardian();
+    error Aera__CallerIsNotOwnerOrGuardian();
+    error Aera__AssetIsNotRegistered(IERC20 asset);
+    error Aera__AmountExceedsAvailable(
+        IERC20 asset,
+        uint256 amount,
+        uint256 available
+    );
+    error Aera__VaultIsPaused();
+    error Aera__VaultIsNotPaused();
+    error Aera__NoAvailableFeeForCaller(address caller);
+    error Aera__CannotSweepRegisteredAsset();
+
     /// FUNCTIONS ///
 
     /// @notice Deposit assets.

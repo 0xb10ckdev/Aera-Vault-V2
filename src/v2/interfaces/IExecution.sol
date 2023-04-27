@@ -29,6 +29,7 @@ interface IExecution is IExecutionEvents {
 
     /// ERRORS ///
 
+    error Aera__AssetRegistryIsZeroAddress();
     error Aera__CallerIsNotVault();
     error Aera__SumOfWeightsIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
