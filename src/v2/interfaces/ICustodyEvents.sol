@@ -58,6 +58,10 @@ interface ICustodyEvents {
     event EndRebalanceEarly();
 
     ///@notice Emitted when guardian fees are claimed.
+    /// @param guardian Guardian address.
     /// @param claimedFees Claimed amount of each assets.
-    event ClaimGuardianFees(ICustody.AssetValue[] claimedFees);
+    event ClaimGuardianFees(
+        address guardian,
+        ICustody.AssetValue[] claimedFees
+    );
 }

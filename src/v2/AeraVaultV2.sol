@@ -417,7 +417,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             delete guardiansFee[msg.sender];
         }
 
-        emit ClaimGuardianFees(claimedFees);
+        emit ClaimGuardianFees(msg.sender, claimedFees);
     }
 
     /// @inheritdoc ICustody
