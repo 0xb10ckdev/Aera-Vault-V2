@@ -110,6 +110,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         execution = IExecution(execution_);
         guardian = guardian_;
         guardianFee = guardianFee_;
+        lastFeeCheckpoint = block.timestamp;
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetExecution(execution_);
@@ -282,6 +283,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function pauseVault() external override onlyOwner whenNotPaused {
+        _updateGuardianFees();
+
         execution.claimNow();
         isPaused = true;
 
@@ -290,6 +293,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function resumeVault() external override onlyOwner whenPaused {
+        lastFeeCheckpoint = block.timestamp;
         isPaused = false;
 
         emit ResumeVault();
