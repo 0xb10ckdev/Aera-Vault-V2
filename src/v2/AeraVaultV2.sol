@@ -403,7 +403,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 continue;
             }
 
-            availableFee = Math.max(
+            availableFee = Math.min(
                 fees[i].asset.balanceOf(address(this)),
                 fees[i].value
             );
