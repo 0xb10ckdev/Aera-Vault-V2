@@ -55,6 +55,8 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         balancerExecution.initialize(address(vault));
 
         custody = ICustody(address(vault));
+
+        _deposit();
     }
 
     function _init() internal {

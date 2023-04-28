@@ -16,8 +16,6 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
                 )
             );
         }
-
-        _deposit();
     }
 
     function test_withdraw_fail_withdrawalAmountExceedsAvailable() public {
