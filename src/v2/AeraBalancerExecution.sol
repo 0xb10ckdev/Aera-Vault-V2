@@ -257,8 +257,31 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                 sumEndWeights += endWeights[i];
             }
 
-            startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
-            endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
+            if (sumStartWeights > _ONE) {
+                uint256 deviation = sumStartWeights - _ONE;
+                uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
+                for (uint256 i = 0; i < numRequests; i++) {
+                    if (startWeights[i] > reducibleMinWeight) {
+                        startWeights[i] -= deviation;
+                        break;
+                    }
+                }
+            } else {
+                startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
+            }
+
+            if (sumEndWeights > _ONE) {
+                uint256 deviation = sumEndWeights - _ONE;
+                uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
+                for (uint256 i = 0; i < numRequests; i++) {
+                    if (endWeights[i] > reducibleMinWeight) {
+                        endWeights[i] -= deviation;
+                        break;
+                    }
+                }
+            } else {
+                endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
+            }
         }
 
         _adjustPool(requests, startAmounts);
