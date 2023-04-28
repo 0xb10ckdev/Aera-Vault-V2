@@ -9,9 +9,12 @@ contract DepositTest is BaseDepositTest, TestBaseAeraVaultV2 {
         super.setUp();
 
         for (uint256 i = 0; i < erc20Assets.length; i++) {
-            depositAmounts.push(ICustody.AssetValue(erc20Assets[i], _ONE));
-
-            erc20Assets[i].approve(address(vault), _ONE);
+            depositAmounts.push(
+                ICustody.AssetValue(
+                    erc20Assets[i],
+                    5 * _getScaler(erc20Assets[i])
+                )
+            );
         }
     }
 }

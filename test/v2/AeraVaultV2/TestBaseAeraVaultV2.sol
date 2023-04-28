@@ -45,6 +45,11 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
 
         for (uint256 i = 0; i < 3; i++) {
             erc20Assets[i].approve(address(balancerExecution), 1);
+
+            erc20Assets[i].approve(
+                address(vault),
+                1_000_000 * _getScaler(erc20Assets[i])
+            );
         }
 
         balancerExecution.initialize(address(vault));
@@ -157,67 +162,72 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
 
     function _generateRequestWith2Assets()
         internal
-        returns (IExecution.AssetRebalanceRequest[] memory requests)
+        returns (ICustody.AssetValue[] memory requests)
     {
-        requests = new IExecution.AssetRebalanceRequest[](2);
+        requests = new ICustody.AssetValue[](2);
 
         // WBTC
-        requests[0] = IExecution.AssetRebalanceRequest({
+        requests[0] = ICustody.AssetValue({
             asset: erc20Assets[0],
-            amount: 5e8,
-            weight: 0.69e18
+            value: 0.69e18
         });
         // USDC
-        requests[1] = IExecution.AssetRebalanceRequest({
+        requests[1] = ICustody.AssetValue({
             asset: erc20Assets[1],
-            amount: 80_000e6,
-            weight: 0.31e18
+            value: 0.31e18
         });
     }
 
     function _generateRequestWith3Assets()
         internal
-        returns (IExecution.AssetRebalanceRequest[] memory requests)
+        returns (ICustody.AssetValue[] memory requests)
     {
-        requests = new IExecution.AssetRebalanceRequest[](3);
+        requests = new ICustody.AssetValue[](3);
 
         // WBTC
-        requests[0] = IExecution.AssetRebalanceRequest({
+        requests[0] = ICustody.AssetValue({
             asset: erc20Assets[0],
-            amount: 5e8,
-            weight: 0.34e18
+            value: 0.34e18
         });
         // USDC
-        requests[1] = IExecution.AssetRebalanceRequest({
+        requests[1] = ICustody.AssetValue({
             asset: erc20Assets[1],
-            amount: 80_000e6,
-            weight: 0.31e18
+            value: 0.31e18
         });
         // WETH
-        requests[2] = IExecution.AssetRebalanceRequest({
+        requests[2] = ICustody.AssetValue({
             asset: erc20Assets[2],
-            amount: 100e18,
-            weight: 0.35e18
+            value: 0.35e18
         });
     }
 
-    function _startRebalance(
-        IExecution.AssetRebalanceRequest[] memory requests
-    ) internal {
-        for (uint256 i = 0; i < requests.length; i++) {
-            requests[i].asset.approve(
-                address(balancerExecution),
-                type(uint256).max
-            );
-        }
+    function _deposit() internal {
+        ICustody.AssetValue[] memory amounts = new ICustody.AssetValue[](3);
 
+        // WBTC
+        amounts[0] = ICustody.AssetValue({asset: erc20Assets[0], value: 5e8});
+        // USDC
+        amounts[1] = ICustody.AssetValue({
+            asset: erc20Assets[1],
+            value: 80_000e6
+        });
+        // WETH
+        amounts[2] = ICustody.AssetValue({
+            asset: erc20Assets[2],
+            value: 100e18
+        });
+
+        vault.deposit(amounts);
+    }
+
+    function _startRebalance(ICustody.AssetValue[] memory requests) internal {
         uint256 startTime = block.timestamp + 10;
         uint256 endTime = startTime + 10000;
 
-        vm.expectEmit(true, true, true, true, address(balancerExecution));
-        // emit StartRebalance(requests, startTime, endTime);
+        vm.expectEmit(true, true, true, true, address(custody));
+        emit StartRebalance(requests, startTime, endTime);
 
-        balancerExecution.startRebalance(requests, startTime, endTime);
+        custody.startRebalance(requests, startTime, endTime);
     }
 
     // Simulate swaps
