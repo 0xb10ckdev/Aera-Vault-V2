@@ -39,6 +39,10 @@ interface IAssetRegistry {
     /// @return numeraire Index of numeraire asset.
     function numeraire() external view returns (uint256 numeraire);
 
+    /// @notice Get the number of ERC4626 assets.
+    /// @return numYieldAssets Number of ERC4626 assets.
+    function numYieldAssets() external view returns (uint256 numYieldAssets);
+
     /// @notice Add a new asset.
     /// @param asset A new asset to add.
     function addAsset(AssetInformation memory asset) external;

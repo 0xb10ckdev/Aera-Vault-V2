@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "./dependencies/openzeppelin/IERC4626.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
@@ -301,7 +302,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function startRebalance(
-        AssetValue[] memory assetWeights,
+        AssetValue[] calldata assetWeights,
         uint256 startTime,
         uint256 endTime
     ) external override nonReentrant onlyGuardian whenNotPaused {
@@ -309,39 +310,34 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
-
-        uint256 numAssetWeights = assetWeights.length;
         uint256 numAssets = assets.length;
-        bool isRegistered;
-        uint256 index;
+
+        uint256[] memory underlyingTargetWeights = _adjustYieldAssets(
+            assets,
+            assetWeights
+        );
 
         IExecution.AssetRebalanceRequest[]
             memory requests = new IExecution.AssetRebalanceRequest[](
-                numAssetWeights
+                numAssets - assetRegistry.numYieldAssets()
             );
 
-        for (uint256 i = 0; i < numAssetWeights; i++) {
-            (isRegistered, index) = _isAssetRegistered(
-                assetWeights[i].asset,
-                assets,
-                numAssets
-            );
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
 
-            if (isRegistered) {
-                requests[i] = IExecution.AssetRebalanceRequest(
-                    assetWeights[i].asset,
-                    assetAmounts[index].value,
-                    assetWeights[i].value
+        uint256 index;
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (!assets[i].isERC4626) {
+                requests[index] = IExecution.AssetRebalanceRequest(
+                    assets[i].asset,
+                    assetAmounts[i].value,
+                    underlyingTargetWeights[i]
                 );
-
                 _setAllowance(
-                    assetWeights[i].asset,
+                    assets[i].asset,
                     address(execution),
-                    assetAmounts[index].value
+                    assetAmounts[i].value
                 );
-            } else {
-                revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
+                index++;
             }
         }
 
@@ -491,6 +487,217 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             }
 
             guardiansFeeTotal[assetAmounts[i].asset] += newFee;
+        }
+    }
+
+    /// @notice Adjust the balance of underlying assets in yield assets.
+    /// @dev Will only be called by startRebalance().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @param assetWeights Struct details for weights of assets.
+    /// @return underlyingTargetWeights Total target weights of underlying assets.
+    function _adjustYieldAssets(
+        IAssetRegistry.AssetInformation[] memory assets,
+        AssetValue[] calldata assetWeights
+    ) internal returns (uint256[] memory underlyingTargetWeights) {
+        uint256 numAssets = assets.length;
+        uint256[] memory targetWeights = _getTargatWeights(
+            assets,
+            assetWeights
+        );
+
+        uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
+        (
+            uint256[] memory spotPrices,
+            uint256[] memory assetUnits
+        ) = _getSpotPricesAndUnits(assets);
+
+        uint256[] memory underlyingBalances = new uint256[](numAssets);
+        uint256[] memory depositAmounts = new uint256[](numAssets);
+        underlyingTargetWeights = new uint256[](numAssets);
+
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+
+        {
+            uint256 totalValue = 0;
+            uint256 balance;
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (assets[i].isERC4626) {
+                    balance = IERC4626(address(assets[i].asset))
+                        .convertToAssets(assetAmounts[i].value);
+                    underlyingBalances[i] = balance;
+                    underlyingTargetWeights[
+                        underlyingIndexes[i]
+                    ] += targetWeights[i];
+                } else {
+                    balance = assetAmounts[i].value;
+                    underlyingTargetWeights[i] += targetWeights[i];
+                }
+
+                totalValue += (balance * spotPrices[i]) / assetUnits[i];
+            }
+
+            uint256 targetBalance;
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (assets[i].isERC4626) {
+                    targetBalance =
+                        (totalValue * targetWeights[i] * assetUnits[i]) /
+                        spotPrices[i] /
+                        _ONE;
+                    if (targetBalance > underlyingBalances[i]) {
+                        depositAmounts[i] =
+                            targetBalance -
+                            underlyingBalances[i];
+                    } else {
+                        IERC4626(address(assets[i].asset)).withdraw(
+                            underlyingBalances[i] - targetBalance,
+                            address(this),
+                            address(this)
+                        );
+                        underlyingTargetWeights[
+                            underlyingIndexes[i]
+                        ] -= targetWeights[i];
+                    }
+                }
+            }
+        }
+
+        assetAmounts = _getHoldings(assets);
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626 && depositAmounts[i] > 0) {
+                if (
+                    assetAmounts[underlyingIndexes[i]].value > depositAmounts[i]
+                ) {
+                    _setAllowance(
+                        IERC20(IERC4626(address(assets[i].asset)).asset()),
+                        address(assets[i].asset),
+                        depositAmounts[i]
+                    );
+                    IERC4626(address(assets[i].asset)).deposit(
+                        depositAmounts[i],
+                        address(this)
+                    );
+                    assetAmounts[underlyingIndexes[i]].value -= depositAmounts[
+                        i
+                    ];
+                    underlyingTargetWeights[
+                        underlyingIndexes[i]
+                    ] -= targetWeights[i];
+                }
+            }
+        }
+    }
+
+    /// @notice Get target weights in registered asset order.
+    /// @dev Will only be called by _adjustYieldAssets().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @param assetWeights Struct details for weights of assets.
+    /// @return targetWeights Reordered target weights.
+    function _getTargatWeights(
+        IAssetRegistry.AssetInformation[] memory assets,
+        AssetValue[] calldata assetWeights
+    ) internal pure returns (uint256[] memory targetWeights) {
+        uint256 numAssets = assets.length;
+        uint256 numAssetWeights = assetWeights.length;
+
+        if (numAssets != numAssetWeights) {
+            revert Aera__ValueLengthIsNotSame(numAssets, numAssetWeights);
+        }
+
+        targetWeights = new uint256[](numAssetWeights);
+
+        bool isRegistered;
+        uint256 index;
+        for (uint256 i = 0; i < numAssetWeights; i++) {
+            (isRegistered, index) = _isAssetRegistered(
+                assetWeights[i].asset,
+                assets,
+                numAssets
+            );
+
+            if (!isRegistered) {
+                revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
+            }
+
+            targetWeights[index] = assetWeights[i].value;
+
+            for (uint256 j = 0; j < numAssetWeights; j++) {
+                if (i != j && assetWeights[i].asset == assetWeights[j].asset) {
+                    revert Aera__AssetIsDuplicated(assetWeights[i].asset);
+                }
+            }
+        }
+    }
+
+    /// @notice Get spot prices and units of requested assets.
+    /// @dev Will only be called by _adjustYieldAssets().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @return spotPrices Spot prices of assets.
+    /// @return assetUnits Units of assets.
+    function _getSpotPricesAndUnits(
+        IAssetRegistry.AssetInformation[] memory assets
+    )
+        internal
+        view
+        returns (uint256[] memory spotPrices, uint256[] memory assetUnits)
+    {
+        uint256 numAssets = assets.length;
+
+        IAssetRegistry.AssetPriceReading[]
+            memory erc20SpotPrices = assetRegistry.spotPrices();
+        uint256 numERC20SpotPrices = erc20SpotPrices.length;
+
+        spotPrices = new uint256[](numAssets);
+        assetUnits = new uint256[](numAssets);
+
+        address underlyingAsset;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                underlyingAsset = IERC4626(address(assets[i].asset)).asset();
+                for (uint256 j = 0; j < numERC20SpotPrices; j++) {
+                    if (underlyingAsset == address(erc20SpotPrices[j].asset)) {
+                        spotPrices[i] = erc20SpotPrices[j].spotPrice;
+                        assetUnits[i] =
+                            10 ** IERC20Metadata(underlyingAsset).decimals();
+                        break;
+                    }
+                }
+            } else {
+                for (uint256 j = 0; j < numERC20SpotPrices; j++) {
+                    if (assets[i].asset == erc20SpotPrices[j].asset) {
+                        spotPrices[i] = erc20SpotPrices[j].spotPrice;
+                        break;
+                    }
+                }
+
+                assetUnits[i] =
+                    10 ** IERC20Metadata(address(assets[i].asset)).decimals();
+            }
+        }
+    }
+
+    /// @notice Returns an array of underlying asset indexes.
+    /// @dev Will only be called by _adjustYieldAssets().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @return underlyingIndexes Array of underlying asset indexes.
+    function _getUnderlyingIndexes(
+        IAssetRegistry.AssetInformation[] memory assets
+    ) internal view returns (uint256[] memory underlyingIndexes) {
+        uint256 numAssets = assets.length;
+        underlyingIndexes = new uint256[](numAssets);
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                for (uint256 j = 0; j < numAssets; j++) {
+                    if (
+                        IERC4626(address(assets[i].asset)).asset() ==
+                        address(assets[j].asset)
+                    ) {
+                        underlyingIndexes[i] = j;
+                        break;
+                    }
+                }
+            }
         }
     }
 
