@@ -35,6 +35,7 @@ interface ICustody is ICustodyEvents {
     error Aera__VaultIsPaused();
     error Aera__VaultIsNotPaused();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
+    error Aera__SumOfWeightsIsNotOne();
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoAvailableFeeForCaller(address caller);
     error Aera__CannotSweepRegisteredAsset();

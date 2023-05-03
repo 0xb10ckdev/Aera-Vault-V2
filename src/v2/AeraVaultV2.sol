@@ -316,6 +316,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             assets,
             assetWeights
         );
+        underlyingTargetWeights = _normalizeWeights(underlyingTargetWeights);
 
         IExecution.AssetRebalanceRequest[]
             memory requests = new IExecution.AssetRebalanceRequest[](
@@ -607,6 +608,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         bool isRegistered;
         uint256 index;
+        uint256 weightSum = 0;
+
         for (uint256 i = 0; i < numAssetWeights; i++) {
             (isRegistered, index) = _isAssetRegistered(
                 assetWeights[i].asset,
@@ -619,6 +622,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             }
 
             targetWeights[index] = assetWeights[i].value;
+            weightSum += assetWeights[i].value;
 
             for (uint256 j = 0; j < numAssetWeights; j++) {
                 if (i != j && assetWeights[i].asset == assetWeights[j].asset) {
@@ -626,6 +630,38 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 }
             }
         }
+
+        if (weightSum != _ONE) {
+            revert Aera__SumOfWeightsIsNotOne();
+        }
+    }
+
+    /// @notice Normalize weights to make a sum of weights one.
+    /// @dev Will only be called by startRebalance().
+    /// @param weights Array of weights to be normalized.
+    /// @return newWeights Array of normalized weights.
+    function _normalizeWeights(
+        uint256[] memory weights
+    ) internal pure returns (uint256[] memory newWeights) {
+        uint256 numWeights = weights.length;
+        newWeights = new uint256[](numWeights);
+
+        uint256 weightSum;
+        for (uint256 i = 0; i < numWeights; i++) {
+            weightSum += weights[i];
+        }
+
+        if (weightSum == _ONE) {
+            return weights;
+        }
+
+        uint256 adjustedSum;
+        for (uint256 i = 0; i < numWeights; i++) {
+            newWeights[i] = (weights[i] * _ONE) / weightSum;
+            adjustedSum += newWeights[i];
+        }
+
+        newWeights[0] = newWeights[0] + _ONE - adjustedSum;
     }
 
     /// @notice Get spot prices and units of requested assets.
