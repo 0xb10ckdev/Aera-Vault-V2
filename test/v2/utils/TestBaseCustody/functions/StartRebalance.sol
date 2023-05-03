@@ -22,6 +22,21 @@ abstract contract BaseStartRebalanceTest is TestBaseCustody {
         _startRebalance();
     }
 
+    function test_startRebalance_fail_whenSumOfWeightsIsNotOne() public {
+        ICustody.AssetValue[] memory requests = _generateRequest();
+        requests[0].value++;
+
+        vm.startPrank(custody.guardian());
+
+        vm.expectRevert(ICustody.Aera__SumOfWeightsIsNotOne.selector);
+
+        custody.startRebalance(
+            requests,
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
     function test_startRebalance_fail_whenAssetIsNotRegistered() public {
         IERC20 erc20 = IERC20(
             address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
