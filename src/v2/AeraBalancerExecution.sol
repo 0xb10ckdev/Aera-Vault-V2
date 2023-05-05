@@ -96,8 +96,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numPoolTokens; i++) {
             for (; assetIndex < numAssets; assetIndex++) {
                 if (
-                    vaultParams.poolTokens[i] == assets[i].asset &&
-                    !assets[i].isERC4626
+                    vaultParams.poolTokens[i] == assets[assetIndex].asset &&
+                    !assets[assetIndex].isERC4626
                 ) {
                     break;
                 }

@@ -73,7 +73,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
-            } else if (address(assets_[i].oracle) == address(0)) {
+            } else if (
+                !assets_[i].isERC4626 &&
+                address(assets_[i].oracle) == address(0)
+            ) {
                 revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
             }
 
