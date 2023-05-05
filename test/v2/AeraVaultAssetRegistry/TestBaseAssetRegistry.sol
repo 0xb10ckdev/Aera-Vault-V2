@@ -153,6 +153,7 @@ contract TestBaseAssetRegistry is TestBase {
 
     function _generateValidWeights()
         internal
+        view
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
         IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry

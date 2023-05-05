@@ -121,6 +121,7 @@ contract TestBaseBalancerExecution is
 
     function _generateVaultParams()
         internal
+        view
         returns (
             IBalancerExecution.NewBalancerExecutionParams memory vaultParams
         )
@@ -148,6 +149,7 @@ contract TestBaseBalancerExecution is
 
     function _generateRequestWith2Assets()
         internal
+        view
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {
         requests = new IExecution.AssetRebalanceRequest[](2);
@@ -168,6 +170,7 @@ contract TestBaseBalancerExecution is
 
     function _generateRequestWith3Assets()
         internal
+        view
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {
         requests = new IExecution.AssetRebalanceRequest[](3);
@@ -281,6 +284,7 @@ contract TestBaseBalancerExecution is
 
     function _getTargetAmounts()
         internal
+        view
         returns (uint256[] memory targetAmounts)
     {
         IERC20[] memory poolTokens = balancerExecution.assets();
@@ -324,7 +328,7 @@ contract TestBaseBalancerExecution is
         }
     }
 
-    function _getScaler(IERC20 token) internal returns (uint256) {
+    function _getScaler(IERC20 token) internal view returns (uint256) {
         return 10 ** IERC20Metadata(address(token)).decimals();
     }
 }
