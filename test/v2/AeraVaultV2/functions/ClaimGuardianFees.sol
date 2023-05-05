@@ -13,6 +13,6 @@ contract ClaimGuardianFeesTest is
         override
         returns (ICustody.AssetValue[] memory requests)
     {
-        return _generateRequestWith3Assets();
+        return _generateValidRequest();
     }
 }

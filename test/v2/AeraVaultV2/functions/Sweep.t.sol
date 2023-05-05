@@ -7,6 +7,6 @@ import "../TestBaseAeraVaultV2.sol";
 contract SweepTest is BaseSweepTest, TestBaseAeraVaultV2 {
     function test_sweep_fail_whenCannotSweepRegisteredAsset() public {
         vm.expectRevert(ICustody.Aera__CannotSweepRegisteredAsset.selector);
-        vault.sweep(assets[0].asset, _ONE);
+        vault.sweep(assets[0], _ONE);
     }
 }

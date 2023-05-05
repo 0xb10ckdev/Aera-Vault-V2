@@ -8,6 +8,9 @@ contract SetAssetRegistryTest is BaseSetAssetRegistryTest, TestBaseAeraVaultV2 {
     function setUp() public override {
         super.setUp();
 
-        newAssetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+        newAssetRegistry = new AeraVaultAssetRegistry(
+            assetsInformation,
+            numeraire
+        );
     }
 }

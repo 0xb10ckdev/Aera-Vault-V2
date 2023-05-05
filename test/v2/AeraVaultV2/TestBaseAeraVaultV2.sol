@@ -13,6 +13,7 @@ import "../../../src/v2/AeraBalancerExecution.sol";
 import "../../../src/v2/AeraVaultAssetRegistry.sol";
 import "../../../src/v2/AeraVaultV2.sol";
 import "../utils/TestBaseCustody/TestBaseCustody.sol";
+import {ERC20, ERC4626Mock} from "../../utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
@@ -30,7 +31,9 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
     AeraVaultAssetRegistry assetRegistry;
     AeraVaultV2 vault;
     address balancerManagedPoolFactory;
-    IAssetRegistry.AssetInformation[] assets;
+    IAssetRegistry.AssetInformation[] assetsInformation;
+    mapping(address => bool) isERC4626;
+    uint256[] oraclePrices;
     uint256 numeraire;
 
     function setUp() public virtual {
@@ -43,12 +46,13 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         _deployBalancerExecution();
         _deployAeraVaultV2();
 
-        for (uint256 i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < erc20Assets.length; i++) {
             erc20Assets[i].approve(address(balancerExecution), 1);
-
-            erc20Assets[i].approve(
+        }
+        for (uint256 i = 0; i < assets.length; i++) {
+            assets[i].approve(
                 address(vault),
-                1_000_000 * _getScaler(erc20Assets[i])
+                1_000_000 * _getScaler(assets[i])
             );
         }
 
@@ -60,37 +64,127 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
     }
 
     function _init() internal {
+        _deployYieldAssets();
+
         erc20Assets.push(IERC20(_WBTC_ADDRESS));
         erc20Assets.push(IERC20(_USDC_ADDRESS));
         erc20Assets.push(IERC20(_WETH_ADDRESS));
 
-        // USDC
-        numeraire = 1;
+        uint256 numERC20 = erc20Assets.length;
+        uint256 numERC4626 = yieldAssets.length;
+        uint256 erc20Index = 0;
+        uint256 erc4626Index = 0;
 
-        for (uint256 i = 0; i < 3; i++) {
-            deal(address(erc20Assets[i]), address(this), 1_000_000e18);
-            deal(address(erc20Assets[i]), _USER, 1_000_000e18);
+        for (uint256 i = 0; i < numERC20 + numERC4626; i++) {
+            if (
+                erc4626Index == numERC4626 ||
+                (erc20Index < numERC20 &&
+                    address(erc20Assets[erc20Index]) <
+                    address(yieldAssets[erc4626Index]))
+            ) {
+                assets.push(erc20Assets[erc20Index]);
+                if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
+                    numeraire = i;
+                }
+                erc20Index++;
+            } else {
+                assets.push(yieldAssets[erc4626Index]);
+                erc4626Index++;
+            }
+        }
 
-            assets.push(
+        for (uint256 i = 0; i < yieldAssets.length; i++) {
+            isERC4626[address(yieldAssets[i])] = true;
+        }
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (!isERC4626[address(assets[i])]) {
+                deal(address(assets[i]), address(this), 10_000_000e18);
+                deal(address(assets[i]), _USER, 10_000_000e18);
+            }
+            assetsInformation.push(
                 IAssetRegistry.AssetInformation({
-                    asset: erc20Assets[i],
-                    isERC4626: false,
+                    asset: assets[i],
+                    isERC4626: isERC4626[address(assets[i])],
                     withdrawable: true,
                     oracle: AggregatorV2V3Interface(
-                        i == numeraire ? address(0) : address(new OracleMock(6))
+                        i == numeraire || isERC4626[address(assets[i])]
+                            ? address(0)
+                            : address(new OracleMock(6))
                     )
                 })
             );
         }
 
-        IOracleMock(address(assets[0].oracle)).setLatestAnswer(
-            int256(15_000e6)
+        for (uint256 i = 0; i < yieldAssets.length; i++) {
+            IERC20(yieldAssets[i].asset()).approve(
+                address(yieldAssets[i]),
+                type(uint256).max
+            );
+            yieldAssets[i].deposit(1_000_000e18, address(this));
+        }
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assetsInformation[i].isERC4626) {
+                if (
+                    IERC4626(address(assetsInformation[i].asset)).asset() ==
+                    _WBTC_ADDRESS
+                ) {
+                    oraclePrices.push(15_000e6);
+                } else if (
+                    IERC4626(address(assetsInformation[i].asset)).asset() ==
+                    _WETH_ADDRESS
+                ) {
+                    oraclePrices.push(1_000e6);
+                } else {
+                    oraclePrices.push(1e6);
+                }
+            } else {
+                if (address(assetsInformation[i].asset) == _WBTC_ADDRESS) {
+                    oraclePrices.push(15_000e6);
+                    IOracleMock(address(assetsInformation[i].oracle))
+                        .setLatestAnswer(int256(oraclePrices[i]));
+                } else if (
+                    address(assetsInformation[i].asset) == _WETH_ADDRESS
+                ) {
+                    oraclePrices.push(1_000e6);
+                    IOracleMock(address(assetsInformation[i].oracle))
+                        .setLatestAnswer(int256(oraclePrices[i]));
+                } else {
+                    oraclePrices.push(1e6);
+                }
+            }
+        }
+    }
+
+    function _deployYieldAssets() internal {
+        ERC4626Mock[] memory erc4626Mocks = new ERC4626Mock[](2);
+
+        erc4626Mocks[0] = new ERC4626Mock(
+            ERC20(_WBTC_ADDRESS),
+            "aWBTC",
+            "AWBTC"
         );
-        IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
+        erc4626Mocks[1] = new ERC4626Mock(
+            ERC20(_USDC_ADDRESS),
+            "aUSDC",
+            "AUSDC"
+        );
+
+        if (address(erc4626Mocks[0]) < address(erc4626Mocks[1])) {
+            yieldAssets.push(IERC4626(address(erc4626Mocks[0])));
+            yieldAssets.push(IERC4626(address(erc4626Mocks[1])));
+        } else {
+            yieldAssets.push(IERC4626(address(erc4626Mocks[1])));
+            yieldAssets.push(IERC4626(address(erc4626Mocks[0])));
+        }
     }
 
     function _deployAssetRegistry() internal {
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+        assetRegistry = new AeraVaultAssetRegistry(
+            assetsInformation,
+            numeraire
+        );
     }
 
     function _deployBalancerManagedPoolFactory() internal {
@@ -137,6 +231,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
 
     function _generateVaultParams()
         internal
+        view
         returns (
             IBalancerExecution.NewBalancerExecutionParams memory vaultParams
         )
@@ -162,62 +257,31 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         });
     }
 
-    function _generateRequestWith2Assets()
+    function _generateValidRequest()
         internal
         returns (ICustody.AssetValue[] memory requests)
     {
-        requests = new ICustody.AssetValue[](2);
+        requests = new ICustody.AssetValue[](assets.length);
 
-        // WBTC
-        requests[0] = ICustody.AssetValue({
-            asset: erc20Assets[0],
-            value: 0.69e18
-        });
-        // USDC
-        requests[1] = ICustody.AssetValue({
-            asset: erc20Assets[1],
-            value: 0.31e18
-        });
-    }
-
-    function _generateRequestWith3Assets()
-        internal
-        returns (ICustody.AssetValue[] memory requests)
-    {
-        requests = new ICustody.AssetValue[](3);
-
-        // WBTC
-        requests[0] = ICustody.AssetValue({
-            asset: erc20Assets[0],
-            value: 0.34e18
-        });
-        // USDC
-        requests[1] = ICustody.AssetValue({
-            asset: erc20Assets[1],
-            value: 0.31e18
-        });
-        // WETH
-        requests[2] = ICustody.AssetValue({
-            asset: erc20Assets[2],
-            value: 0.35e18
-        });
+        for (uint256 i = 0; i < assets.length; i++) {
+            requests[i] = ICustody.AssetValue({
+                asset: assets[i],
+                value: 0.2e18
+            });
+        }
     }
 
     function _deposit() internal {
-        ICustody.AssetValue[] memory amounts = new ICustody.AssetValue[](3);
+        ICustody.AssetValue[] memory amounts = new ICustody.AssetValue[](
+            assets.length
+        );
 
-        // WBTC
-        amounts[0] = ICustody.AssetValue({asset: erc20Assets[0], value: 5e8});
-        // USDC
-        amounts[1] = ICustody.AssetValue({
-            asset: erc20Assets[1],
-            value: 80_000e6
-        });
-        // WETH
-        amounts[2] = ICustody.AssetValue({
-            asset: erc20Assets[2],
-            value: 100e18
-        });
+        for (uint256 i = 0; i < assets.length; i++) {
+            amounts[i] = ICustody.AssetValue({
+                asset: assets[i],
+                value: (1_000_00e6 / oraclePrices[i]) * _getScaler(assets[i])
+            });
+        }
 
         vault.deposit(amounts);
     }
@@ -302,6 +366,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
 
     function _getTargetAmounts()
         internal
+        view
         returns (uint256[] memory targetAmounts)
     {
         IERC20[] memory poolTokens = balancerExecution.assets();
@@ -345,7 +410,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         }
     }
 
-    function _getScaler(IERC20 token) internal returns (uint256) {
+    function _getScaler(IERC20 token) internal view returns (uint256) {
         return 10 ** IERC20Metadata(address(token)).decimals();
     }
 }

@@ -20,7 +20,7 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
 
     function test_withdraw_fail_withdrawalAmountExceedsAvailable() public {
         vm.prank(_GUARDIAN);
-        _startRebalance(_generateRequestWith3Assets());
+        _startRebalance(_generateRequest());
 
         withdrawalAmounts[0].value =
             withdrawalAmounts[0].asset.balanceOf(address(vault)) +
@@ -40,7 +40,7 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
 
     function test_withdraw_success_withClaim() public virtual {
         vm.prank(_GUARDIAN);
-        _startRebalance(_generateRequestWith3Assets());
+        _startRebalance(_generateRequest());
 
         uint256[] memory balances = new uint256[](withdrawalAmounts.length);
         for (uint256 i = 0; i < withdrawalAmounts.length; i++) {

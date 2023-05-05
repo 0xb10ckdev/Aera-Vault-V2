@@ -10,6 +10,6 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         override
         returns (ICustody.AssetValue[] memory requests)
     {
-        return _generateRequestWith3Assets();
+        return _generateValidRequest();
     }
 }
