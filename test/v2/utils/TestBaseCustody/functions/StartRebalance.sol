@@ -37,6 +37,34 @@ abstract contract BaseStartRebalanceTest is TestBaseCustody {
         );
     }
 
+    function test_startRebalance_fail_whenValueLengthIsNotSame() public {
+        ICustody.AssetValue[] memory requests = _generateRequest();
+        ICustody.AssetValue[]
+            memory invalidRequests = new ICustody.AssetValue[](
+                requests.length - 1
+            );
+
+        for (uint256 i = 0; i < requests.length - 1; i++) {
+            invalidRequests[i] = requests[i];
+        }
+
+        vm.startPrank(custody.guardian());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__ValueLengthIsNotSame.selector,
+                custody.assetRegistry().assets().length,
+                invalidRequests.length
+            )
+        );
+
+        custody.startRebalance(
+            invalidRequests,
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
     function test_startRebalance_fail_whenAssetIsNotRegistered() public {
         IERC20 erc20 = IERC20(
             address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
@@ -51,6 +79,26 @@ abstract contract BaseStartRebalanceTest is TestBaseCustody {
             abi.encodeWithSelector(
                 ICustody.Aera__AssetIsNotRegistered.selector,
                 erc20
+            )
+        );
+
+        custody.startRebalance(
+            requests,
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
+    function test_startRebalance_fail_whenAssetIsDuplicated() public {
+        ICustody.AssetValue[] memory requests = _generateRequest();
+        requests[0].asset = requests[1].asset;
+
+        vm.startPrank(custody.guardian());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetIsDuplicated.selector,
+                requests[0].asset
             )
         );
 
