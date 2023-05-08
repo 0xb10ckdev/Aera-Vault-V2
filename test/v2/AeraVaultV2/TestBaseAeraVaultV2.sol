@@ -32,7 +32,8 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
     AeraVaultV2 vault;
     address balancerManagedPoolFactory;
     IAssetRegistry.AssetInformation[] assetsInformation;
-    mapping(address => bool) isERC4626;
+    mapping(IERC20 => bool) isERC4626;
+    mapping(IERC20 => uint256) underlyingIndex;
     uint256[] oraclePrices;
     uint256 numeraire;
 
@@ -94,21 +95,27 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         }
 
         for (uint256 i = 0; i < yieldAssets.length; i++) {
-            isERC4626[address(yieldAssets[i])] = true;
+            isERC4626[yieldAssets[i]] = true;
+            for (uint256 j = 0; j < assets.length; j++) {
+                if (yieldAssets[i].asset() == address(assets[j])) {
+                    underlyingIndex[yieldAssets[i]] = j;
+                    break;
+                }
+            }
         }
 
         for (uint256 i = 0; i < assets.length; i++) {
-            if (!isERC4626[address(assets[i])]) {
+            if (!isERC4626[assets[i]]) {
                 deal(address(assets[i]), address(this), 10_000_000e18);
                 deal(address(assets[i]), _USER, 10_000_000e18);
             }
             assetsInformation.push(
                 IAssetRegistry.AssetInformation({
                     asset: assets[i],
-                    isERC4626: isERC4626[address(assets[i])],
+                    isERC4626: isERC4626[assets[i]],
                     withdrawable: true,
                     oracle: AggregatorV2V3Interface(
-                        i == numeraire || isERC4626[address(assets[i])]
+                        i == numeraire || isERC4626[assets[i]]
                             ? address(0)
                             : address(new OracleMock(6))
                     )
@@ -294,6 +301,30 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
         emit StartRebalance(requests, startTime, endTime);
 
         custody.startRebalance(requests, startTime, endTime);
+    }
+
+    function _normalizeWeights(
+        uint256[] memory weights
+    ) internal pure returns (uint256[] memory newWeights) {
+        uint256 numWeights = weights.length;
+        newWeights = new uint256[](numWeights);
+
+        uint256 weightSum;
+        for (uint256 i = 0; i < numWeights; i++) {
+            weightSum += weights[i];
+        }
+
+        if (weightSum == _ONE) {
+            return weights;
+        }
+
+        uint256 adjustedSum;
+        for (uint256 i = 0; i < numWeights; i++) {
+            newWeights[i] = (weights[i] * _ONE) / weightSum;
+            adjustedSum += newWeights[i];
+        }
+
+        newWeights[0] = newWeights[0] + _ONE - adjustedSum;
     }
 
     // Simulate swaps
