@@ -5,6 +5,14 @@ import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
+    uint256 yieldActionThreshold;
+
+    function setUp() public override {
+        super.setUp();
+
+        yieldActionThreshold = _getScaler(assets[numeraire]);
+    }
+
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
@@ -13,7 +21,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(0),
             address(balancerExecution),
             _GUARDIAN,
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
         );
     }
 
@@ -25,7 +34,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(0),
             _GUARDIAN,
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
         );
     }
 
@@ -37,7 +47,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(balancerExecution),
             address(0),
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
         );
     }
 
@@ -47,7 +58,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(balancerExecution),
             address(this),
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
         );
     }
 
@@ -65,7 +77,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
-            _MAX_GUARDIAN_FEE + 1
+            _MAX_GUARDIAN_FEE + 1,
+            yieldActionThreshold
         );
     }
 
@@ -81,7 +94,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
         );
 
         assertEq(address(vault.assetRegistry()), address(assetRegistry));

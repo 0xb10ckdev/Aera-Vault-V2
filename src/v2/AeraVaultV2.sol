@@ -24,6 +24,9 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @notice Guardian fee per second in 18 decimal fixed point format.
     uint256 public immutable guardianFee;
 
+    /// @notice Minimum action threshold for yield bearing assets measured in base token terms.
+    uint256 public immutable minYieldActionThreshold;
+
     /// STORAGE ///
 
     /// @notice The address of asset registry.
@@ -93,11 +96,14 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @param execution_ The address of execution module.
     /// @param guardian_ The address of guardian.
     /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
+    /// @param minYieldActionThreshold_ Minimum action threshold for yield bearing assets
+    ///                                 measured in base token terms.
     constructor(
         address assetRegistry_,
         address execution_,
         address guardian_,
-        uint256 guardianFee_
+        uint256 guardianFee_,
+        uint256 minYieldActionThreshold_
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkExecutionAddress(execution_);
@@ -106,11 +112,15 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         if (guardianFee_ > _MAX_GUARDIAN_FEE) {
             revert Aera__GuardianFeeIsAboveMax(guardianFee_, _MAX_GUARDIAN_FEE);
         }
+        if (minYieldActionThreshold_ == 0) {
+            revert Aera__MinYieldActionThresholdIsZero();
+        }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
         execution = IExecution(execution_);
         guardian = guardian_;
         guardianFee = guardianFee_;
+        minYieldActionThreshold = minYieldActionThreshold_;
         lastFeeCheckpoint = block.timestamp;
 
         emit SetAssetRegistry(assetRegistry_);
@@ -520,24 +530,27 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         {
             uint256 totalValue = 0;
-            uint256 balance;
-            for (uint256 i = 0; i < numAssets; i++) {
-                if (assets[i].isERC4626) {
-                    balance = IERC4626(address(assets[i].asset))
-                        .convertToAssets(assetAmounts[i].value);
-                    underlyingBalances[i] = balance;
-                    underlyingTargetWeights[
-                        underlyingIndexes[i]
-                    ] += targetWeights[i];
-                } else {
-                    balance = assetAmounts[i].value;
-                    underlyingTargetWeights[i] += targetWeights[i];
-                }
+            {
+                uint256 balance;
+                for (uint256 i = 0; i < numAssets; i++) {
+                    if (assets[i].isERC4626) {
+                        balance = IERC4626(address(assets[i].asset))
+                            .convertToAssets(assetAmounts[i].value);
+                        underlyingBalances[i] = balance;
+                        underlyingTargetWeights[
+                            underlyingIndexes[i]
+                        ] += targetWeights[i];
+                    } else {
+                        balance = assetAmounts[i].value;
+                        underlyingTargetWeights[i] += targetWeights[i];
+                    }
 
-                totalValue += (balance * spotPrices[i]) / assetUnits[i];
+                    totalValue += (balance * spotPrices[i]) / assetUnits[i];
+                }
             }
 
             uint256 targetBalance;
+            uint256 withdrawalAmount;
             for (uint256 i = 0; i < numAssets; i++) {
                 if (assets[i].isERC4626) {
                     targetBalance =
@@ -549,14 +562,23 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                             targetBalance -
                             underlyingBalances[i];
                     } else {
-                        IERC4626(address(assets[i].asset)).withdraw(
-                            underlyingBalances[i] - targetBalance,
-                            address(this),
-                            address(this)
-                        );
-                        underlyingTargetWeights[
-                            underlyingIndexes[i]
-                        ] -= targetWeights[i];
+                        withdrawalAmount =
+                            underlyingBalances[i] -
+                            targetBalance;
+                        if (
+                            (withdrawalAmount * spotPrices[i]) /
+                                assetUnits[i] >=
+                            minYieldActionThreshold
+                        ) {
+                            IERC4626(address(assets[i].asset)).withdraw(
+                                underlyingBalances[i] - targetBalance,
+                                address(this),
+                                address(this)
+                            );
+                            underlyingTargetWeights[
+                                underlyingIndexes[i]
+                            ] -= targetWeights[i];
+                        }
                     }
                 }
             }
@@ -566,7 +588,10 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numAssets; i++) {
             if (assets[i].isERC4626 && depositAmounts[i] > 0) {
                 if (
-                    assetAmounts[underlyingIndexes[i]].value > depositAmounts[i]
+                    assetAmounts[underlyingIndexes[i]].value >
+                    depositAmounts[i] &&
+                    (depositAmounts[i] * spotPrices[i]) / assetUnits[i] >=
+                    minYieldActionThreshold
                 ) {
                     _setAllowance(
                         IERC20(IERC4626(address(assets[i].asset)).asset()),

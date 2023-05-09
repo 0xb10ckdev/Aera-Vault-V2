@@ -232,7 +232,8 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
-            _MAX_GUARDIAN_FEE
+            _MAX_GUARDIAN_FEE,
+            _getScaler(assets[numeraire])
         );
     }
 

@@ -24,6 +24,7 @@ interface ICustody is ICustodyEvents {
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
     error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
+    error Aera__MinYieldActionThresholdIsZero();
     error Aera__CallerIsNotGuardian();
     error Aera__CallerIsNotOwnerOrGuardian();
     error Aera__AssetIsNotRegistered(IERC20 asset);
