@@ -82,6 +82,19 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
+    function test_aeraVaultV2Deployment_fail_whenMinYieldActionThresholdIsZero()
+        public
+    {
+        vm.expectRevert(ICustody.Aera__MinYieldActionThresholdIsZero.selector);
+        new AeraVaultV2(
+            address(assetRegistry),
+            address(balancerExecution),
+            _GUARDIAN,
+            _MAX_GUARDIAN_FEE,
+            0
+        );
+    }
+
     function test_aeraVaultV2Deployment_success() public {
         vm.expectEmit(true, true, true, true);
         emit SetAssetRegistry(address(assetRegistry));
