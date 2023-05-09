@@ -8,36 +8,18 @@ interface IERC4626Mock {
     function setMaxDepositAmount(uint256 amount, bool use) external;
 
     function setMaxWithdrawalAmount(uint256 amount, bool use) external;
+
+    function pause() external;
 }
 
 contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
     function test_startRebalance_success_whenNoYieldAssetsShouldBeAdjusted()
         public
     {
-        ICustody.AssetValue[] memory requests = _generateValidRequest();
-
-        uint256[] memory weights = _getAssetWeights();
-
-        weights = _normalizeWeights(weights);
-
-        uint256 numERC20 = erc20Assets.length;
-        uint256 index;
-        for (uint256 i = 0; i < assets.length; i++) {
-            if (!assetsInformation[i].isERC4626) {
-                if (numERC20 % 2 == 0 || index < numERC20 - 1) {
-                    uint256 adjustmentWeight = ((index / 2 + 1) * _ONE) / 100;
-                    if (index % 2 == 0) {
-                        weights[i] = weights[i] + adjustmentWeight;
-                    } else {
-                        weights[i] = weights[i] - adjustmentWeight;
-                    }
-                }
-
-                index++;
-            }
-
-            requests[i].value = weights[i];
-        }
+        (
+            ICustody.AssetValue[] memory requests,
+            uint256[] memory weights
+        ) = _adjustERC20AssetWeights();
 
         uint256[] memory balances = _getAssetBalances();
 
@@ -57,32 +39,13 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
     function test_startRebalance_success_whenYieldActionAmountIsLessThanThreshold()
         public
     {
-        ICustody.AssetValue[] memory requests = _generateValidRequest();
-
-        uint256[] memory weights = _getAssetWeights();
-
-        weights = _normalizeWeights(weights);
-
-        uint256 numERC20 = erc20Assets.length;
-        uint256 index;
-        for (uint256 i = 0; i < assets.length; i++) {
-            if (!assetsInformation[i].isERC4626) {
-                if (numERC20 % 2 == 0 || index < numERC20 - 1) {
-                    uint256 adjustmentWeight = ((index / 2 + 1) * _ONE) / 100;
-                    if (index % 2 == 0) {
-                        weights[i] = weights[i] + adjustmentWeight;
-                    } else {
-                        weights[i] = weights[i] - adjustmentWeight;
-                    }
-                }
-
-                requests[i].value = weights[i];
-                index++;
-            }
-        }
+        (
+            ICustody.AssetValue[] memory requests,
+            uint256[] memory weights
+        ) = _adjustERC20AssetWeights();
 
         uint256 numERC4626 = yieldAssets.length;
-        index = 0;
+        uint256 index;
         for (uint256 i = 0; i < assets.length; i++) {
             if (assetsInformation[i].isERC4626) {
                 if (numERC4626 % 2 == 0 || index < numERC4626 - 1) {
@@ -118,9 +81,7 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
     {
         ICustody.AssetValue[] memory requests = _generateValidRequest();
 
-        uint256[] memory weights = _getAssetWeights();
-
-        weights = _normalizeWeights(weights);
+        uint256[] memory weights = _normalizeWeights(_getAssetWeights());
 
         uint256 numAssets = assets.length;
         for (uint256 i = 0; i < numAssets; i++) {
@@ -148,32 +109,13 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         uint256 maxDeposit,
         uint256 maxWithdrawal
     ) public {
-        ICustody.AssetValue[] memory requests = _generateValidRequest();
-
-        uint256[] memory weights = _getAssetWeights();
-
-        weights = _normalizeWeights(weights);
-
-        uint256 numERC20 = erc20Assets.length;
-        uint256 index;
-        for (uint256 i = 0; i < assets.length; i++) {
-            if (!assetsInformation[i].isERC4626) {
-                if (numERC20 % 2 == 0 || index < numERC20 - 1) {
-                    uint256 adjustmentWeight = ((index / 2 + 1) * _ONE) / 100;
-                    if (index % 2 == 0) {
-                        weights[i] = weights[i] + adjustmentWeight;
-                    } else {
-                        weights[i] = weights[i] - adjustmentWeight;
-                    }
-                }
-
-                requests[i].value = weights[i];
-                index++;
-            }
-        }
+        (
+            ICustody.AssetValue[] memory requests,
+            uint256[] memory weights
+        ) = _adjustERC20AssetWeights();
 
         uint256 numERC4626 = yieldAssets.length;
-        index = 0;
+        uint256 index;
         for (uint256 i = 0; i < assets.length; i++) {
             if (assetsInformation[i].isERC4626) {
                 if (numERC4626 % 2 == 0 || index < numERC4626 - 1) {
@@ -225,6 +167,82 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
                 index++;
             }
             assertApproxEqAbs(weights[i], currentWeights[i], 0.05e18);
+        }
+    }
+
+    function test_startRebalance_success_whenMaxDepositAndWithdrawReverts()
+        public
+    {
+        (
+            ICustody.AssetValue[] memory requests,
+            uint256[] memory weights
+        ) = _adjustERC20AssetWeights();
+
+        uint256 numERC4626 = yieldAssets.length;
+        uint256 index;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assetsInformation[i].isERC4626) {
+                if (numERC4626 % 2 == 0 || index < numERC4626 - 1) {
+                    if (index % 2 == 0) {
+                        weights[i] = weights[i] + 0.001e18;
+                    } else {
+                        weights[i] = weights[i] - 0.001e18;
+                    }
+                    IERC4626Mock(address(assets[i])).pause();
+                }
+
+                requests[i].value = weights[i];
+                index++;
+            }
+        }
+
+        uint256[] memory balances = _getAssetBalances();
+
+        _rebalance(requests);
+
+        uint256[] memory currentBalances = _getAssetBalances();
+        uint256[] memory currentWeights = _getAssetWeights();
+
+        index = 0;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assetsInformation[i].isERC4626) {
+                if ((numERC4626 % 2 == 0 || index < numERC4626 - 1)) {
+                    assertEq(balances[i], currentBalances[i]);
+                }
+                index++;
+            }
+            assertApproxEqAbs(weights[i], currentWeights[i], 0.05e18);
+        }
+    }
+
+    function _adjustERC20AssetWeights()
+        internal
+        view
+        returns (
+            ICustody.AssetValue[] memory requests,
+            uint256[] memory weights
+        )
+    {
+        requests = _generateValidRequest();
+        weights = _normalizeWeights(_getAssetWeights());
+
+        uint256 numERC20 = erc20Assets.length;
+        uint256 index;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (!assetsInformation[i].isERC4626) {
+                if (numERC20 % 2 == 0 || index < numERC20 - 1) {
+                    uint256 adjustmentWeight = ((index / 2 + 1) * _ONE) / 100;
+                    if (index % 2 == 0) {
+                        weights[i] = weights[i] + adjustmentWeight;
+                    } else {
+                        weights[i] = weights[i] - adjustmentWeight;
+                    }
+                }
+
+                index++;
+            }
+
+            requests[i].value = weights[i];
         }
     }
 
