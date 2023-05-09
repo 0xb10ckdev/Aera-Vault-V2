@@ -249,42 +249,20 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             }
         }
 
-        {
-            uint256 sumStartWeights;
-            uint256 sumEndWeights;
-            for (uint256 i = 0; i < numRequests; i++) {
-                sumStartWeights += startWeights[i];
-                sumEndWeights += endWeights[i];
-            }
+        IERC20[] memory rebalancingAssets;
+        (
+            rebalancingAssets,
+            startAmounts,
+            startWeights,
+            endWeights
+        ) = _getValidRebalanceData(
+            requests,
+            startAmounts,
+            startWeights,
+            endWeights
+        );
 
-            if (sumStartWeights > _ONE) {
-                uint256 deviation = sumStartWeights - _ONE;
-                uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
-                for (uint256 i = 0; i < numRequests; i++) {
-                    if (startWeights[i] > reducibleMinWeight) {
-                        startWeights[i] -= deviation;
-                        break;
-                    }
-                }
-            } else {
-                startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
-            }
-
-            if (sumEndWeights > _ONE) {
-                uint256 deviation = sumEndWeights - _ONE;
-                uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
-                for (uint256 i = 0; i < numRequests; i++) {
-                    if (endWeights[i] > reducibleMinWeight) {
-                        endWeights[i] -= deviation;
-                        break;
-                    }
-                }
-            } else {
-                endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
-            }
-        }
-
-        _adjustPool(requests, startAmounts);
+        _adjustPool(rebalancingAssets, startAmounts);
 
         IERC20[] memory poolTokens = _getPoolTokens();
 
@@ -677,16 +655,102 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         necessaryTotalValue -= adjustableAssetValue * adjustableCount;
     }
 
-    /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
+    /// @notice Get valid data for rebalancing.
     /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
+    /// @param startAmounts Start amount of each assets to rebalance as requests.
+    /// @param startWeights Start weights of each assets.
+    /// @param endWeights End weights of each assets.
+    /// @return rebalancingAssets Assets that will participate in rebalancing.
+    /// @return validStartAmounts Amount of assets that will participate.
+    /// @return validStartWeights Start weights of assets that will participate.
+    /// @return validEndWeights End weights of assets that will participate.
+    function _getValidRebalanceData(
+        AssetRebalanceRequest[] calldata requests,
+        uint256[] memory startAmounts,
+        uint256[] memory startWeights,
+        uint256[] memory endWeights
+    )
+        internal
+        pure
+        returns (
+            IERC20[] memory rebalancingAssets,
+            uint256[] memory validStartAmounts,
+            uint256[] memory validStartWeights,
+            uint256[] memory validEndWeights
+        )
+    {
+        uint256 numRequests = requests.length;
+        uint256 numValidAssets;
+        uint256 sumStartWeights;
+        uint256 sumEndWeights;
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (startAmounts[i] > 0) {
+                numValidAssets++;
+            }
+            sumStartWeights += startWeights[i];
+            sumEndWeights += endWeights[i];
+        }
+
+        rebalancingAssets = new IERC20[](numValidAssets);
+        validStartAmounts = new uint256[](numValidAssets);
+        validStartWeights = new uint256[](numValidAssets);
+        validEndWeights = new uint256[](numValidAssets);
+
+        uint256 index;
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (startAmounts[i] == 0) {
+                continue;
+            }
+
+            rebalancingAssets[index] = requests[i].asset;
+            validStartAmounts[index] = startAmounts[i];
+            validStartWeights[index] = startWeights[i];
+            validEndWeights[index] = endWeights[i];
+
+            index++;
+        }
+
+        if (sumStartWeights > _ONE) {
+            uint256 deviation = sumStartWeights - _ONE;
+            uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
+            for (uint256 i = 0; i < numValidAssets; i++) {
+                if (validStartWeights[i] > reducibleMinWeight) {
+                    validStartWeights[i] -= deviation;
+                    break;
+                }
+            }
+        } else {
+            validStartWeights[0] =
+                validStartWeights[0] +
+                _ONE -
+                sumStartWeights;
+        }
+
+        if (sumEndWeights > _ONE) {
+            uint256 deviation = sumEndWeights - _ONE;
+            uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
+            for (uint256 i = 0; i < numRequests; i++) {
+                if (validEndWeights[i] > reducibleMinWeight) {
+                    validEndWeights[i] -= deviation;
+                    break;
+                }
+            }
+        } else {
+            validEndWeights[0] = validEndWeights[0] + _ONE - sumEndWeights;
+        }
+    }
+
+    /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
+    /// @dev Will only be called by startRebalance().
+    /// @param rebalancingAssets Assets to rebalance.
     /// @param startAmounts Adjusted start amount of each assets to rebalance.
     ///                     It rebalances the minimal necessary amounts of assets.
     function _adjustPool(
-        AssetRebalanceRequest[] calldata requests,
+        IERC20[] memory rebalancingAssets,
         uint256[] memory startAmounts
     ) internal {
-        uint256 numRequests = requests.length;
+        uint256 numAssets = rebalancingAssets.length;
 
         (
             IERC20[] memory poolTokens,
@@ -701,14 +765,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         uint256 index;
         uint256 startAmount;
         IERC20 asset;
-        for (uint256 i = 0; i < numRequests; i++) {
+        for (uint256 i = 0; i < numAssets; i++) {
             startAmount = startAmounts[i];
 
-            if (startAmount == 0) {
-                continue;
-            }
-
-            asset = requests[i].asset;
+            asset = rebalancingAssets[i];
 
             (isRegistered, index) = _isAssetRegisteredToPool(
                 asset,
@@ -734,12 +794,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
             if (
-                !_isTokenNecessary(
-                    poolTokens[i],
-                    requests,
-                    startAmounts,
-                    numRequests
-                )
+                !_isTokenNecessary(poolTokens[i], rebalancingAssets, numAssets)
             ) {
                 _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
             }
@@ -796,21 +851,17 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     /// @notice Check whether asset is necessary in Balancer pool or not.
     /// @dev Will only be called by _adjustPool().
     /// @param poolToken IERC20 token to check.
-    /// @param requests Struct details for requests.
-    /// @param startAmounts Start amount of each assets to rebalance.
-    /// @param numRequests Number of requests.
+    /// @param rebalancingAssets Assets to rebalance.
+    /// @param numAssets Number of assets.
     /// @return isNecessary True if asset is necessary.
     function _isTokenNecessary(
         IERC20 poolToken,
-        AssetRebalanceRequest[] calldata requests,
-        uint256[] memory startAmounts,
-        uint256 numRequests
+        IERC20[] memory rebalancingAssets,
+        uint256 numAssets
     ) internal pure returns (bool isNecessary) {
-        for (uint256 i = 0; i < numRequests; i++) {
-            if (poolToken == requests[i].asset) {
-                if (startAmounts[i] > 0) {
-                    isNecessary = true;
-                }
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (poolToken == rebalancingAssets[i]) {
+                isNecessary = true;
                 break;
             }
         }
