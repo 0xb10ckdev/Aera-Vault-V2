@@ -37,13 +37,23 @@ abstract contract BaseClaimGuardianFeesTest is TestBaseCustody {
             holdings.length
         );
 
+        uint256[] memory balances = new uint256[](holdings.length);
+
         for (uint256 i = 0; i < holdings.length; i++) {
             fees[i] = IGuardiansFee(address(custody)).guardiansFee(guardian, i);
+            balances[i] = holdings[i].asset.balanceOf(guardian);
         }
 
         vm.expectEmit(true, true, true, true, address(custody));
         emit ClaimGuardianFees(guardian, fees);
 
         custody.claimGuardianFees();
+
+        for (uint256 i = 0; i < holdings.length; i++) {
+            assertEq(
+                balances[i] + fees[i].value,
+                holdings[i].asset.balanceOf(guardian)
+            );
+        }
     }
 }
