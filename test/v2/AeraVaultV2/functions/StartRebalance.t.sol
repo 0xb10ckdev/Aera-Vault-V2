@@ -17,7 +17,10 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         uint256 index;
         for (uint256 i = 0; i < assets.length; i++) {
             if (!assetsInformation[i].isERC4626) {
-                if (index < erc20Assets.length - 1) {
+                if (
+                    erc20Assets.length % 2 == 0 ||
+                    index < erc20Assets.length - 1
+                ) {
                     if (index % 2 == 0) {
                         weights[i] =
                             weights[i] +
@@ -65,6 +68,87 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         }
     }
 
+    function test_startRebalance_success_whenYieldActionAmountIsLessThanThreshold()
+        public
+    {
+        ICustody.AssetValue[] memory requests = _generateValidRequest();
+
+        uint256[] memory weights = _getAssetWeights();
+
+        weights = _normalizeWeights(weights);
+
+        uint256 index;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (!assetsInformation[i].isERC4626) {
+                if (
+                    erc20Assets.length % 2 == 0 ||
+                    index < erc20Assets.length - 1
+                ) {
+                    if (index % 2 == 0) {
+                        weights[i] =
+                            weights[i] +
+                            ((index / 2 + 1) * _ONE) /
+                            100;
+                    } else {
+                        weights[i] =
+                            weights[i] -
+                            ((index / 2 + 1) * _ONE) /
+                            100;
+                    }
+                }
+
+                requests[i].value = weights[i];
+                index++;
+            }
+        }
+
+        index = 0;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assetsInformation[i].isERC4626) {
+                if (
+                    yieldAssets.length % 2 == 0 ||
+                    index < yieldAssets.length - 1
+                ) {
+                    if (index % 2 == 0) {
+                        weights[i] = weights[i] + 0.0001e18;
+                    } else {
+                        weights[i] = weights[i] - 0.0001e18;
+                    }
+                }
+
+                requests[i].value = weights[i];
+                index++;
+            }
+        }
+
+        uint256[] memory balances = _getAssetBalances();
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit StartRebalance(requests, block.timestamp, block.timestamp + 100);
+
+        vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+
+        vm.stopPrank();
+
+        vm.warp(vault.execution().rebalanceEndTime());
+
+        _swap(_getTargetAmounts());
+
+        vault.endRebalance();
+
+        uint256[] memory currentBalances = _getAssetBalances();
+        uint256[] memory currentWeights = _getAssetWeights();
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assetsInformation[i].isERC4626) {
+                assertApproxEqRel(balances[i], currentBalances[i], 0.001e18);
+            }
+            assertApproxEqAbs(weights[i], currentWeights[i], 0.05e18);
+        }
+    }
+
     function test_startRebalance_success_whenYieldAssetsShouldBeAdjusted()
         public
     {
@@ -75,7 +159,7 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         weights = _normalizeWeights(weights);
 
         for (uint256 i = 0; i < assets.length; i++) {
-            if (i < assets.length - 1) {
+            if (assets.length % 2 == 0 || i < assets.length - 1) {
                 if (i % 2 == 0) {
                     weights[i] = weights[i] + ((i / 2 + 1) * _ONE) / 100;
                 } else {
