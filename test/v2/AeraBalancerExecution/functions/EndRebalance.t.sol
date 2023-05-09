@@ -34,6 +34,7 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
 
     function _generateRequest()
         internal
+        view
         override
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {

@@ -10,6 +10,7 @@ contract ClaimGuardianFeesTest is
 {
     function _generateRequest()
         internal
+        view
         override
         returns (ICustody.AssetValue[] memory requests)
     {

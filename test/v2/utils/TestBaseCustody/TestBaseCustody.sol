@@ -15,6 +15,7 @@ abstract contract TestBaseCustody is TestBase, ICustodyEvents {
 
     function _generateRequest()
         internal
+        view
         virtual
         returns (ICustody.AssetValue[] memory requests)
     {

@@ -24,6 +24,7 @@ contract StartRebalanceTest is
 
     function _generateRequest()
         internal
+        view
         override
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {

@@ -108,7 +108,11 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         }
     }
 
-    function _getAssetBalances() internal returns (uint256[] memory balances) {
+    function _getAssetBalances()
+        internal
+        view
+        returns (uint256[] memory balances)
+    {
         balances = new uint256[](assets.length);
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -116,7 +120,11 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         }
     }
 
-    function _getAssetWeights() internal returns (uint256[] memory weights) {
+    function _getAssetWeights()
+        internal
+        view
+        returns (uint256[] memory weights)
+    {
         uint256 numAssets = assets.length;
         uint256[] memory values = new uint256[](numAssets);
         weights = new uint256[](numAssets);
@@ -163,6 +171,7 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
 
     function _generateRequest()
         internal
+        view
         override
         returns (ICustody.AssetValue[] memory requests)
     {

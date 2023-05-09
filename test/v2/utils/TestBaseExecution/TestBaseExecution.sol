@@ -12,6 +12,7 @@ abstract contract TestBaseExecution is TestBase, IExecutionEvents {
 
     function _generateRequest()
         internal
+        view
         virtual
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {

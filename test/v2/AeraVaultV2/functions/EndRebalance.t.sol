@@ -7,6 +7,7 @@ import "../TestBaseAeraVaultV2.sol";
 contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseAeraVaultV2 {
     function _generateRequest()
         internal
+        view
         override
         returns (ICustody.AssetValue[] memory requests)
     {

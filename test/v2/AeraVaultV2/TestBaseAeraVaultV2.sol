@@ -267,6 +267,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, Deployer {
 
     function _generateValidRequest()
         internal
+        view
         returns (ICustody.AssetValue[] memory requests)
     {
         requests = new ICustody.AssetValue[](assets.length);
