@@ -14,6 +14,14 @@ abstract contract BaseWithdrawTest is TestBaseCustody {
         custody.withdraw(withdrawAmounts, false);
     }
 
+    function test_withdraw_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.withdraw(withdrawAmounts, false);
+    }
+
     function test_withdraw_fail_whenAssetIsNotRegistered() public {
         IERC20 erc20 = IERC20(
             address(new ERC20Mock("Token", "TOKEN", 18, 1e30))

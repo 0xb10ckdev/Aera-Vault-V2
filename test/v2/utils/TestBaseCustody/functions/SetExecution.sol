@@ -14,6 +14,14 @@ abstract contract BaseSetExecutionTest is TestBaseCustody {
         custody.setExecution(address(newExecution));
     }
 
+    function test_setExecution_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.setExecution(address(newExecution));
+    }
+
     function test_setExecution_fail_whenExecutionIsZeroAddress() public {
         vm.expectRevert(ICustody.Aera__ExecutionIsZeroAddress.selector);
 

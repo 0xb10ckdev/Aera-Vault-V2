@@ -11,6 +11,14 @@ abstract contract BaseSetGuardianTest is TestBaseCustody {
         custody.setGuardian(_USER);
     }
 
+    function test_setGuardian_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.setGuardian(_USER);
+    }
+
     function test_setGuardian_fail_whenGuardianIsZeroAddress() public {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
 

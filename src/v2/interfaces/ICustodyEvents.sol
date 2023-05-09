@@ -28,7 +28,7 @@ interface ICustodyEvents {
     event SetExecution(address execution);
 
     /// @notice Emitted when vault is finalized.
-    event Finalize();
+    event Finalized();
 
     /// @notice Emitted when sweep is called.
     /// @param asset Address of asset.

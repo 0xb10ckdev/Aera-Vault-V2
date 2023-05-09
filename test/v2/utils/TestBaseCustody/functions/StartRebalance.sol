@@ -12,6 +12,16 @@ abstract contract BaseStartRebalanceTest is TestBaseCustody {
         _startRebalance();
     }
 
+    function test_startRebalance_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.startPrank(custody.guardian());
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        _startRebalance();
+    }
+
     function test_startRebalance_fail_whenVaultIsPaused() public {
         custody.pauseVault();
 

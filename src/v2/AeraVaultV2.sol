@@ -41,6 +41,9 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @notice Whether custody module is paused or not.
     bool public isPaused;
 
+    /// @notice Indicates that the Vault has been finalized.
+    bool public finalized;
+
     /// @notice Fee earned amount for each guardian.
     mapping(address => AssetValue[]) public guardiansFee;
 
@@ -80,6 +83,14 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     modifier whenPaused() {
         if (!isPaused) {
             revert Aera__VaultIsNotPaused();
+        }
+        _;
+    }
+
+    /// @dev Throws if called after the vault is finalized.
+    modifier whenNotFinalized() {
+        if (finalized) {
+            revert Aera__VaultIsFinalized();
         }
         _;
     }
@@ -131,7 +142,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @inheritdoc ICustody
     function deposit(
         AssetValue[] memory amounts
-    ) external override nonReentrant onlyOwner {
+    ) external override nonReentrant onlyOwner whenNotFinalized {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAssets = assets.length;
@@ -163,7 +174,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     function withdraw(
         AssetValue[] memory amounts,
         bool force
-    ) external override nonReentrant onlyOwner {
+    ) external override nonReentrant onlyOwner whenNotFinalized {
         _updateGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
@@ -232,7 +243,9 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function setGuardian(address newGuardian) external override onlyOwner {
+    function setGuardian(
+        address newGuardian
+    ) external override onlyOwner whenNotFinalized {
         _checkGuardianAddress(newGuardian);
         _updateGuardianFees();
 
@@ -244,7 +257,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     /// @inheritdoc ICustody
     function setAssetRegistry(
         address newAssetRegistry
-    ) external override onlyOwner {
+    ) external override onlyOwner whenNotFinalized {
         _checkAssetRegistryAddress(newAssetRegistry);
         _updateGuardianFees();
 
@@ -254,7 +267,9 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function setExecution(address newExecution) external override onlyOwner {
+    function setExecution(
+        address newExecution
+    ) external override onlyOwner whenNotFinalized {
         _checkExecutionAddress(newExecution);
         _updateGuardianFees();
 
@@ -264,7 +279,15 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function finalize() external override onlyOwner {
+    function finalize()
+        external
+        override
+        nonReentrant
+        onlyOwner
+        whenNotFinalized
+    {
+        finalized = true;
+
         _updateGuardianFees();
 
         execution.claimNow();
@@ -278,7 +301,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
         }
 
-        emit Finalize();
+        emit Finalized();
     }
 
     /// @inheritdoc ICustody
@@ -302,7 +325,13 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function pauseVault() external override onlyOwner whenNotPaused {
+    function pauseVault()
+        external
+        override
+        onlyOwner
+        whenNotPaused
+        whenNotFinalized
+    {
         _updateGuardianFees();
 
         execution.claimNow();
@@ -312,7 +341,13 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function resumeVault() external override onlyOwner whenPaused {
+    function resumeVault()
+        external
+        override
+        onlyOwner
+        whenPaused
+        whenNotFinalized
+    {
         lastFeeCheckpoint = block.timestamp;
         isPaused = false;
 
@@ -324,7 +359,14 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         AssetValue[] calldata assetWeights,
         uint256 startTime,
         uint256 endTime
-    ) external override nonReentrant onlyGuardian whenNotPaused {
+    )
+        external
+        override
+        nonReentrant
+        onlyGuardian
+        whenNotPaused
+        whenNotFinalized
+    {
         _updateGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
@@ -373,6 +415,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         nonReentrant
         onlyOwnerOrGuardian
         whenNotPaused
+        whenNotFinalized
     {
         _updateGuardianFees();
 
@@ -388,6 +431,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         nonReentrant
         onlyOwnerOrGuardian
         whenNotPaused
+        whenNotFinalized
     {
         _updateGuardianFees();
 

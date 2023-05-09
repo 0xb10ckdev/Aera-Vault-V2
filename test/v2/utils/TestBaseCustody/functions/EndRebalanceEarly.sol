@@ -14,6 +14,14 @@ abstract contract BaseEndRebalanceEarlyTest is TestBaseCustody {
         custody.endRebalanceEarly();
     }
 
+    function test_endRebalanceEarly_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.endRebalanceEarly();
+    }
+
     function test_endRebalanceEarly_fail_whenVaultIsPaused() public {
         custody.pauseVault();
 

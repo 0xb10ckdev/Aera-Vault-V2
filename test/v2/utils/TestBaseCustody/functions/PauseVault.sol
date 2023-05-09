@@ -11,6 +11,14 @@ abstract contract BasePauseVaultTest is TestBaseCustody {
         custody.pauseVault();
     }
 
+    function test_pauseVault_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.pauseVault();
+    }
+
     function test_pauseVault_fail_whenVaultIsPaused() public {
         custody.pauseVault();
 

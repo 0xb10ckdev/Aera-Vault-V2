@@ -11,6 +11,15 @@ abstract contract BaseResumeVaultTest is TestBaseCustody {
         custody.resumeVault();
     }
 
+    function test_resumeVault_fail_whenFinalized() public {
+        custody.pauseVault();
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.resumeVault();
+    }
+
     function test_resumeVault_fail_whenVaultIsNotPaused() public {
         vm.expectRevert(ICustody.Aera__VaultIsNotPaused.selector);
 

@@ -14,6 +14,14 @@ abstract contract BaseDepositTest is TestBaseCustody {
         custody.deposit(depositAmounts);
     }
 
+    function test_deposit_fail_whenFinalized() public {
+        custody.finalize();
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        custody.deposit(depositAmounts);
+    }
+
     function test_deposit_fail_whenAssetIsNotRegistered() public {
         IERC20 erc20 = IERC20(
             address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
