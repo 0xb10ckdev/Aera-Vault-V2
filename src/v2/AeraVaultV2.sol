@@ -522,69 +522,55 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             uint256[] memory assetUnits
         ) = _getSpotPricesAndUnits(assets);
 
-        uint256[] memory underlyingBalances = new uint256[](numAssets);
         uint256[] memory depositAmounts = new uint256[](numAssets);
+        uint256[] memory withdrawAmounts = new uint256[](numAssets);
+        uint256[] memory currentWeights = new uint256[](numAssets);
+
+        (
+            depositAmounts,
+            withdrawAmounts,
+            currentWeights
+        ) = _calcAdjustmentAmounts(
+            assets,
+            targetWeights,
+            spotPrices,
+            assetUnits
+        );
+
         underlyingTargetWeights = new uint256[](numAssets);
-
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
-
-        {
-            uint256 totalValue = 0;
-            {
-                uint256 balance;
-                for (uint256 i = 0; i < numAssets; i++) {
-                    if (assets[i].isERC4626) {
-                        balance = IERC4626(address(assets[i].asset))
-                            .convertToAssets(assetAmounts[i].value);
-                        underlyingBalances[i] = balance;
-                        underlyingTargetWeights[
-                            underlyingIndexes[i]
-                        ] += targetWeights[i];
-                    } else {
-                        balance = assetAmounts[i].value;
-                        underlyingTargetWeights[i] += targetWeights[i];
-                    }
-
-                    totalValue += (balance * spotPrices[i]) / assetUnits[i];
-                }
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                underlyingTargetWeights[underlyingIndexes[i]] += targetWeights[
+                    i
+                ];
+            } else {
+                underlyingTargetWeights[i] += targetWeights[i];
             }
+        }
 
-            uint256 targetBalance;
-            uint256 withdrawalAmount;
-            for (uint256 i = 0; i < numAssets; i++) {
-                if (assets[i].isERC4626) {
-                    targetBalance =
-                        (totalValue * targetWeights[i] * assetUnits[i]) /
-                        spotPrices[i] /
-                        _ONE;
-                    if (targetBalance > underlyingBalances[i]) {
-                        depositAmounts[i] =
-                            targetBalance -
-                            underlyingBalances[i];
-                    } else {
-                        withdrawalAmount =
-                            underlyingBalances[i] -
-                            targetBalance;
-                        if (
-                            (withdrawalAmount * spotPrices[i]) /
-                                assetUnits[i] >=
-                            minYieldActionThreshold
-                        ) {
-                            IERC4626(address(assets[i].asset)).withdraw(
-                                underlyingBalances[i] - targetBalance,
-                                address(this),
-                                address(this)
-                            );
-                            underlyingTargetWeights[
-                                underlyingIndexes[i]
-                            ] -= targetWeights[i];
-                        }
-                    }
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626 && withdrawAmounts[i] > 0) {
+                if (
+                    (withdrawAmounts[i] * spotPrices[i]) / assetUnits[i] >=
+                    minYieldActionThreshold
+                ) {
+                    IERC4626(address(assets[i].asset)).withdraw(
+                        withdrawAmounts[i],
+                        address(this),
+                        address(this)
+                    );
+                    underlyingTargetWeights[
+                        underlyingIndexes[i]
+                    ] -= targetWeights[i];
+                } else {
+                    underlyingTargetWeights[
+                        underlyingIndexes[i]
+                    ] -= currentWeights[i];
                 }
             }
         }
 
-        assetAmounts = _getHoldings(assets);
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
         for (uint256 i = 0; i < numAssets; i++) {
             if (assets[i].isERC4626 && depositAmounts[i] > 0) {
                 if (
@@ -608,6 +594,74 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                     underlyingTargetWeights[
                         underlyingIndexes[i]
                     ] -= targetWeights[i];
+                } else {
+                    underlyingTargetWeights[
+                        underlyingIndexes[i]
+                    ] -= currentWeights[i];
+                }
+            }
+        }
+    }
+
+    /// @notice Calculate the amounts of underlying assets of yield assets to adjust.
+    /// @dev Will only be called by _adjustYieldAssets().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @param targetWeights Reordered target weights.
+    /// @param spotPrices Spot prices of assets.
+    /// @param assetUnits Units of assets.
+    /// @return depositAmounts Amounts of underlying assets to deposit to yield tokens.
+    /// @return withdrawAmounts Amounts of underlying assets to withdraw from yield tokens.
+    function _calcAdjustmentAmounts(
+        IAssetRegistry.AssetInformation[] memory assets,
+        uint256[] memory targetWeights,
+        uint256[] memory spotPrices,
+        uint256[] memory assetUnits
+    )
+        internal
+        view
+        returns (
+            uint256[] memory depositAmounts,
+            uint256[] memory withdrawAmounts,
+            uint256[] memory currentWeights
+        )
+    {
+        uint256 numAssets = assets.length;
+        depositAmounts = new uint256[](numAssets);
+        withdrawAmounts = new uint256[](numAssets);
+        currentWeights = new uint256[](numAssets);
+        uint256[] memory underlyingBalances = new uint256[](numAssets);
+        uint256[] memory values = new uint256[](numAssets);
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+        uint256 totalValue = 0;
+        {
+            uint256 balance;
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (assets[i].isERC4626) {
+                    balance = IERC4626(address(assets[i].asset))
+                        .convertToAssets(assetAmounts[i].value);
+                    underlyingBalances[i] = balance;
+                } else {
+                    balance = assetAmounts[i].value;
+                }
+
+                values[i] = (balance * spotPrices[i]) / assetUnits[i];
+                totalValue += values[i];
+            }
+        }
+
+        uint256 targetBalance;
+        for (uint256 i = 0; i < numAssets; i++) {
+            currentWeights[i] = (values[i] * _ONE) / totalValue;
+
+            if (assets[i].isERC4626) {
+                targetBalance =
+                    (totalValue * targetWeights[i] * assetUnits[i]) /
+                    spotPrices[i] /
+                    _ONE;
+                if (targetBalance > underlyingBalances[i]) {
+                    depositAmounts[i] = targetBalance - underlyingBalances[i];
+                } else {
+                    withdrawAmounts[i] = underlyingBalances[i] - targetBalance;
                 }
             }
         }
@@ -764,7 +818,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @notice Get total amount of assets in execution and custody module.
     /// @dev Will only be called by withdraw(), finalize(), startRebalance(),
-    ///      holdings() and _updateGuardianFees().
+    ///      holdings(), _calcAdjustmentAmounts() and _updateGuardianFees().
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(
