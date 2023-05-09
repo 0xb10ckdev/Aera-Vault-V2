@@ -9,7 +9,7 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
         super.setUp();
 
         for (uint256 i = 0; i < erc20Assets.length; i++) {
-            withdrawalAmounts.push(
+            withdrawAmounts.push(
                 ICustody.AssetValue(
                     erc20Assets[i],
                     5 * _getScaler(erc20Assets[i])
@@ -22,44 +22,44 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
         vm.prank(_GUARDIAN);
         _startRebalance(_generateRequest());
 
-        withdrawalAmounts[0].value =
-            withdrawalAmounts[0].asset.balanceOf(address(vault)) +
+        withdrawAmounts[0].value =
+            withdrawAmounts[0].asset.balanceOf(address(vault)) +
             1;
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 ICustody.Aera__AmountExceedsAvailable.selector,
-                withdrawalAmounts[0].asset,
-                withdrawalAmounts[0].value,
-                withdrawalAmounts[0].value - 1
+                withdrawAmounts[0].asset,
+                withdrawAmounts[0].value,
+                withdrawAmounts[0].value - 1
             )
         );
 
-        custody.withdraw(withdrawalAmounts, false);
+        custody.withdraw(withdrawAmounts, false);
     }
 
     function test_withdraw_success_withClaim() public virtual {
         vm.prank(_GUARDIAN);
         _startRebalance(_generateRequest());
 
-        uint256[] memory balances = new uint256[](withdrawalAmounts.length);
-        for (uint256 i = 0; i < withdrawalAmounts.length; i++) {
-            balances[i] = withdrawalAmounts[i].asset.balanceOf(address(this));
-            withdrawalAmounts[i].value =
-                withdrawalAmounts[0].asset.balanceOf(address(vault)) +
+        uint256[] memory balances = new uint256[](withdrawAmounts.length);
+        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
+            balances[i] = withdrawAmounts[i].asset.balanceOf(address(this));
+            withdrawAmounts[i].value =
+                withdrawAmounts[0].asset.balanceOf(address(vault)) +
                 1;
         }
 
         vm.expectEmit(true, true, true, true, address(custody));
-        emit Withdraw(withdrawalAmounts, true);
+        emit Withdraw(withdrawAmounts, true);
 
-        custody.withdraw(withdrawalAmounts, true);
+        custody.withdraw(withdrawAmounts, true);
 
-        for (uint256 i = 0; i < withdrawalAmounts.length; i++) {
+        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             assertEq(
-                withdrawalAmounts[i].asset.balanceOf(address(this)) -
+                withdrawAmounts[i].asset.balanceOf(address(this)) -
                     balances[i],
-                withdrawalAmounts[i].value
+                withdrawAmounts[i].value
             );
         }
     }

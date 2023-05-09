@@ -168,40 +168,13 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
 
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
-        bool isRegistered;
-        uint256 index;
+        uint256[] memory assetIndexes = _checkWithdrawRequest(assets, amounts);
 
         for (uint256 i = 0; i < numAmounts; i++) {
-            (isRegistered, index) = _isAssetRegistered(
-                amounts[i].asset,
-                assets,
-                numAssets
-            );
-
-            if (isRegistered) {
-                if (assetAmounts[index].value < amounts[i].value) {
-                    revert Aera__AmountExceedsAvailable(
-                        amounts[i].asset,
-                        amounts[i].value,
-                        assetAmounts[i].value
-                    );
-                }
-            } else {
-                revert Aera__AssetIsNotRegistered(amounts[i].asset);
-            }
-        }
-
-        bool claimed;
-
-        for (uint256 i = 0; i < numAmounts; i++) {
-            if (
-                !claimed &&
-                amounts[i].asset.balanceOf(address(this)) < amounts[i].value
-            ) {
+            if (amounts[i].asset.balanceOf(address(this)) < amounts[i].value) {
                 if (!force) {
                     revert Aera__AmountExceedsAvailable(
                         amounts[i].asset,
@@ -211,11 +184,47 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 }
 
                 execution.claimNow();
-                claimed = true;
+                break;
             }
+        }
 
+        uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
+        uint256[] memory withdrawAmounts = new uint256[](numAssets);
+        (
+            uint256[] memory spotPrices,
+            uint256[] memory assetUnits
+        ) = _getSpotPricesAndUnits(assets);
+
+        uint256 assetIndex;
+        for (uint256 i = 0; i < numAmounts; i++) {
             if (amounts[i].value > 0) {
-                amounts[i].asset.safeTransfer(owner(), amounts[i].value);
+                assetIndex = assetIndexes[i];
+
+                if (assets[assetIndex].isERC4626) {
+                    if (assets[assetIndex].withdrawable) {
+                        amounts[i].asset.safeTransfer(
+                            owner(),
+                            amounts[i].value
+                        );
+                    } else {
+                        withdrawAmounts[
+                            underlyingIndexes[assetIndex]
+                        ] += _withdrawUnderlyingAsset(
+                            assets[assetIndex],
+                            amounts[i].value,
+                            spotPrices[assetIndex],
+                            assetUnits[assetIndex]
+                        );
+                    }
+                } else {
+                    withdrawAmounts[assetIndex] += amounts[i].value;
+                }
+            }
+        }
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (withdrawAmounts[i] > 0) {
+                assets[i].asset.safeTransfer(owner(), withdrawAmounts[i]);
             }
         }
 
@@ -459,8 +468,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @notice Calculate current guardian fees.
     /// @dev Will only be called by withdraw(), setGuardian(), setAssetRegistry(),
-    ///      setExecution(), finalize(), startRebalance(), endRebalance(),
-    ///      endRebalanceEarly() and claimGuardianFees().
+    ///      setExecution(), finalize(), pauseVault(), startRebalance(),
+    ///      endRebalance(), endRebalanceEarly() and claimGuardianFees().
     function _updateGuardianFees() internal {
         if (guardianFee == 0) {
             return;
@@ -498,6 +507,62 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
             }
 
             guardiansFeeTotal[assetAmounts[i].asset] += newFee;
+        }
+    }
+
+    /// @notice Check request to withdraw.
+    /// @dev Will only be called by withdraw().
+    /// @param assets Struct details for registered assets in asset registry.
+    /// @param amounts Struct details for amounts to withdraw.
+    /// @return assetIndexes Array of requested asset indexes in order of registered assets.
+    function _checkWithdrawRequest(
+        IAssetRegistry.AssetInformation[] memory assets,
+        AssetValue[] memory amounts
+    ) internal view returns (uint256[] memory assetIndexes) {
+        uint256 numAssets = assets.length;
+        uint256 numAmounts = amounts.length;
+
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+        assetIndexes = new uint256[](numAmounts);
+
+        bool isRegistered;
+        IERC4626 yieldAsset;
+        uint256 availableAmount;
+        uint256 index;
+
+        for (uint256 i = 0; i < numAmounts; i++) {
+            (isRegistered, index) = _isAssetRegistered(
+                amounts[i].asset,
+                assets,
+                numAssets
+            );
+
+            if (isRegistered) {
+                availableAmount = assetAmounts[index].value;
+
+                if (assets[index].isERC4626 && !assets[index].withdrawable) {
+                    yieldAsset = IERC4626(address(assets[index].asset));
+                    availableAmount = yieldAsset.convertToAssets(
+                        availableAmount
+                    );
+                    availableAmount = Math.min(
+                        availableAmount,
+                        yieldAsset.maxWithdraw(address(this))
+                    );
+                }
+
+                if (availableAmount < amounts[i].value) {
+                    revert Aera__AmountExceedsAvailable(
+                        amounts[i].asset,
+                        amounts[i].value,
+                        availableAmount
+                    );
+                }
+            } else {
+                revert Aera__AssetIsNotRegistered(amounts[i].asset);
+            }
+
+            assetIndexes[i] = index;
         }
     }
 
@@ -551,14 +616,13 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numAssets; i++) {
             if (assets[i].isERC4626 && withdrawAmounts[i] > 0) {
                 if (
-                    (withdrawAmounts[i] * spotPrices[i]) / assetUnits[i] >=
-                    minYieldActionThreshold
-                ) {
-                    IERC4626(address(assets[i].asset)).withdraw(
+                    _withdrawUnderlyingAsset(
+                        assets[i],
                         withdrawAmounts[i],
-                        address(this),
-                        address(this)
-                    );
+                        spotPrices[i],
+                        assetUnits[i]
+                    ) > 0
+                ) {
                     underlyingTargetWeights[
                         underlyingIndexes[i]
                     ] -= targetWeights[i];
@@ -576,18 +640,14 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
                 if (
                     assetAmounts[underlyingIndexes[i]].value >
                     depositAmounts[i] &&
-                    (depositAmounts[i] * spotPrices[i]) / assetUnits[i] >=
-                    minYieldActionThreshold
-                ) {
-                    _setAllowance(
-                        IERC20(IERC4626(address(assets[i].asset)).asset()),
-                        address(assets[i].asset),
-                        depositAmounts[i]
-                    );
-                    IERC4626(address(assets[i].asset)).deposit(
+                    _depositUnderlyingAsset(
+                        assets[i],
                         depositAmounts[i],
-                        address(this)
-                    );
+                        spotPrices[i],
+                        assetUnits[i]
+                    ) >
+                    0
+                ) {
                     assetAmounts[underlyingIndexes[i]].value -= depositAmounts[
                         i
                     ];
@@ -667,6 +727,90 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @notice Deposit the amount of underlying asset to yield asset.
+    /// @dev Will only be called by _adjustYieldAssets().
+    /// @param asset Struct detail for yield asset.
+    /// @param amount Amount of underlying asset to withdraw from yield asset.
+    /// @param spotPrice Oracle price.
+    /// @param assetUnit Unit of underlying asset.
+    /// @return Exact deposited amount of underlying asset.
+    function _depositUnderlyingAsset(
+        IAssetRegistry.AssetInformation memory asset,
+        uint256 amount,
+        uint256 spotPrice,
+        uint256 assetUnit
+    ) internal returns (uint256) {
+        uint256 value = (amount * spotPrice) / assetUnit;
+        if (value < minYieldActionThreshold) {
+            return 0;
+        }
+
+        IERC4626 yieldAsset = IERC4626(address(asset.asset));
+        IERC20 underlyingAsset = IERC20(yieldAsset.asset());
+
+        try yieldAsset.maxDeposit(address(this)) returns (
+            uint256 maxDepositAmount
+        ) {
+            if (maxDepositAmount == 0) {
+                return 0;
+            }
+
+            uint256 depositAmount = Math.min(amount, maxDepositAmount);
+
+            _setAllowance(underlyingAsset, address(yieldAsset), depositAmount);
+
+            yieldAsset.deposit(depositAmount, address(this));
+
+            _clearAllowance(underlyingAsset, address(yieldAsset));
+
+            return depositAmount;
+        } catch {}
+
+        return 0;
+    }
+
+    /// @notice Withdraw the amount of underlying asset from yield asset.
+    /// @dev Will only be called by withdraw() and _adjustYieldAssets().
+    /// @param asset Struct detail for yield asset.
+    /// @param amount Amount of underlying asset to withdraw from yield asset.
+    /// @param spotPrice Oracle price.
+    /// @param assetUnit Unit of underlying asset.
+    /// @return Exact withdrawn amount of underlying asset.
+    function _withdrawUnderlyingAsset(
+        IAssetRegistry.AssetInformation memory asset,
+        uint256 amount,
+        uint256 spotPrice,
+        uint256 assetUnit
+    ) internal returns (uint256) {
+        uint256 value = (amount * spotPrice) / assetUnit;
+        if (value < minYieldActionThreshold) {
+            return 0;
+        }
+
+        IERC4626 yieldAsset = IERC4626(address(asset.asset));
+        IERC20 underlyingAsset = IERC20(yieldAsset.asset());
+
+        try yieldAsset.maxWithdraw(address(this)) returns (
+            uint256 maxWithdrawalAmount
+        ) {
+            if (maxWithdrawalAmount == 0) {
+                return 0;
+            }
+
+            uint256 balance = underlyingAsset.balanceOf(address(this));
+
+            yieldAsset.withdraw(
+                Math.min(amount, maxWithdrawalAmount),
+                address(this),
+                address(this)
+            );
+
+            return underlyingAsset.balanceOf(address(this)) - balance;
+        } catch {}
+
+        return 0;
+    }
+
     /// @notice Get target weights in registered asset order.
     /// @dev Will only be called by _adjustYieldAssets().
     /// @param assets Struct details for registered assets in asset registry.
@@ -744,7 +888,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Get spot prices and units of requested assets.
-    /// @dev Will only be called by _adjustYieldAssets().
+    /// @dev Will only be called by withdraw() and _adjustYieldAssets().
     /// @param assets Struct details for registered assets in asset registry.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
@@ -792,7 +936,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Returns an array of underlying asset indexes.
-    /// @dev Will only be called by _adjustYieldAssets().
+    /// @dev Will only be called by withdraw() and _adjustYieldAssets().
     /// @param assets Struct details for registered assets in asset registry.
     /// @return underlyingIndexes Array of underlying asset indexes.
     function _getUnderlyingIndexes(
@@ -817,8 +961,9 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Get total amount of assets in execution and custody module.
-    /// @dev Will only be called by withdraw(), finalize(), startRebalance(),
-    ///      holdings(), _calcAdjustmentAmounts() and _updateGuardianFees().
+    /// @dev Will only be called by startRebalance(), finalize(), holdings(),
+    ///     _updateGuardianFees(), _checkWithdrawRequest(), _calcAdjustmentAmounts()
+    ///     and _adjustYieldAssets().
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(
@@ -857,7 +1002,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Reset allowance of token for a spender.
-    /// @dev Will only be called by _setAllowance().
+    /// @dev Will only be called by _depositUnderlyingAsset() and _setAllowance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
@@ -868,7 +1013,7 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Set allowance of token for a spender.
-    /// @dev Will only be called by startRebalance().
+    /// @dev Will only be called by startRebalance() and _depositUnderlyingAsset().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     /// @param amount Amount to approve for spending.
@@ -914,7 +1059,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     }
 
     /// @notice Check whether asset is registered to asset registry or not.
-    /// @dev Will only be called by deposit(), withdraw(), sweep() and startRebalance().
+    /// @dev Will only be called by deposit(), sweep(), _checkWithdrawRequest()
+    ///      and _getTargatWeights().
     /// @param asset Asset to check.
     /// @param registeredAssets Array of registered assets.
     /// @param numAssets Number of registered assets.
