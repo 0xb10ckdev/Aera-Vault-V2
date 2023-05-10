@@ -125,7 +125,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function deposit(
-        AssetValue[] memory amounts
+        AssetValue[] calldata amounts
     ) external override nonReentrant onlyOwner whenNotFinalized {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
@@ -153,7 +153,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function withdraw(
-        AssetValue[] memory amounts,
+        AssetValue[] calldata amounts,
         bool force
     ) external override nonReentrant onlyOwner whenNotFinalized {
         _updateGuardianFees();
