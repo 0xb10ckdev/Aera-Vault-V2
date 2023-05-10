@@ -129,18 +129,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ) external override nonReentrant onlyOwner whenNotFinalized {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
-        uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
         bool isRegistered;
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            (isRegistered, ) = _isAssetRegistered(
-                assetValue.asset,
-                assets,
-                numAssets
-            );
+            (isRegistered, ) = _isAssetRegistered(assetValue.asset, assets);
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
@@ -300,9 +295,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ) external override nonReentrant {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
-        uint256 numAssets = assets.length;
 
-        (bool isRegistered, ) = _isAssetRegistered(token, assets, numAssets);
+        (bool isRegistered, ) = _isAssetRegistered(token, assets);
 
         if (isRegistered) {
             revert Aera__CannotSweepRegisteredAsset();
@@ -556,7 +550,6 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         IAssetRegistry.AssetInformation[] memory assets,
         AssetValue[] memory amounts
     ) internal view returns (uint256[] memory assetIndexes) {
-        uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
@@ -572,8 +565,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             assetValue = amounts[i];
             (isRegistered, index) = _isAssetRegistered(
                 assetValue.asset,
-                assets,
-                numAssets
+                assets
             );
 
             if (isRegistered) {
@@ -878,8 +870,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
             (isRegistered, index) = _isAssetRegistered(
                 assetWeight.asset,
-                assets,
-                numAssets
+                assets
             );
 
             if (!isRegistered) {
@@ -1123,14 +1114,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ///      and _getTargatWeights().
     /// @param asset Asset to check.
     /// @param registeredAssets Array of registered assets.
-    /// @param numAssets Number of registered assets.
     /// @return isRegistered True if asset is registered.
     /// @return index Index of asset in Balancer pool.
     function _isAssetRegistered(
         IERC20 asset,
-        IAssetRegistry.AssetInformation[] memory registeredAssets,
-        uint256 numAssets
+        IAssetRegistry.AssetInformation[] memory registeredAssets
     ) internal pure returns (bool isRegistered, uint256 index) {
+        uint256 numAssets = registeredAssets.length;
+
         for (uint256 i = 0; i < numAssets; i++) {
             if (registeredAssets[i].asset < asset) {
                 continue;
