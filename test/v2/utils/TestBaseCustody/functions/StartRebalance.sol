@@ -27,7 +27,7 @@ abstract contract BaseStartRebalanceTest is TestBaseCustody {
 
         vm.startPrank(custody.guardian());
 
-        vm.expectRevert(ICustody.Aera__VaultIsPaused.selector);
+        vm.expectRevert(bytes("Pausable: paused"));
 
         _startRebalance();
     }

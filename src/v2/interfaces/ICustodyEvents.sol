@@ -35,12 +35,6 @@ interface ICustodyEvents {
     /// @param amount Amount of asset.
     event Sweep(IERC20 asset, uint256 amount);
 
-    /// @notice Emitted when vault is paused.
-    event PauseVault();
-
-    /// @notice Emitted when vault is resumed.
-    event ResumeVault();
-
     /// @notice Emitted when rebalancing is started.
     /// @param assetWeights Weights of assets to rebalance and target weight.
     /// @param startTime Timestamp at which weight movement should start.

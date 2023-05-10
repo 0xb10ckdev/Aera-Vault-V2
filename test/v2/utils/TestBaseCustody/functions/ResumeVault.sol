@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import "../TestBaseCustody.sol";
 
 abstract contract BaseResumeVaultTest is TestBaseCustody {
+    event Unpaused(address);
+
     function test_resumeVault_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
@@ -21,7 +23,7 @@ abstract contract BaseResumeVaultTest is TestBaseCustody {
     }
 
     function test_resumeVault_fail_whenVaultIsNotPaused() public {
-        vm.expectRevert(ICustody.Aera__VaultIsNotPaused.selector);
+        vm.expectRevert(bytes("Pausable: not paused"));
 
         custody.resumeVault();
     }
@@ -30,7 +32,7 @@ abstract contract BaseResumeVaultTest is TestBaseCustody {
         custody.pauseVault();
 
         vm.expectEmit(true, true, true, true, address(custody));
-        emit ResumeVault();
+        emit Unpaused(address(this));
 
         custody.resumeVault();
     }

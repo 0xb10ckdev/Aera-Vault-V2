@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "./dependencies/openzeppelin/IERC4626.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
+import "./dependencies/openzeppelin/Pausable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
 import "./interfaces/IAssetRegistry.sol";
@@ -11,7 +12,7 @@ import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
 
 /// @title Aera Vault V2.
-contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
+contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 1e18;
@@ -37,9 +38,6 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
 
     /// @notice The address of guardian.
     address public guardian;
-
-    /// @notice Whether custody module is paused or not.
-    bool public isPaused;
 
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
@@ -67,22 +65,6 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
     modifier onlyOwnerOrGuardian() {
         if (msg.sender != owner() && msg.sender != guardian) {
             revert Aera__CallerIsNotOwnerOrGuardian();
-        }
-        _;
-    }
-
-    /// @dev Throws if called after the vault is paused.
-    modifier whenNotPaused() {
-        if (isPaused) {
-            revert Aera__VaultIsPaused();
-        }
-        _;
-    }
-
-    /// @dev Throws if called after the vault is resumed.
-    modifier whenPaused() {
-        if (!isPaused) {
-            revert Aera__VaultIsNotPaused();
         }
         _;
     }
@@ -335,9 +317,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         _updateGuardianFees();
 
         execution.claimNow();
-        isPaused = true;
 
-        emit PauseVault();
+        _pause();
     }
 
     /// @inheritdoc ICustody
@@ -349,9 +330,8 @@ contract AeraVaultV2 is ICustody, Ownable, ReentrancyGuard {
         whenNotFinalized
     {
         lastFeeCheckpoint = block.timestamp;
-        isPaused = false;
 
-        emit ResumeVault();
+        _unpause();
     }
 
     /// @inheritdoc ICustody

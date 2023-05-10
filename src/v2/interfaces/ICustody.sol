@@ -33,8 +33,6 @@ interface ICustody is ICustodyEvents {
         uint256 amount,
         uint256 available
     );
-    error Aera__VaultIsPaused();
-    error Aera__VaultIsNotPaused();
     error Aera__VaultIsFinalized();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__SumOfWeightsIsNotOne();
