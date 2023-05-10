@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "./dependencies/openzeppelin/ERC165Checker.sol";
 import "./dependencies/openzeppelin/IERC4626.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
@@ -8,6 +9,7 @@ import "./dependencies/openzeppelin/Pausable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
 import "./interfaces/IAssetRegistry.sol";
+import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
 
@@ -1102,9 +1104,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Check if the address can be an execution.
     /// @dev Will only be called by constructor and setExecution()
     /// @param newExecution Address to check.
-    function _checkExecutionAddress(address newExecution) internal pure {
+    function _checkExecutionAddress(address newExecution) internal view {
         if (newExecution == address(0)) {
             revert Aera__ExecutionIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(
+                newExecution,
+                type(IBalancerExecution).interfaceId
+            )
+        ) {
+            revert Aera__ExecutionIsNotValid(newExecution);
         }
     }
 

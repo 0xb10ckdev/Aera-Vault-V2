@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "./dependencies/openzeppelin/ERC165.sol";
 import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
@@ -13,7 +14,12 @@ import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
 
 /// @title Aera Balancer Execution.
-contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
+contract AeraBalancerExecution is
+    IBalancerExecution,
+    ERC165,
+    Ownable,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 1e18;
@@ -360,6 +366,18 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                 value: poolHoldings[i]
             });
         }
+    }
+
+    /// @notice Returns true if this contract implements the interface defined by
+    ///         interfaceId.
+    /// @param interfaceId Interface Id to check.
+    /// @return True if this contract implements the interface.
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IBalancerExecution).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// INTERNAL FUNCTIONS ///

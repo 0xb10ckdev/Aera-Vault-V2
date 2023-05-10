@@ -28,6 +28,17 @@ abstract contract BaseSetExecutionTest is TestBaseCustody {
         custody.setExecution(address(0));
     }
 
+    function test_setExecution_fail_whenExecutionIsNotValid() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__ExecutionIsNotValid.selector,
+                address(1)
+            )
+        );
+
+        custody.setExecution(address(1));
+    }
+
     function test_setExecution_success() public virtual {
         vm.expectEmit(true, true, true, true, address(custody));
         emit SetExecution(address(newExecution));
