@@ -54,6 +54,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
+    error Aera__WeightIsBelowMin(uint256 actual, uint256 min);
     error Aera__CannotSweepPoolAsset();
 
     /// MODIFIERS ///
@@ -238,6 +239,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                         (startAmounts[i] * spotPrice * _ONE) /
                         necessaryTotalValue /
                         assetUnit;
+                    if (startWeights[i] < _MIN_WEIGHT) {
+                        startWeights[i] = _MIN_WEIGHT;
+                    }
                 }
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
@@ -245,6 +249,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                         (endAmounts[i] * spotPrice * _ONE) /
                         necessaryTotalValue /
                         assetUnit;
+                    if (endWeights[i] < _MIN_WEIGHT) {
+                        endWeights[i] = _MIN_WEIGHT;
+                    }
                 }
             }
         }
@@ -650,9 +657,13 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             adjustableAssetValue =
                 (((minAssetValue - minValue)) * _ONE) /
                 (_ONE - _MIN_WEIGHT * adjustableCount);
+            necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+        } else if (minAssetValue < minValue) {
+            revert Aera__WeightIsBelowMin(
+                (minAssetValue * _ONE) / necessaryTotalValue,
+                _MIN_WEIGHT
+            );
         }
-
-        necessaryTotalValue -= adjustableAssetValue * adjustableCount;
     }
 
     /// @notice Get valid data for rebalancing.
