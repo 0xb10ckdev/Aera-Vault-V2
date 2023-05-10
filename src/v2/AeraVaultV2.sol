@@ -1032,14 +1032,11 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             for (uint256 j = 0; j < numAssets; j++) {
                 if (assets[j].asset < executionHolding.asset) {
                     continue;
-                } else {
-                    if (assets[j].asset == executionHolding.asset) {
-                        if (executionHolding.value > 0) {
-                            assetAmounts[j].value += executionHolding.value;
-                        }
-                    }
-                    break;
                 }
+                if (assets[j].asset == executionHolding.asset) {
+                    assetAmounts[j].value += executionHolding.value;
+                }
+                break;
             }
         }
     }
