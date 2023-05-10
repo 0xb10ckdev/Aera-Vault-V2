@@ -693,14 +693,14 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     {
         uint256 numRequests = requests.length;
         uint256 numValidAssets;
-        uint256 sumStartWeights;
-        uint256 sumEndWeights;
+        uint256 startWeightSum;
+        uint256 endWeightSum;
         for (uint256 i = 0; i < numRequests; i++) {
             if (startAmounts[i] > 0) {
                 numValidAssets++;
             }
-            sumStartWeights += startWeights[i];
-            sumEndWeights += endWeights[i];
+            startWeightSum += startWeights[i];
+            endWeightSum += endWeights[i];
         }
 
         rebalancingAssets = new IERC20[](numValidAssets);
@@ -722,33 +722,45 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             index++;
         }
 
-        if (sumStartWeights > _ONE) {
-            uint256 deviation = sumStartWeights - _ONE;
-            uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
-            for (uint256 i = 0; i < numValidAssets; i++) {
-                if (validStartWeights[i] > reducibleMinWeight) {
-                    validStartWeights[i] -= deviation;
-                    break;
-                }
-            }
-        } else {
-            validStartWeights[0] =
-                validStartWeights[0] +
-                _ONE -
-                sumStartWeights;
+        if (startWeightSum != _ONE) {
+            validStartWeights = _normalizeWeights(
+                validStartWeights,
+                startWeightSum
+            );
         }
 
-        if (sumEndWeights > _ONE) {
-            uint256 deviation = sumEndWeights - _ONE;
+        if (endWeightSum != _ONE) {
+            validEndWeights = _normalizeWeights(validEndWeights, endWeightSum);
+        }
+    }
+
+    /// @notice Normalize weights to make a sum of weights one.
+    /// @dev Will only be called by _getValidRebalanceData().
+    /// @param weights Array of weights to be normalized.
+    /// @param weightSum Sum of weights.
+    /// @return newWeights Array of normalized weights.
+    function _normalizeWeights(
+        uint256[] memory weights,
+        uint256 weightSum
+    ) internal pure returns (uint256[] memory newWeights) {
+        uint256 numWeights = weights.length;
+        newWeights = new uint256[](numWeights);
+
+        for (uint256 i = 0; i < numWeights; i++) {
+            newWeights[i] = weights[i];
+        }
+
+        if (weightSum > _ONE) {
+            uint256 deviation = weightSum - _ONE;
             uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
-            for (uint256 i = 0; i < numRequests; i++) {
-                if (validEndWeights[i] > reducibleMinWeight) {
-                    validEndWeights[i] -= deviation;
+            for (uint256 i = 0; i < numWeights; i++) {
+                if (weights[i] > reducibleMinWeight) {
+                    newWeights[i] -= deviation;
                     break;
                 }
             }
         } else {
-            validEndWeights[0] = validEndWeights[0] + _ONE - sumEndWeights;
+            newWeights[0] = newWeights[0] + _ONE - weightSum;
         }
     }
 
