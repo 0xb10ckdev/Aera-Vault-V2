@@ -26,6 +26,25 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
+    function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsNotValid()
+        public
+    {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetRegistryIsNotValid.selector,
+                address(1)
+            )
+        );
+
+        new AeraVaultV2(
+            address(1),
+            address(balancerExecution),
+            _GUARDIAN,
+            _MAX_GUARDIAN_FEE,
+            yieldActionThreshold
+        );
+    }
+
     function test_aeraVaultV2Deployment_fail_whenExecutionIsZeroAddress()
         public
     {

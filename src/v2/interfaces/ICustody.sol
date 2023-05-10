@@ -20,6 +20,7 @@ interface ICustody is ICustodyEvents {
     /// ERRORS ///
 
     error Aera__AssetRegistryIsZeroAddress();
+    error Aera__AssetRegistryIsNotValid(address assetRegistry);
     error Aera__ExecutionIsZeroAddress();
     error Aera__ExecutionIsNotValid(address execution);
     error Aera__GuardianIsZeroAddress();

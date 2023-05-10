@@ -30,6 +30,17 @@ abstract contract BaseSetAssetRegistryTest is TestBaseCustody {
         custody.setAssetRegistry(address(0));
     }
 
+    function test_setAssetRegistry_fail_whenAssetRegistryIsNotValid() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetRegistryIsNotValid.selector,
+                address(1)
+            )
+        );
+
+        custody.setAssetRegistry(address(1));
+    }
+
     function test_setAssetRegistry_success() public virtual {
         vm.expectEmit(true, true, true, true, address(custody));
         emit SetAssetRegistry(address(newAssetRegistry));

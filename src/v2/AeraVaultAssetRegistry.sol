@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "./dependencies/openzeppelin/ERC165.sol";
 import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./interfaces/IAssetRegistry.sol";
 
 /// @title Aera Vault Asset Registry.
-contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
+contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     uint256 internal constant _ONE = 1e18;
 
     /// @notice Minimum period for weight change duration.
@@ -259,6 +260,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         }
 
         return prices;
+    }
+
+    /// @notice Returns true if this contract implements the interface defined by
+    ///         interfaceId.
+    /// @param interfaceId Interface Id to check.
+    /// @return True if this contract implements the interface.
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IAssetRegistry).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// INTERNAL FUNCTIONS ///

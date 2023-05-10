@@ -1081,9 +1081,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @param newAssetRegistry Address to check.
     function _checkAssetRegistryAddress(
         address newAssetRegistry
-    ) internal pure {
+    ) internal view {
         if (newAssetRegistry == address(0)) {
             revert Aera__AssetRegistryIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(
+                newAssetRegistry,
+                type(IAssetRegistry).interfaceId
+            )
+        ) {
+            revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
         }
     }
 
