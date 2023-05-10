@@ -129,23 +129,25 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             .assets();
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
+        AssetValue memory assetValue;
         bool isRegistered;
 
         for (uint256 i = 0; i < numAmounts; i++) {
+            assetValue = amounts[i];
             (isRegistered, ) = _isAssetRegistered(
-                amounts[i].asset,
+                assetValue.asset,
                 assets,
                 numAssets
             );
 
             if (!isRegistered) {
-                revert Aera__AssetIsNotRegistered(amounts[i].asset);
+                revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
-            amounts[i].asset.safeTransferFrom(
+            assetValue.asset.safeTransferFrom(
                 owner(),
                 address(this),
-                amounts[i].value
+                assetValue.value
             );
         }
 
@@ -165,14 +167,16 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
         uint256[] memory assetIndexes = _checkWithdrawRequest(assets, amounts);
+        AssetValue memory assetValue;
 
         for (uint256 i = 0; i < numAmounts; i++) {
-            if (amounts[i].asset.balanceOf(address(this)) < amounts[i].value) {
+            assetValue = amounts[i];
+            if (assetValue.asset.balanceOf(address(this)) < assetValue.value) {
                 if (!force) {
                     revert Aera__AmountExceedsAvailable(
-                        amounts[i].asset,
-                        amounts[i].value,
-                        amounts[i].asset.balanceOf(address(this))
+                        assetValue.asset,
+                        assetValue.value,
+                        assetValue.asset.balanceOf(address(this))
                     );
                 }
 
@@ -190,27 +194,28 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         uint256 assetIndex;
         for (uint256 i = 0; i < numAmounts; i++) {
-            if (amounts[i].value > 0) {
+            assetValue = amounts[i];
+            if (assetValue.value > 0) {
                 assetIndex = assetIndexes[i];
 
                 if (assets[assetIndex].isERC4626) {
                     if (assets[assetIndex].withdrawable) {
-                        amounts[i].asset.safeTransfer(
+                        assetValue.asset.safeTransfer(
                             owner(),
-                            amounts[i].value
+                            assetValue.value
                         );
                     } else {
                         withdrawAmounts[
                             underlyingIndexes[assetIndex]
                         ] += _withdrawUnderlyingAsset(
                             assets[assetIndex],
-                            amounts[i].value,
+                            assetValue.value,
                             spotPrices[assetIndex],
                             assetUnits[assetIndex]
                         );
                     }
                 } else {
-                    withdrawAmounts[assetIndex] += amounts[i].value;
+                    withdrawAmounts[assetIndex] += assetValue.value;
                 }
             }
         }
@@ -366,16 +371,18 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
 
+        IAssetRegistry.AssetInformation memory asset;
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626) {
+            asset = assets[i];
+            if (!asset.isERC4626) {
                 requests[index] = IExecution.AssetRebalanceRequest(
-                    assets[i].asset,
+                    asset.asset,
                     assetAmounts[i].value,
                     underlyingTargetWeights[i]
                 );
                 _setAllowance(
-                    assets[i].asset,
+                    asset.asset,
                     address(execution),
                     assetAmounts[i].value
                 );
@@ -433,23 +440,25 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         AssetValue[] memory fees = guardiansFee[msg.sender];
         uint256 numFees = fees.length;
         AssetValue[] memory claimedFees = new AssetValue[](numFees);
+        AssetValue memory fee;
         uint256 availableFee;
         bool allFeeClaimed = true;
 
         for (uint256 i = 0; i < numFees; i++) {
-            claimedFees[i].asset = fees[i].asset;
+            fee = fees[i];
+            claimedFees[i].asset = fee.asset;
 
-            if (fees[i].value == 0) {
+            if (fee.value == 0) {
                 continue;
             }
 
             availableFee = Math.min(
-                fees[i].asset.balanceOf(address(this)),
-                fees[i].value
+                fee.asset.balanceOf(address(this)),
+                fee.value
             );
-            guardiansFeeTotal[fees[i].asset] -= availableFee;
+            guardiansFeeTotal[fee.asset] -= availableFee;
             guardiansFee[msg.sender][i].value -= availableFee;
-            fees[i].asset.safeTransfer(msg.sender, availableFee);
+            fee.asset.safeTransfer(msg.sender, availableFee);
             claimedFees[i].value = availableFee;
 
             if (guardiansFee[msg.sender][i].value > 0) {
@@ -513,24 +522,26 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         uint256 numAssets = assets.length;
         uint256 numGuardiansFee = guardiansFee[guardian].length;
+        AssetValue memory assetAmount;
         uint256 newFee;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            newFee = (assetAmounts[i].value * feeIndex * guardianFee) / _ONE;
+            assetAmount = assetAmounts[i];
+            newFee = (assetAmount.value * feeIndex * guardianFee) / _ONE;
             uint256 j;
             for (; j < numGuardiansFee; j++) {
-                if (guardiansFee[guardian][j].asset == assetAmounts[i].asset) {
+                if (guardiansFee[guardian][j].asset == assetAmount.asset) {
                     guardiansFee[guardian][j].value += newFee;
                     break;
                 }
             }
             if (j == numGuardiansFee) {
                 guardiansFee[guardian].push(
-                    AssetValue(assetAmounts[i].asset, newFee)
+                    AssetValue(assetAmount.asset, newFee)
                 );
             }
 
-            guardiansFeeTotal[assetAmounts[i].asset] += newFee;
+            guardiansFeeTotal[assetAmount.asset] += newFee;
         }
     }
 
@@ -551,12 +562,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         bool isRegistered;
         IERC4626 yieldAsset;
+        AssetValue memory assetValue;
         uint256 availableAmount;
         uint256 index;
 
         for (uint256 i = 0; i < numAmounts; i++) {
+            assetValue = amounts[i];
             (isRegistered, index) = _isAssetRegistered(
-                amounts[i].asset,
+                assetValue.asset,
                 assets,
                 numAssets
             );
@@ -575,15 +588,15 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                     );
                 }
 
-                if (availableAmount < amounts[i].value) {
+                if (availableAmount < assetValue.value) {
                     revert Aera__AmountExceedsAvailable(
-                        amounts[i].asset,
-                        amounts[i].value,
+                        assetValue.asset,
+                        assetValue.value,
                         availableAmount
                     );
                 }
             } else {
-                revert Aera__AssetIsNotRegistered(amounts[i].asset);
+                revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
             assetIndexes[i] = index;
@@ -853,27 +866,30 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         targetWeights = new uint256[](numAssetWeights);
 
+        AssetValue memory assetWeight;
         bool isRegistered;
         uint256 index;
         uint256 weightSum = 0;
 
         for (uint256 i = 0; i < numAssetWeights; i++) {
+            assetWeight = assetWeights[i];
+
             (isRegistered, index) = _isAssetRegistered(
-                assetWeights[i].asset,
+                assetWeight.asset,
                 assets,
                 numAssets
             );
 
             if (!isRegistered) {
-                revert Aera__AssetIsNotRegistered(assetWeights[i].asset);
+                revert Aera__AssetIsNotRegistered(assetWeight.asset);
             }
 
-            targetWeights[index] = assetWeights[i].value;
-            weightSum += assetWeights[i].value;
+            targetWeights[index] = assetWeight.value;
+            weightSum += assetWeight.value;
 
             for (uint256 j = 0; j < numAssetWeights; j++) {
-                if (i != j && assetWeights[i].asset == assetWeights[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetWeights[i].asset);
+                if (i != j && assetWeight.asset == assetWeights[j].asset) {
+                    revert Aera__AssetIsDuplicated(assetWeight.asset);
                 }
             }
         }
@@ -932,11 +948,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         spotPrices = new uint256[](numAssets);
         assetUnits = new uint256[](numAssets);
 
+        IAssetRegistry.AssetInformation memory asset;
         address underlyingAsset;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                underlyingAsset = IERC4626(address(assets[i].asset)).asset();
+            asset = assets[i];
+
+            if (asset.isERC4626) {
+                underlyingAsset = IERC4626(address(asset.asset)).asset();
                 for (uint256 j = 0; j < numERC20SpotPrices; j++) {
                     if (underlyingAsset == address(erc20SpotPrices[j].asset)) {
                         spotPrices[i] = erc20SpotPrices[j].spotPrice;
@@ -947,14 +966,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 }
             } else {
                 for (uint256 j = 0; j < numERC20SpotPrices; j++) {
-                    if (assets[i].asset == erc20SpotPrices[j].asset) {
+                    if (asset.asset == erc20SpotPrices[j].asset) {
                         spotPrices[i] = erc20SpotPrices[j].spotPrice;
                         break;
                     }
                 }
 
                 assetUnits[i] =
-                    10 ** IERC20Metadata(address(assets[i].asset)).decimals();
+                    10 ** IERC20Metadata(address(asset.asset)).decimals();
             }
         }
     }
@@ -999,24 +1018,31 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         uint256 numExecutionHoldings = executionHoldings.length;
 
         assetAmounts = new AssetValue[](numAssets);
+        IAssetRegistry.AssetInformation memory asset;
 
         for (uint256 i = 0; i < numAssets; i++) {
+            asset = assets[i];
             assetAmounts[i] = AssetValue({
-                asset: assets[i].asset,
-                value: assets[i].asset.balanceOf(address(this))
+                asset: asset.asset,
+                value: asset.asset.balanceOf(address(this))
             });
-            if (guardiansFeeTotal[assets[i].asset] > 0) {
-                assetAmounts[i].value -= guardiansFeeTotal[assets[i].asset];
+            if (guardiansFeeTotal[asset.asset] > 0) {
+                assetAmounts[i].value -= guardiansFeeTotal[asset.asset];
             }
         }
+
+        IExecution.AssetValue memory executionHolding;
+
         for (uint256 i = 0; i < numExecutionHoldings; i++) {
+            executionHolding = executionHoldings[i];
+
             for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset < executionHoldings[i].asset) {
+                if (assets[j].asset < executionHolding.asset) {
                     continue;
                 } else {
-                    if (assets[j].asset == executionHoldings[i].asset) {
-                        if (executionHoldings[i].value > 0) {
-                            assetAmounts[j].value += executionHoldings[i].value;
+                    if (assets[j].asset == executionHolding.asset) {
+                        if (executionHolding.value > 0) {
+                            assetAmounts[j].value += executionHolding.value;
                         }
                     }
                     break;
