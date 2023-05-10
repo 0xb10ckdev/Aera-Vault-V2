@@ -568,29 +568,27 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 assets
             );
 
-            if (isRegistered) {
-                availableAmount = assetAmounts[index].value;
-
-                if (assets[index].isERC4626 && !assets[index].withdrawable) {
-                    yieldAsset = IERC4626(address(assets[index].asset));
-                    availableAmount = yieldAsset.convertToAssets(
-                        availableAmount
-                    );
-                    availableAmount = Math.min(
-                        availableAmount,
-                        yieldAsset.maxWithdraw(address(this))
-                    );
-                }
-
-                if (availableAmount < assetValue.value) {
-                    revert Aera__AmountExceedsAvailable(
-                        assetValue.asset,
-                        assetValue.value,
-                        availableAmount
-                    );
-                }
-            } else {
+            if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
+            }
+
+            availableAmount = assetAmounts[index].value;
+
+            if (assets[index].isERC4626 && !assets[index].withdrawable) {
+                yieldAsset = IERC4626(address(assets[index].asset));
+                availableAmount = yieldAsset.convertToAssets(availableAmount);
+                availableAmount = Math.min(
+                    availableAmount,
+                    yieldAsset.maxWithdraw(address(this))
+                );
+            }
+
+            if (availableAmount < assetValue.value) {
+                revert Aera__AmountExceedsAvailable(
+                    assetValue.asset,
+                    assetValue.value,
+                    availableAmount
+                );
             }
 
             assetIndexes[i] = index;
