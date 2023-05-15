@@ -1199,7 +1199,7 @@ contract AeraVaultV2 is
         if (
             !ERC165Checker.supportsInterface(
                 newExecution,
-                type(IExecution).interfaceId
+                type(IBalancerExecution).interfaceId
             )
         ) {
             revert Aera__ExecutionIsNotValid(newExecution);
