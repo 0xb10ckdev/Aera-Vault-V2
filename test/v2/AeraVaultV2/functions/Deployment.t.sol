@@ -7,6 +7,8 @@ import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 contract DeploymentTest is TestBaseAeraVaultV2 {
     uint256 yieldActionThreshold;
 
+    error Aera__MinYieldActionThresholdIsZero();
+
     function setUp() public override {
         super.setUp();
 
@@ -121,7 +123,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenMinYieldActionThresholdIsZero()
         public
     {
-        vm.expectRevert(ICustody.Aera__MinYieldActionThresholdIsZero.selector);
+        vm.expectRevert(Aera__MinYieldActionThresholdIsZero.selector);
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),

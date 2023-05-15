@@ -53,6 +53,10 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Last timestamp where guardian fee index was locked.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
+    /// ERRORS ///
+
+    error Aera__MinYieldActionThresholdIsZero();
+
     /// MODIFIERS ///
 
     /// @dev Throws if called by any account other than the guardian.
