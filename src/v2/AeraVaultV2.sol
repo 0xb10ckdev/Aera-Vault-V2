@@ -400,35 +400,37 @@ contract AeraVaultV2 is
             }
         }
 
-        IExecution.AssetRebalanceRequest[]
-            memory requests = new IExecution.AssetRebalanceRequest[](
-                numValidAssets
-            );
-
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
-
-        IAssetRegistry.AssetInformation memory asset;
-        uint256 index;
-        for (uint256 i = 0; i < numAssets; i++) {
-            asset = assets[i];
-            if (!asset.isERC4626 && underlyingTargetWeights[i] > 0) {
-                requests[index] = IExecution.AssetRebalanceRequest(
-                    asset.asset,
-                    assetAmounts[i].value,
-                    underlyingTargetWeights[i]
+        if (numValidAssets > 0) {
+            IExecution.AssetRebalanceRequest[]
+                memory requests = new IExecution.AssetRebalanceRequest[](
+                    numValidAssets
                 );
-                _setAllowance(
-                    asset.asset,
-                    address(execution),
-                    assetAmounts[i].value
-                );
-                index++;
+
+            AssetValue[] memory assetAmounts = _getHoldings(assets);
+
+            IAssetRegistry.AssetInformation memory asset;
+            uint256 index;
+            for (uint256 i = 0; i < numAssets; i++) {
+                asset = assets[i];
+                if (!asset.isERC4626 && underlyingTargetWeights[i] > 0) {
+                    requests[index] = IExecution.AssetRebalanceRequest(
+                        asset.asset,
+                        assetAmounts[i].value,
+                        underlyingTargetWeights[i]
+                    );
+                    _setAllowance(
+                        asset.asset,
+                        address(execution),
+                        assetAmounts[i].value
+                    );
+                    index++;
+                }
             }
+
+            execution.startRebalance(requests, startTime, endTime);
         }
 
         rebalanceEndTime = endTime;
-
-        execution.startRebalance(requests, startTime, endTime);
 
         emit StartRebalance(assetWeights, startTime, endTime);
     }
@@ -1112,7 +1114,7 @@ contract AeraVaultV2 is
             asset = assets[i];
             assetAmounts[i] = AssetValue({
                 asset: asset.asset,
-                value: assetAmounts[i].value - guardiansFeeTotal[asset.asset]
+                value: asset.asset.balanceOf(address(this))
             });
         }
 
@@ -1130,6 +1132,10 @@ contract AeraVaultV2 is
                 }
                 break;
             }
+        }
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            assetAmounts[i].value -= guardiansFeeTotal[assets[i].asset];
         }
     }
 
