@@ -617,7 +617,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         AssetValue[] calldata assetWeights
     ) internal returns (uint256[] memory underlyingTargetWeights) {
         uint256 numAssets = assets.length;
-        uint256[] memory targetWeights = _getTargatWeights(
+        uint256[] memory targetWeights = _getTargetWeights(
             assets,
             assetWeights
         );
@@ -857,7 +857,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @param assets Struct details for registered assets in asset registry.
     /// @param assetWeights Struct details for weights of assets.
     /// @return targetWeights Reordered target weights.
-    function _getTargatWeights(
+    function _getTargetWeights(
         IAssetRegistry.AssetInformation[] memory assets,
         AssetValue[] calldata assetWeights
     ) internal pure returns (uint256[] memory targetWeights) {
@@ -1126,7 +1126,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Check whether asset is registered to asset registry or not.
     /// @dev Will only be called by deposit(), sweep(), _checkWithdrawRequest()
-    ///      and _getTargatWeights().
+    ///      and _getTargetWeights().
     /// @param asset Asset to check.
     /// @param registeredAssets Array of registered assets.
     /// @return isRegistered True if asset is registered.
