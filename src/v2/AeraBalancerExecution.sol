@@ -7,6 +7,7 @@ import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
+import "./Constants.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
@@ -18,11 +19,10 @@ contract AeraBalancerExecution is
     IBalancerExecution,
     ERC165,
     Ownable,
-    ReentrancyGuard
+    ReentrancyGuard,
+    Constants
 {
     using SafeERC20 for IERC20;
-
-    uint256 internal constant _ONE = 1e18;
 
     /// @notice Mininum weight of pool tokens in Balancer Pool.
     uint256 private constant _MIN_WEIGHT = 0.01e18;

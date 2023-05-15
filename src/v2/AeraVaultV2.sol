@@ -8,16 +8,21 @@ import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/Pausable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
+import "./Constants.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
 
 /// @title Aera Vault V2 Custody contract.
-contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
+contract AeraVaultV2 is
+    ICustody,
+    Ownable,
+    Pausable,
+    ReentrancyGuard,
+    Constants
+{
     using SafeERC20 for IERC20;
-
-    uint256 internal constant _ONE = 1e18;
 
     /// @notice Largest possible guardian fee earned proportion per one second.
     /// @dev 0.0000001% per second, i.e. 3.1536% per year.
