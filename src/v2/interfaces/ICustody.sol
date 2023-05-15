@@ -38,6 +38,8 @@ interface ICustody is ICustodyEvents {
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__SumOfWeightsIsNotOne();
     error Aera__AssetIsDuplicated(IERC20 asset);
+    error Aera__RebalancingHasNotStarted();
+    error Aera__RebalancingIsOnGoing(uint256 endTime);
     error Aera__NoAvailableFeeForCaller(address caller);
     error Aera__CannotSweepRegisteredAsset();
 
@@ -123,4 +125,10 @@ interface ICustody is ICustodyEvents {
     /// @notice Get guardian fee per second.
     /// @param guardianFee Guardian fee per second in 18 decimal fixed point format.
     function guardianFee() external view returns (uint256 guardianFee);
+
+    /// @notice Timestamp at when rebalancing ends.
+    function rebalanceEndTime()
+        external
+        view
+        returns (uint256 rebalanceEndTime);
 }

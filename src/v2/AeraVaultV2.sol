@@ -44,6 +44,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
 
+    /// @notice Timestamp at when rebalancing ends.
+    uint256 public rebalanceEndTime;
+
     /// @notice Fee earned amount for each guardian.
     mapping(address => AssetValue[]) public guardiansFee;
 
@@ -261,6 +264,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         address newExecution
     ) external override onlyOwner whenNotFinalized {
         _checkExecutionAddress(newExecution);
+
+        // Note: we could remove this but leaving it to protect the guardian
         _updateGuardianFees();
 
         execution = IExecution(newExecution);
@@ -399,6 +404,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             }
         }
 
+        rebalanceEndTime = endTime;
+
         execution.startRebalance(requests, startTime, endTime);
 
         emit StartRebalance(assetWeights, startTime, endTime);
@@ -413,6 +420,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         whenNotFinalized
     {
+        if (rebalanceEndTime == 0) {
+            revert Aera__RebalancingHasNotStarted();
+        }
+        if (block.timestamp < rebalanceEndTime) {
+            revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
+        }
+
         _updateGuardianFees();
 
         execution.endRebalance();

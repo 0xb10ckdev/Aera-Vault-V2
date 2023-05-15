@@ -28,14 +28,19 @@ abstract contract BaseEndRebalanceTest is TestBaseCustody {
         custody.endRebalance();
     }
 
+    function test_endRebalance_fail_whenRebalancingHasNotStarted() public {
+        vm.expectRevert(ICustody.Aera__RebalancingHasNotStarted.selector);
+        custody.endRebalance();
+    }
+
     function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
         vm.prank(custody.guardian());
         _startRebalance();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IExecution.Aera__RebalancingIsOnGoing.selector,
-                custody.execution().rebalanceEndTime()
+                ICustody.Aera__RebalancingIsOnGoing.selector,
+                custody.rebalanceEndTime()
             )
         );
 
