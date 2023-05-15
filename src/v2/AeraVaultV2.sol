@@ -141,6 +141,12 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
+            for (uint256 j = 0; j < numAmounts; j++) {
+                if (i != j && assetValue.asset == amounts[j].asset) {
+                    revert Aera__AssetIsDuplicated(assetValue.asset);
+                }
+            }
+
             assetValue.asset.safeTransferFrom(
                 owner(),
                 address(this),
@@ -578,6 +584,12 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
+            }
+
+            for (uint256 j = 0; j < numAmounts; j++) {
+                if (i != j && assetValue.asset == amounts[j].asset) {
+                    revert Aera__AssetIsDuplicated(assetValue.asset);
+                }
             }
 
             availableAmount = assetAmounts[index].value;

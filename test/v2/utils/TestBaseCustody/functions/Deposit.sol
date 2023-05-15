@@ -38,6 +38,19 @@ abstract contract BaseDepositTest is TestBaseCustody {
         custody.deposit(depositAmounts);
     }
 
+    function test_deposit_fail_whenAssetIsDuplicated() public {
+        depositAmounts[0].asset = depositAmounts[1].asset;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetIsDuplicated.selector,
+                depositAmounts[0].asset
+            )
+        );
+
+        custody.deposit(depositAmounts);
+    }
+
     function test_deposit_success() public virtual {
         uint256[] memory balances = new uint256[](depositAmounts.length);
         for (uint256 i = 0; i < depositAmounts.length; i++) {

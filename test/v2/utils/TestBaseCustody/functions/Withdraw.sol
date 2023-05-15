@@ -38,6 +38,19 @@ abstract contract BaseWithdrawTest is TestBaseCustody {
         custody.withdraw(withdrawAmounts, false);
     }
 
+    function test_withdraw_fail_whenAssetIsDuplicated() public {
+        withdrawAmounts[0].asset = withdrawAmounts[1].asset;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetIsDuplicated.selector,
+                withdrawAmounts[0].asset
+            )
+        );
+
+        custody.withdraw(withdrawAmounts, false);
+    }
+
     function test_withdraw_fail_withdrawalAmountExceedsHolding() public {
         ICustody.AssetValue[] memory holdings = custody.holdings();
 
