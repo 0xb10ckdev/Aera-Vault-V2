@@ -13,13 +13,13 @@ import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
 
-/// @title Aera Vault V2.
+/// @title Aera Vault V2 Custody contract.
 contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 internal constant _ONE = 1e18;
 
-    /// @notice Largest management fee earned proportion per one second.
+    /// @notice Largest possible guardian fee earned proportion per one second.
     /// @dev 0.0000001% per second, i.e. 3.1536% per year.
     ///      0.0000001% * (365 * 24 * 60 * 60) = 3.1536%
     uint256 private constant _MAX_GUARDIAN_FEE = 10 ** 9;
@@ -85,12 +85,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// FUNCTIONS ///
 
-    /// @notice Initialize the contract by deploying a new Balancer Pool using the provided factory.
-    /// @dev Tokens should be unique.
-    ///      The following pre-conditions are checked by Balancer in internal transactions:
-    ///       If tokens are sorted in ascending order.
-    ///       If swapFeePercentage is greater than the minimum and less than the maximum.
-    ///       If the total sum of weights is one.
+    /// @notice Initialize the custody contract by providing references to
+    ///         asset registry, execution contracts and other parameters.
     /// @param assetRegistry_ The address of asset registry.
     /// @param execution_ The address of execution module.
     /// @param guardian_ The address of guardian.
@@ -555,8 +551,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Check request to withdraw.
     /// @dev Will only be called by withdraw().
-    /// @param assets Struct details for registered assets in asset registry.
-    /// @param amounts Struct details for amounts to withdraw.
+    /// @param assets Struct details for asset information from asset registry.
+    /// @param amounts Struct details for assets and amounts to withdraw.
     /// @return assetIndexes Array of requested asset indexes in order of registered assets.
     function _checkWithdrawRequest(
         IAssetRegistry.AssetInformation[] memory assets,

@@ -44,12 +44,12 @@ interface ICustody is ICustodyEvents {
     /// FUNCTIONS ///
 
     /// @notice Deposit assets.
-    /// @param amounts Struct details for amounts to deposit.
+    /// @param amounts Struct details for assets and amounts to deposit.
     function deposit(AssetValue[] memory amounts) external;
 
     /// @notice Withdraw assets.
-    /// @param amounts Struct details for amounts to withdraw.
-    /// @param force Whether it can touch assets on execution module or not.
+    /// @param amounts Struct details for assets and amounts to withdraw.
+    /// @param force Whether it can touch assets inside execution module or not.
     function withdraw(AssetValue[] memory amounts, bool force) external;
 
     /// @notice Sets current vault guardian.
@@ -72,27 +72,27 @@ interface ICustody is ICustodyEvents {
     /// @param amount Amount of token.
     function sweep(IERC20 token, uint256 amount) external;
 
-    /// @notice End rebalancing and stops the guardian from initiating new rebalances.
+    /// @notice Ends rebalancing and stops the guardian from initiating new rebalances.
     function pauseVault() external;
 
-    /// @notice Resumes vault operations
+    /// @notice Resumes vault operations.
     function resumeVault() external;
 
-    /// @notice Attempt to change the distribution of ERC20 assets in
-    ///         the custody module to a target distribution.
-    /// @param assetWeights Struct details for weights of assets.
-    /// @param startTime Timestamp at which weight movement should start.
-    /// @param endTime Timestamp at which the weights should reach target values.
+    /// @notice Initiate weight change of assets in the custody module
+    ///         to a target distribution.
+    /// @param assetWeights Struct details for assets and their weights.
+    /// @param startTime Timestamp by which weight movement should start.
+    /// @param endTime Timestamp by which the weights should reach target values.
     function startRebalance(
         AssetValue[] memory assetWeights,
         uint256 startTime,
         uint256 endTime
     ) external;
 
-    /// @notice Claim funds from prior rebalance.
+    /// @notice Formally end current rebalance and retrieve funds from execution module.
     function endRebalance() external;
 
-    /// @notice Claim all funds in execution module.
+    /// @notice Terminate rebalance early and retrieve funds from execution module.
     function endRebalanceEarly() external;
 
     /// @notice Claim fees on behalf of guardian.

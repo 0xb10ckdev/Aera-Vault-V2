@@ -7,11 +7,11 @@ import "./ICustody.sol";
 /// @title Interface for custody module events.
 interface ICustodyEvents {
     /// @notice Emitted when deposit is called.
-    /// @param amounts Struct details for deposited amount.
+    /// @param amounts Struct details for deposited assets and amounts.
     event Deposit(ICustody.AssetValue[] amounts);
 
     /// @notice Emitted when withdraw is called.
-    /// @param amounts Struct details for withdrawal amount.
+    /// @param amounts Struct details for withdrawn assets and amounts.
     /// @param force Whether it could touch assets on execution module or not.
     event Withdraw(ICustody.AssetValue[] amounts, bool force);
 
@@ -45,15 +45,15 @@ interface ICustodyEvents {
         uint256 endTime
     );
 
-    ///@notice Emitted when endRebalance is called.
+    /// @notice Emitted when endRebalance is called.
     event EndRebalance();
 
-    ///@notice Emitted when endRebalanceEarly is called.
+    /// @notice Emitted when endRebalanceEarly is called.
     event EndRebalanceEarly();
 
-    ///@notice Emitted when guardian fees are claimed.
+    /// @notice Emitted when guardian fees are claimed.
     /// @param guardian Guardian address.
-    /// @param claimedFees Claimed amount of each assets.
+    /// @param claimedFees Claimed amount of each asset.
     event ClaimGuardianFees(
         address guardian,
         ICustody.AssetValue[] claimedFees

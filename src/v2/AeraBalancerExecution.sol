@@ -683,10 +683,11 @@ contract AeraBalancerExecution is
 
     /// @notice Get valid data for rebalancing.
     /// @dev Will only be called by startRebalance().
-    /// @param requests Struct details for requests.
-    /// @param startAmounts Start amount of each assets to rebalance as requests.
-    /// @param startWeights Start weights of each assets.
-    /// @param endWeights End weights of each assets.
+    /// @param requests Struct details for amount to rebalance and
+    ///                 target weight for each asset.
+    /// @param startAmounts Start amount of each asset to rebalance as requests.
+    /// @param startWeights Start weights of each asset.
+    /// @param endWeights End weights of each asset.
     /// @return rebalancingAssets Assets that will participate in rebalancing.
     /// @return validStartAmounts Amount of assets that will participate.
     /// @return validStartWeights Start weights of assets that will participate.
@@ -749,7 +750,7 @@ contract AeraBalancerExecution is
         }
     }
 
-    /// @notice Normalize weights to make a sum of weights one.
+    /// @notice Normalize weights to make their sum equal to one.
     /// @dev Will only be called by _getValidRebalanceData().
     /// @param weights Array of weights to be normalized.
     /// @param weightSum Sum of weights.
