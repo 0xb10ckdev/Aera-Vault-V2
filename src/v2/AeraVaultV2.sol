@@ -193,6 +193,7 @@ contract AeraVaultV2 is
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
+
             if (assetValue.asset.balanceOf(address(this)) < assetValue.value) {
                 if (!force) {
                     revert Aera__AmountExceedsAvailable(
@@ -217,28 +218,28 @@ contract AeraVaultV2 is
         uint256 assetIndex;
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            if (assetValue.value > 0) {
-                assetIndex = assetIndexes[i];
 
-                if (assets[assetIndex].isERC4626) {
-                    if (assets[assetIndex].withdrawable) {
-                        assetValue.asset.safeTransfer(
-                            owner(),
-                            assetValue.value
-                        );
-                    } else {
-                        withdrawAmounts[
-                            underlyingIndexes[assetIndex]
-                        ] += _withdrawUnderlyingAsset(
-                            assets[assetIndex],
-                            assetValue.value,
-                            spotPrices[assetIndex],
-                            assetUnits[assetIndex]
-                        );
-                    }
+            if (assetValue.value == 0) {
+                continue;
+            }
+
+            assetIndex = assetIndexes[i];
+
+            if (assets[assetIndex].isERC4626) {
+                if (assets[assetIndex].withdrawable) {
+                    assetValue.asset.safeTransfer(owner(), assetValue.value);
                 } else {
-                    withdrawAmounts[assetIndex] += assetValue.value;
+                    withdrawAmounts[
+                        underlyingIndexes[assetIndex]
+                    ] += _withdrawUnderlyingAsset(
+                        assets[assetIndex],
+                        assetValue.value,
+                        spotPrices[assetIndex],
+                        assetUnits[assetIndex]
+                    );
                 }
+            } else {
+                withdrawAmounts[assetIndex] += assetValue.value;
             }
         }
 
@@ -696,67 +697,70 @@ contract AeraVaultV2 is
         }
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626 && withdrawAmounts[i] > 0) {
-                if (
-                    _withdrawUnderlyingAsset(
-                        assets[i],
-                        withdrawAmounts[i],
-                        spotPrices[i],
-                        assetUnits[i]
-                    ) > 0
-                ) {
-                    underlyingTargetWeights[
-                        underlyingIndexes[i]
-                    ] -= targetWeights[i];
-                } else {
-                    underlyingTargetWeights[
-                        underlyingIndexes[i]
-                    ] -= currentWeights[i];
-                }
+            if (!assets[i].isERC4626 || withdrawAmounts[i] == 0) {
+                continue;
+            }
+
+            if (
+                _withdrawUnderlyingAsset(
+                    assets[i],
+                    withdrawAmounts[i],
+                    spotPrices[i],
+                    assetUnits[i]
+                ) > 0
+            ) {
+                underlyingTargetWeights[underlyingIndexes[i]] -= targetWeights[
+                    i
+                ];
+            } else {
+                underlyingTargetWeights[underlyingIndexes[i]] -= currentWeights[
+                    i
+                ];
             }
         }
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
         for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626 && depositAmounts[i] > 0) {
-                if (
-                    assetAmounts[underlyingIndexes[i]].value >
-                    depositAmounts[i] &&
-                    _depositUnderlyingAsset(
-                        assets[i],
-                        depositAmounts[i],
-                        spotPrices[i],
-                        assetUnits[i]
-                    ) >
-                    0
-                ) {
-                    assetAmounts[underlyingIndexes[i]].value -= depositAmounts[
-                        i
-                    ];
-                    underlyingTargetWeights[
-                        underlyingIndexes[i]
-                    ] -= targetWeights[i];
-                } else {
-                    underlyingTargetWeights[
-                        underlyingIndexes[i]
-                    ] -= currentWeights[i];
-                }
+            if (!assets[i].isERC4626 || depositAmounts[i] == 0) {
+                continue;
+            }
+
+            if (
+                assetAmounts[underlyingIndexes[i]].value > depositAmounts[i] &&
+                _depositUnderlyingAsset(
+                    assets[i],
+                    depositAmounts[i],
+                    spotPrices[i],
+                    assetUnits[i]
+                ) >
+                0
+            ) {
+                assetAmounts[underlyingIndexes[i]].value -= depositAmounts[i];
+                underlyingTargetWeights[underlyingIndexes[i]] -= targetWeights[
+                    i
+                ];
+            } else {
+                underlyingTargetWeights[underlyingIndexes[i]] -= currentWeights[
+                    i
+                ];
             }
         }
 
         uint256 deviation;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626) {
-                if (underlyingTargetWeights[i] > currentWeights[i]) {
-                    deviation = underlyingTargetWeights[i] - currentWeights[i];
-                } else {
-                    deviation = currentWeights[i] - underlyingTargetWeights[i];
-                }
+            if (assets[i].isERC4626) {
+                continue;
+            }
 
-                if ((totalValue * deviation) / _ONE < minThreshold) {
-                    underlyingTargetWeights[i] = 0;
-                }
+            if (underlyingTargetWeights[i] > currentWeights[i]) {
+                deviation = underlyingTargetWeights[i] - currentWeights[i];
+            } else {
+                deviation = currentWeights[i] - underlyingTargetWeights[i];
+            }
+
+            if ((totalValue * deviation) / _ONE < minThreshold) {
+                underlyingTargetWeights[i] = 0;
             }
         }
     }
@@ -814,16 +818,18 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAssets; i++) {
             currentWeights[i] = (values[i] * _ONE) / totalValue;
 
-            if (assets[i].isERC4626) {
-                targetBalance =
-                    (totalValue * targetWeights[i] * assetUnits[i]) /
-                    spotPrices[i] /
-                    _ONE;
-                if (targetBalance > underlyingBalances[i]) {
-                    depositAmounts[i] = targetBalance - underlyingBalances[i];
-                } else {
-                    withdrawAmounts[i] = underlyingBalances[i] - targetBalance;
-                }
+            if (!assets[i].isERC4626) {
+                continue;
+            }
+
+            targetBalance =
+                (totalValue * targetWeights[i] * assetUnits[i]) /
+                spotPrices[i] /
+                _ONE;
+            if (targetBalance > underlyingBalances[i]) {
+                depositAmounts[i] = targetBalance - underlyingBalances[i];
+            } else {
+                withdrawAmounts[i] = underlyingBalances[i] - targetBalance;
             }
         }
     }
@@ -1069,15 +1075,17 @@ contract AeraVaultV2 is
         underlyingIndexes = new uint256[](numAssets);
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                for (uint256 j = 0; j < numAssets; j++) {
-                    if (
-                        IERC4626(address(assets[i].asset)).asset() ==
-                        address(assets[j].asset)
-                    ) {
-                        underlyingIndexes[i] = j;
-                        break;
-                    }
+            if (!assets[i].isERC4626) {
+                continue;
+            }
+
+            for (uint256 j = 0; j < numAssets; j++) {
+                if (
+                    IERC4626(address(assets[i].asset)).asset() ==
+                    address(assets[j].asset)
+                ) {
+                    underlyingIndexes[i] = j;
+                    break;
                 }
             }
         }
