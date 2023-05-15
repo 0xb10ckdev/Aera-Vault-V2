@@ -262,10 +262,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         return prices;
     }
 
-    /// @notice Returns true if this contract implements the interface defined by
-    ///         interfaceId.
-    /// @param interfaceId Interface Id to check.
-    /// @return True if this contract implements the interface.
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override returns (bool) {
