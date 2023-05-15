@@ -477,7 +477,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         AssetValue[] memory claimedFees = new AssetValue[](numFees);
         AssetValue storage fee;
         uint256 availableFee;
-        bool allFeeClaimed = true;
+        bool allFeesClaimed = true;
 
         for (uint256 i = 0; i < numFees; i++) {
             fee = fees[i];
@@ -497,11 +497,11 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             claimedFees[i].value = availableFee;
 
             if (fee.value > 0) {
-                allFeeClaimed = false;
+                allFeesClaimed = false;
             }
         }
 
-        if (allFeeClaimed && msg.sender != guardian) {
+        if (allFeesClaimed && msg.sender != guardian) {
             delete guardiansFee[msg.sender];
         }
 
