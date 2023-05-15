@@ -37,13 +37,20 @@ contract TestBaseAssetRegistry is TestBase {
             .assets();
 
         uint256 numYieldAssets = 0;
-        for (uint256 i = 0; i < registryAssets.length; i++) {
-            if (registryAssets[i].isERC4626) {
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assets[i].isERC4626) {
                 numYieldAssets++;
             }
         }
 
-        assertEq(numYieldAssets, assetRegistry.numYieldAssets());
+        uint256 numRegisteredYieldAssets = 0;
+        for (uint256 i = 0; i < registryAssets.length; i++) {
+            if (registryAssets[i].isERC4626) {
+                numRegisteredYieldAssets++;
+            }
+        }
+
+        assertEq(numYieldAssets, numRegisteredYieldAssets);
     }
 
     function propAssetsSorted() internal {

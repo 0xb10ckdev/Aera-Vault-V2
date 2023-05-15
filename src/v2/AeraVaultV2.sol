@@ -353,6 +353,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAssets = assets.length;
+        uint256 numYieldAssets;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                numYieldAssets++;
+            }
+        }
 
         uint256[] memory underlyingTargetWeights = _adjustYieldAssets(
             assets,
@@ -362,7 +369,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         IExecution.AssetRebalanceRequest[]
             memory requests = new IExecution.AssetRebalanceRequest[](
-                numAssets - assetRegistry.numYieldAssets()
+                numAssets - numYieldAssets
             );
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
