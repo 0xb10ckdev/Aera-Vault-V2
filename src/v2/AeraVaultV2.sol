@@ -380,23 +380,28 @@ contract AeraVaultV2 is
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAssets = assets.length;
-        uint256 numYieldAssets;
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                numYieldAssets++;
-            }
-        }
-
-        uint256[] memory underlyingTargetWeights = _adjustYieldAssets(
+        uint256[] memory targetWeights = _getTargetWeights(
             assets,
             assetWeights
         );
+        uint256[] memory underlyingTargetWeights = _adjustYieldAssets(
+            assets,
+            targetWeights
+        );
         underlyingTargetWeights = _normalizeWeights(underlyingTargetWeights);
+
+        uint256 numValidAssets;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (!assets[i].isERC4626 && underlyingTargetWeights[i] > 0) {
+                numValidAssets++;
+            }
+        }
 
         IExecution.AssetRebalanceRequest[]
             memory requests = new IExecution.AssetRebalanceRequest[](
-                numAssets - numYieldAssets
+                numValidAssets
             );
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
@@ -405,7 +410,7 @@ contract AeraVaultV2 is
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
             asset = assets[i];
-            if (!asset.isERC4626) {
+            if (!asset.isERC4626 && underlyingTargetWeights[i] > 0) {
                 requests[index] = IExecution.AssetRebalanceRequest(
                     asset.asset,
                     assetAmounts[i].value,
@@ -648,17 +653,13 @@ contract AeraVaultV2 is
     /// @notice Adjust the balance of underlying assets in yield assets.
     /// @dev Will only be called by startRebalance().
     /// @param assets Struct details for registered assets in asset registry.
-    /// @param assetWeights Struct details for weights of assets.
+    /// @param targetWeights Target weights of assets.
     /// @return underlyingTargetWeights Total target weights of underlying assets.
     function _adjustYieldAssets(
         IAssetRegistry.AssetInformation[] memory assets,
-        AssetValue[] calldata assetWeights
+        uint256[] memory targetWeights
     ) internal returns (uint256[] memory underlyingTargetWeights) {
         uint256 numAssets = assets.length;
-        uint256[] memory targetWeights = _getTargetWeights(
-            assets,
-            assetWeights
-        );
 
         uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
         (
@@ -669,11 +670,13 @@ contract AeraVaultV2 is
         uint256[] memory depositAmounts = new uint256[](numAssets);
         uint256[] memory withdrawAmounts = new uint256[](numAssets);
         uint256[] memory currentWeights = new uint256[](numAssets);
+        uint256 totalValue;
 
         (
             depositAmounts,
             withdrawAmounts,
-            currentWeights
+            currentWeights,
+            totalValue
         ) = _calcAdjustmentAmounts(
             assets,
             targetWeights,
@@ -740,6 +743,22 @@ contract AeraVaultV2 is
                 }
             }
         }
+
+        uint256 deviation;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (!assets[i].isERC4626) {
+                if (underlyingTargetWeights[i] > currentWeights[i]) {
+                    deviation = underlyingTargetWeights[i] - currentWeights[i];
+                } else {
+                    deviation = currentWeights[i] - underlyingTargetWeights[i];
+                }
+
+                if ((totalValue * deviation) / _ONE < minThreshold) {
+                    underlyingTargetWeights[i] = 0;
+                }
+            }
+        }
     }
 
     /// @notice Calculate the amounts of underlying assets of yield assets to adjust.
@@ -750,6 +769,8 @@ contract AeraVaultV2 is
     /// @param assetUnits Units of assets.
     /// @return depositAmounts Amounts of underlying assets to deposit to yield tokens.
     /// @return withdrawAmounts Amounts of underlying assets to withdraw from yield tokens.
+    /// @return currentWeights Current weights of assets.
+    /// @return totalValue Total value of assets measured in base token terms.
     function _calcAdjustmentAmounts(
         IAssetRegistry.AssetInformation[] memory assets,
         uint256[] memory targetWeights,
@@ -761,7 +782,8 @@ contract AeraVaultV2 is
         returns (
             uint256[] memory depositAmounts,
             uint256[] memory withdrawAmounts,
-            uint256[] memory currentWeights
+            uint256[] memory currentWeights,
+            uint256 totalValue
         )
     {
         uint256 numAssets = assets.length;
@@ -771,7 +793,7 @@ contract AeraVaultV2 is
         uint256[] memory underlyingBalances = new uint256[](numAssets);
         uint256[] memory values = new uint256[](numAssets);
         AssetValue[] memory assetAmounts = _getHoldings(assets);
-        uint256 totalValue = 0;
+
         {
             uint256 balance;
             for (uint256 i = 0; i < numAssets; i++) {
@@ -891,7 +913,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get target weights in registered asset order.
-    /// @dev Will only be called by _adjustYieldAssets().
+    /// @dev Will only be called by startRebalance().
     /// @param assets Struct details for registered assets in asset registry.
     /// @param assetWeights Struct details for weights of assets.
     /// @return targetWeights Reordered target weights.
@@ -968,12 +990,18 @@ contract AeraVaultV2 is
         }
 
         if (adjustedSum < _ONE) {
-            newWeights[0] = newWeights[0] + _ONE - adjustedSum;
+            for (uint256 i = 0; i < numWeights; i++) {
+                if (newWeights[i] > 0) {
+                    newWeights[i] = newWeights[i] + _ONE - adjustedSum;
+                    break;
+                }
+            }
         } else if (adjustedSum > _ONE) {
             uint256 deviation = adjustedSum - _ONE;
             for (uint256 i = 0; i < numWeights; i++) {
                 if (newWeights[i] > deviation) {
                     newWeights[i] -= deviation;
+                    break;
                 }
             }
         }
