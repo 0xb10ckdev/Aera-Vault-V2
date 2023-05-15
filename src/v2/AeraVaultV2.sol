@@ -1104,11 +1104,8 @@ contract AeraVaultV2 is
             asset = assets[i];
             assetAmounts[i] = AssetValue({
                 asset: asset.asset,
-                value: asset.asset.balanceOf(address(this))
+                value: assetAmounts[i].value - guardiansFeeTotal[asset.asset]
             });
-            if (guardiansFeeTotal[asset.asset] > 0) {
-                assetAmounts[i].value -= guardiansFeeTotal[asset.asset];
-            }
         }
 
         IExecution.AssetValue memory executionHolding;
@@ -1194,7 +1191,7 @@ contract AeraVaultV2 is
         if (
             !ERC165Checker.supportsInterface(
                 newExecution,
-                type(IBalancerExecution).interfaceId
+                type(IExecution).interfaceId
             )
         ) {
             revert Aera__ExecutionIsNotValid(newExecution);
