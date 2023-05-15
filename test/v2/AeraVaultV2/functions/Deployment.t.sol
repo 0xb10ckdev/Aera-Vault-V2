@@ -5,14 +5,17 @@ import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
-    uint256 yieldActionThreshold;
+    uint256 minThreshold;
+    uint256 minYieldActionThreshold;
 
+    error Aera__MinThresholdIsZero();
     error Aera__MinYieldActionThresholdIsZero();
 
     function setUp() public override {
         super.setUp();
 
-        yieldActionThreshold = _getScaler(assets[numeraire]);
+        minThreshold = _getScaler(assets[numeraire]);
+        minYieldActionThreshold = _getScaler(assets[numeraire]);
     }
 
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
@@ -24,7 +27,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -43,7 +47,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -56,7 +61,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(0),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -73,7 +79,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(1),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -86,7 +93,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             address(0),
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -97,7 +105,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             address(this),
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
     }
 
@@ -116,7 +125,20 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE + 1,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenMinThresholdIsZero() public {
+        vm.expectRevert(Aera__MinThresholdIsZero.selector);
+        new AeraVaultV2(
+            address(assetRegistry),
+            address(balancerExecution),
+            _GUARDIAN,
+            _MAX_GUARDIAN_FEE,
+            0,
+            minYieldActionThreshold
         );
     }
 
@@ -129,6 +151,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
+            minThreshold,
             0
         );
     }
@@ -146,7 +169,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(balancerExecution),
             _GUARDIAN,
             _MAX_GUARDIAN_FEE,
-            yieldActionThreshold
+            minThreshold,
+            minYieldActionThreshold
         );
 
         assertEq(address(vault.assetRegistry()), address(assetRegistry));

@@ -27,6 +27,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Guardian fee per second in 18 decimal fixed point format.
     uint256 public immutable guardianFee;
 
+    /// @notice Minimum action threshold for erc20 assets measured in base token terms.
+    uint256 public immutable minThreshold;
+
     /// @notice Minimum action threshold for yield bearing assets measured in base token terms.
     uint256 public immutable minYieldActionThreshold;
 
@@ -58,6 +61,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// ERRORS ///
 
+    error Aera__MinThresholdIsZero();
     error Aera__MinYieldActionThresholdIsZero();
 
     /// MODIFIERS ///
@@ -94,6 +98,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @param execution_ The address of execution module.
     /// @param guardian_ The address of guardian.
     /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
+    /// @param minThreshold_ Minimum action threshold for erc20 assets measured
+    ///                      in base token terms.
     /// @param minYieldActionThreshold_ Minimum action threshold for yield bearing assets
     ///                                 measured in base token terms.
     constructor(
@@ -101,6 +107,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         address execution_,
         address guardian_,
         uint256 guardianFee_,
+        uint256 minThreshold_,
         uint256 minYieldActionThreshold_
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
@@ -110,6 +117,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         if (guardianFee_ > _MAX_GUARDIAN_FEE) {
             revert Aera__GuardianFeeIsAboveMax(guardianFee_, _MAX_GUARDIAN_FEE);
         }
+        if (minThreshold_ == 0) {
+            revert Aera__MinThresholdIsZero();
+        }
         if (minYieldActionThreshold_ == 0) {
             revert Aera__MinYieldActionThresholdIsZero();
         }
@@ -118,6 +128,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         execution = IExecution(execution_);
         guardian = guardian_;
         guardianFee = guardianFee_;
+        minThreshold = minThreshold_;
         minYieldActionThreshold = minYieldActionThreshold_;
         lastFeeCheckpoint = block.timestamp;
 
@@ -945,11 +956,22 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         uint256 adjustedSum;
         for (uint256 i = 0; i < numWeights; i++) {
-            newWeights[i] = (weights[i] * _ONE) / weightSum;
-            adjustedSum += newWeights[i];
+            if (weights[i] > 0) {
+                newWeights[i] = (weights[i] * _ONE) / weightSum;
+                adjustedSum += newWeights[i];
+            }
         }
 
-        newWeights[0] = newWeights[0] + _ONE - adjustedSum;
+        if (adjustedSum < _ONE) {
+            newWeights[0] = newWeights[0] + _ONE - adjustedSum;
+        } else if (adjustedSum > _ONE) {
+            uint256 deviation = adjustedSum - _ONE;
+            for (uint256 i = 0; i < numWeights; i++) {
+                if (newWeights[i] > deviation) {
+                    newWeights[i] -= deviation;
+                }
+            }
+        }
     }
 
     /// @notice Get spot prices and units of requested assets.
