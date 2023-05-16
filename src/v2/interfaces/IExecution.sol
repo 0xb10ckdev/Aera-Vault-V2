@@ -6,9 +6,10 @@ import "./IAssetRegistry.sol";
 import "./IBManagedPool.sol";
 import "./IBVault.sol";
 import "./IExecutionEvents.sol";
+import "./ISweepable.sol";
 
 /// @title Interface for execution module.
-interface IExecution is IExecutionEvents {
+interface IExecution is IExecutionEvents, ISweepable {
     /// TYPES ///
 
     /// @param asset Address of asset.
@@ -54,11 +55,6 @@ interface IExecution is IExecutionEvents {
 
     /// @notice Return all funds in execution module to vault.
     function claimNow() external;
-
-    /// @notice Return a non-listed asset to the owner.
-    /// @param asset Address of asset.
-    /// @param amount Amount of asset.
-    function sweep(IERC20 asset, uint256 amount) external;
 
     /// @notice Return the address of vault's asset registry.
     /// @return assetRegistry The address of asset registry.

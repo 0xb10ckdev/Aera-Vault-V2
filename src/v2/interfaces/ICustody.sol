@@ -5,9 +5,10 @@ import "../dependencies/openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
 import "./ICustodyEvents.sol";
 import "./IExecution.sol";
+import "./ISweepable.sol";
 
 /// @title Interface for custody module.
-interface ICustody is ICustodyEvents {
+interface ICustody is ICustodyEvents, ISweepable {
     /// TYPES ///
 
     /// @param asset Address of asset.
@@ -68,11 +69,6 @@ interface ICustody is ICustodyEvents {
 
     /// @notice Terminate the vault and return all funds to owner.
     function finalize() external;
-
-    /// @notice Return a non-listed asset to the owner.
-    /// @param token Address of token.
-    /// @param amount Amount of token.
-    function sweep(IERC20 token, uint256 amount) external;
 
     /// @notice Ends rebalancing and stops the guardian from initiating new rebalances.
     function pauseVault() external;

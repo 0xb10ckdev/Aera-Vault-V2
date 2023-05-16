@@ -270,7 +270,7 @@ contract AeraCustody is
         emit Finalized();
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc ISweepable
     function sweep(
         IERC20 token,
         uint256 amount

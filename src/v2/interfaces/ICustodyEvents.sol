@@ -30,11 +30,6 @@ interface ICustodyEvents {
     /// @notice Emitted when vault is finalized.
     event Finalized();
 
-    /// @notice Emitted when sweep is called.
-    /// @param asset Address of asset.
-    /// @param amount Amount of asset.
-    event Sweep(IERC20 asset, uint256 amount);
-
     /// @notice Emitted when rebalancing is started.
     /// @param assetWeights Weights of assets to rebalance and target weight.
     /// @param startTime Timestamp at which weight movement should start.

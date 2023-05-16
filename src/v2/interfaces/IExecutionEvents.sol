@@ -21,9 +21,4 @@ interface IExecutionEvents {
 
     /// @notice Emitted when claimNow is called.
     event ClaimNow();
-
-    /// @notice Emitted when sweep is called.
-    /// @param asset Address of asset.
-    /// @param amount Amount of asset.
-    event Sweep(IERC20 asset, uint256 amount);
 }

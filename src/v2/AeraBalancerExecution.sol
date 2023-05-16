@@ -322,7 +322,7 @@ contract AeraBalancerExecution is
         merkleOrchard.claimDistributions(owner(), claims, tokens);
     }
 
-    /// @inheritdoc IExecution
+    /// @inheritdoc ISweepable
     function sweep(
         IERC20 token,
         uint256 amount
