@@ -2,16 +2,18 @@
 pragma solidity 0.8.19;
 
 import {TestBase} from "../../../utils/TestBase.sol";
+import {TestBaseVariables} from "../../utils/TestBase/TestBaseVariables.sol";
 import "../../../../src/v2/dependencies/openzeppelin/IERC20.sol";
 import "../../../../src/v2/dependencies/openzeppelin/IERC4626.sol";
 import "../../../../src/v2/interfaces/ICustody.sol";
 import "../../../../src/v2/interfaces/ICustodyEvents.sol";
 
-abstract contract TestBaseCustody is TestBase, ICustodyEvents {
+abstract contract TestBaseCustody is
+    TestBase,
+    TestBaseVariables,
+    ICustodyEvents
+{
     ICustody custody;
-    IERC20[] assets;
-    IERC20[] erc20Assets;
-    IERC4626[] yieldAssets;
 
     function _generateRequest()
         internal

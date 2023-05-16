@@ -57,8 +57,7 @@ contract WithdrawTest is BaseWithdrawTest, TestBaseAeraVaultV2 {
 
         for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             assertEq(
-                withdrawAmounts[i].asset.balanceOf(address(this)) -
-                    balances[i],
+                withdrawAmounts[i].asset.balanceOf(address(this)) - balances[i],
                 withdrawAmounts[i].value
             );
         }

@@ -14,6 +14,6 @@ contract SweepTest is TestBaseSweepable, TestBaseBalancerExecution {
         vm.expectRevert(
             AeraBalancerExecution.Aera__CannotSweepPoolAsset.selector
         );
-        balancerExecution.sweep(assets[0].asset, _ONE);
+        balancerExecution.sweep(assetsInformation[0].asset, _ONE);
     }
 }
