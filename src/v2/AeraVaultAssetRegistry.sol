@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 import "./dependencies/openzeppelin/ERC165.sol";
 import "./dependencies/openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
-import "./Constants.sol";
 import "./interfaces/IAssetRegistry.sol";
+import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
-contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable, Constants {
+contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice Minimum period for weight change duration.
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
 
@@ -185,7 +185,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable, Constants {
             weightSum += targetWeights[i].weight;
         }
 
-        if (weightSum != _ONE) {
+        if (weightSum != ONE) {
             return false;
         }
 
@@ -318,7 +318,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable, Constants {
     ) internal pure returns (uint256 ratio) {
         return
             currentWeight > targetWeight
-                ? (_ONE * currentWeight) / targetWeight
-                : (_ONE * targetWeight) / currentWeight;
+                ? (ONE * currentWeight) / targetWeight
+                : (ONE * targetWeight) / currentWeight;
     }
 }

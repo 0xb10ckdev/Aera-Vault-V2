@@ -7,20 +7,19 @@ import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
-import "./Constants.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
 import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
+import {ONE} from "./Constants.sol";
 
 /// @title Aera Balancer Execution.
 contract AeraBalancerExecution is
     IBalancerExecution,
     ERC165,
     Ownable,
-    ReentrancyGuard,
-    Constants
+    ReentrancyGuard
 {
     using SafeERC20 for IERC20;
 
@@ -242,7 +241,7 @@ contract AeraBalancerExecution is
                 if (startAmounts[i] != 0) {
                     startAmounts[i] -= adjustableAmount;
                     startWeights[i] =
-                        (startAmounts[i] * spotPrice * _ONE) /
+                        (startAmounts[i] * spotPrice * ONE) /
                         necessaryTotalValue /
                         assetUnit;
                     if (startWeights[i] < _MIN_WEIGHT) {
@@ -252,7 +251,7 @@ contract AeraBalancerExecution is
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
                     endWeights[i] =
-                        (endAmounts[i] * spotPrice * _ONE) /
+                        (endAmounts[i] * spotPrice * ONE) /
                         necessaryTotalValue /
                         assetUnit;
                     if (endWeights[i] < _MIN_WEIGHT) {
@@ -412,7 +411,7 @@ contract AeraBalancerExecution is
             weightSum += requests[i].weight;
         }
 
-        if (weightSum != _ONE) {
+        if (weightSum != ONE) {
             revert Aera__SumOfWeightsIsNotOne();
         }
 
@@ -645,7 +644,7 @@ contract AeraBalancerExecution is
         {
             uint256 targetValue;
             for (uint256 i = 0; i < numRequests; i++) {
-                targetValue = (totalValue * requests[i].weight) / _ONE;
+                targetValue = (totalValue * requests[i].weight) / ONE;
                 if (values[i] != targetValue) {
                     startAmounts[i] = requests[i].amount;
                     endAmounts[i] =
@@ -666,16 +665,16 @@ contract AeraBalancerExecution is
             }
         }
 
-        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
+        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / ONE;
 
         if (minAssetValue > minValue) {
             adjustableAssetValue =
-                (((minAssetValue - minValue)) * _ONE) /
-                (_ONE - _MIN_WEIGHT * adjustableCount);
+                (((minAssetValue - minValue)) * ONE) /
+                (ONE - _MIN_WEIGHT * adjustableCount);
             necessaryTotalValue -= adjustableAssetValue * adjustableCount;
         } else if (minAssetValue < minValue) {
             revert Aera__WeightIsBelowMin(
-                (minAssetValue * _ONE) / necessaryTotalValue,
+                (minAssetValue * ONE) / necessaryTotalValue,
                 _MIN_WEIGHT
             );
         }
@@ -738,14 +737,14 @@ contract AeraBalancerExecution is
             index++;
         }
 
-        if (startWeightSum != _ONE) {
+        if (startWeightSum != ONE) {
             validStartWeights = _normalizeWeights(
                 validStartWeights,
                 startWeightSum
             );
         }
 
-        if (endWeightSum != _ONE) {
+        if (endWeightSum != ONE) {
             validEndWeights = _normalizeWeights(validEndWeights, endWeightSum);
         }
     }
@@ -766,8 +765,8 @@ contract AeraBalancerExecution is
             newWeights[i] = weights[i];
         }
 
-        if (weightSum > _ONE) {
-            uint256 deviation = weightSum - _ONE;
+        if (weightSum > ONE) {
+            uint256 deviation = weightSum - ONE;
             uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
             for (uint256 i = 0; i < numWeights; i++) {
                 if (weights[i] > reducibleMinWeight) {
@@ -776,7 +775,7 @@ contract AeraBalancerExecution is
                 }
             }
         } else {
-            newWeights[0] = newWeights[0] + _ONE - weightSum;
+            newWeights[0] = newWeights[0] + ONE - weightSum;
         }
     }
 
@@ -853,10 +852,10 @@ contract AeraBalancerExecution is
         uint256 avgWeightSum;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            avgWeights[i] = _ONE / numPoolTokens;
+            avgWeights[i] = ONE / numPoolTokens;
             avgWeightSum += avgWeights[i];
         }
-        avgWeights[0] = avgWeights[0] + _ONE - avgWeightSum;
+        avgWeights[0] = avgWeights[0] + ONE - avgWeightSum;
 
         pool.updateWeightsGradually(
             block.timestamp,

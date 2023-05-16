@@ -401,7 +401,7 @@ contract AeraVaultV2 is AeraCustody {
                 deviation = currentWeights[i] - underlyingTargetWeights[i];
             }
 
-            if ((totalValue * deviation) / _ONE < minThreshold) {
+            if ((totalValue * deviation) / ONE < minThreshold) {
                 underlyingTargetWeights[i] = 0;
             }
         }
@@ -457,7 +457,7 @@ contract AeraVaultV2 is AeraCustody {
 
         uint256 targetBalance;
         for (uint256 i = 0; i < numAssets; i++) {
-            currentWeights[i] = (values[i] * _ONE) / totalValue;
+            currentWeights[i] = (values[i] * ONE) / totalValue;
 
             if (!assets[i].isERC4626) {
                 continue;
@@ -466,7 +466,7 @@ contract AeraVaultV2 is AeraCustody {
             targetBalance =
                 (totalValue * targetWeights[i] * assetUnits[i]) /
                 spotPrices[i] /
-                _ONE;
+                ONE;
             if (targetBalance > underlyingBalances[i]) {
                 depositAmounts[i] = targetBalance - underlyingBalances[i];
             } else {
@@ -601,7 +601,7 @@ contract AeraVaultV2 is AeraCustody {
             }
         }
 
-        if (weightSum != _ONE) {
+        if (weightSum != ONE) {
             revert Aera__SumOfWeightsIsNotOne();
         }
     }
@@ -620,27 +620,27 @@ contract AeraVaultV2 is AeraCustody {
             weightSum += weights[i];
         }
 
-        if (weightSum == _ONE) {
+        if (weightSum == ONE) {
             return weights;
         }
 
         uint256 adjustedSum;
         for (uint256 i = 0; i < numWeights; i++) {
             if (weights[i] > 0) {
-                newWeights[i] = (weights[i] * _ONE) / weightSum;
+                newWeights[i] = (weights[i] * ONE) / weightSum;
                 adjustedSum += newWeights[i];
             }
         }
 
-        if (adjustedSum < _ONE) {
+        if (adjustedSum < ONE) {
             for (uint256 i = 0; i < numWeights; i++) {
                 if (newWeights[i] > 0) {
-                    newWeights[i] = newWeights[i] + _ONE - adjustedSum;
+                    newWeights[i] = newWeights[i] + ONE - adjustedSum;
                     break;
                 }
             }
-        } else if (adjustedSum > _ONE) {
-            uint256 deviation = adjustedSum - _ONE;
+        } else if (adjustedSum > ONE) {
+            uint256 deviation = adjustedSum - ONE;
             for (uint256 i = 0; i < numWeights; i++) {
                 if (newWeights[i] > deviation) {
                     newWeights[i] -= deviation;

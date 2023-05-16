@@ -7,19 +7,13 @@ import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/Pausable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
-import "./Constants.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/ICustody.sol";
 import "./interfaces/IExecution.sol";
+import {ONE} from "./Constants.sol";
 
 /// @title Aera Custody contract.
-contract AeraCustody is
-    ICustody,
-    Ownable,
-    Pausable,
-    ReentrancyGuard,
-    Constants
-{
+contract AeraCustody is ICustody, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Largest possible guardian fee earned proportion per one second.
@@ -505,7 +499,7 @@ contract AeraCustody is
 
         for (uint256 i = 0; i < numAssets; i++) {
             assetAmount = assetAmounts[i];
-            newFee = (assetAmount.value * feeIndex * guardianFee) / _ONE;
+            newFee = (assetAmount.value * feeIndex * guardianFee) / ONE;
             uint256 j;
             for (; j < numGuardiansFee; j++) {
                 if (guardiansFee[guardian][j].asset == assetAmount.asset) {
