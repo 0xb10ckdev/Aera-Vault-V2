@@ -273,7 +273,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Insert asset at the given index in an array of assets.
-    /// @dev Will only be called by constructor() and addAsset().
     /// @param asset New asset details.
     /// @param index Index of the new asset in the array.
     function _insertAsset(
@@ -308,7 +307,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     }
 
     /// @notice Calculate a change ratio for weight upgrade.
-    /// @dev Will only be called by checkWeights().
     /// @param currentWeight Current weight.
     /// @param targetWeight Target weight.
     /// @return ratio Change ratio(>1) from current weight to target weight.

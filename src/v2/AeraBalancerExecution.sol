@@ -379,7 +379,6 @@ contract AeraBalancerExecution is
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Claim all funds from Balancer Pool.
-    /// @dev Will only be called by endRebalance() and claimNow().
     function _claim() internal {
         (
             IERC20[] memory poolTokens,
@@ -396,7 +395,7 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Check if the requests are valid.
-    /// @dev Will only be called by startRebalance().
+
     /// @param requests Struct details for requests.
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
@@ -422,7 +421,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Get spot prices and units of requested assets.
-    /// @dev Will only be called by startRebalance().
     /// @param requests Each request specifies amount of asset to rebalance and target weight.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
@@ -461,7 +459,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Register a token to Balancer pool and deposit to the pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param token Token to register.
     /// @param amount Amount to deposit.
     function _bindAndDepositToken(IERC20 token, uint256 amount) internal {
@@ -471,7 +468,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Withdraw a token from Balancer pool and unregister from the pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param token Token to unregister.
     /// @param amount Amount to withdraw.
     function _unbindAndWithdrawToken(IERC20 token, uint256 amount) internal {
@@ -481,7 +477,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Deposit token from Execution module to Balancer Pool.
-    /// @dev Will only be called by _bindAndDepositTokens().
     /// @param token The token to deposit.
     /// @param amount The amount of token to deposit.
     function _depositTokenToPool(IERC20 token, uint256 amount) internal {
@@ -496,7 +491,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Withdraw token from Balancer Pool to Execution module.
-    /// @dev Will only be called by _unbindAndWithdrawTokens().
     /// @param token The token to withdraw.
     /// @param amount The amount of token to withdraw.
     function _withdrawTokenFromPool(IERC20 token, uint256 amount) internal {
@@ -509,7 +503,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Update token balance of Balancer Pool.
-    /// @dev Will only be called by _depositTokenToPool() and _withdrawTokenFromPool().
     /// @param token Address of pool token.
     /// @param amount Amount of pool token.
     /// @param kind Kind of pool balance operation.
@@ -576,7 +569,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Reset allowance of token for a spender.
-    /// @dev Will only be called by _setAllowance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
@@ -587,7 +579,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Set allowance of token for a spender.
-    /// @dev Will only be called by initialize() and _depositTokenToPool().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     /// @param amount Amount to approve for spending.
@@ -601,7 +592,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Calculate the amounts and adjustable values for rebalancing.
-    /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
     /// @param spotPrices Spot prices of requested assets.
     /// @param assetUnits Units in asset decimals.
@@ -681,7 +671,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Get valid data for rebalancing.
-    /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for amount to rebalance and
     ///                 target weight for each asset.
     /// @param startAmounts Start amount of each asset to rebalance as requests.
@@ -750,7 +739,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Normalize weights to make their sum equal to one.
-    /// @dev Will only be called by _getValidRebalanceData().
     /// @param weights Array of weights to be normalized.
     /// @param weightSum Sum of weights.
     /// @return newWeights Array of normalized weights.
@@ -780,7 +768,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
-    /// @dev Will only be called by startRebalance().
     /// @param rebalancingAssets Assets to rebalance.
     /// @param startAmounts Adjusted start amount of each assets to rebalance.
     ///                     It rebalances the minimal necessary amounts of assets.
@@ -840,8 +827,7 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Reset weights of pool tokens.
-    /// @dev Will only be called by _adjustPool().
-    ///      It resets weights to avoid MIN_WEIGHT error while binding.
+    /// @dev It resets weights to avoid MIN_WEIGHT error while binding.
     /// @param poolTokens IERC20 tokens of Balancer Pool.
     /// @param numPoolTokens Number of pool tokens.
     function _resetPoolWeights(
@@ -866,7 +852,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Check whether asset is registered to Balancer pool or not.
-    /// @dev Will only be called by _adjustPool().
     /// @param asset Asset to check.
     /// @param poolTokens IERC20 tokens of Balancer Pool.
     /// @param numPoolTokens Number of pool tokens.
@@ -887,7 +872,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Check whether asset is necessary in Balancer pool or not.
-    /// @dev Will only be called by _adjustPool().
     /// @param poolToken IERC20 token to check.
     /// @param rebalancingAssets Assets to rebalance.
     /// @param numAssets Number of assets.
@@ -906,7 +890,6 @@ contract AeraBalancerExecution is
     }
 
     /// @notice Adjust asset amounts in Balancer pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param asset Asset to adjust.
     /// @param startAmount Start amount of asset to rebalance.
     /// @param poolHolding Balance of asset in Balancer Pool.
