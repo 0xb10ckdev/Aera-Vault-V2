@@ -31,8 +31,6 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
 
     /// FUNCTIONS ///
 
-    constructor() {}
-
     /// @inheritdoc IAeraVaultV2Factory
     function create(
         address assetRegistry,
