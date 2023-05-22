@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "src/v2/dependencies/openzeppelin/IERC20.sol";
+import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import {TestBase} from "test/utils/TestBase.sol";

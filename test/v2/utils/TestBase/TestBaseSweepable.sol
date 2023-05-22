@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/dependencies/openzeppelin/IERC20.sol";
+import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/ISweepable.sol";
 import "src/v2/interfaces/ISweepableEvents.sol";
 import {TestBase} from "test/utils/TestBase.sol";
