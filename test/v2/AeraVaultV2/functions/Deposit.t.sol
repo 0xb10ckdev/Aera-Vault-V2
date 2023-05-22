@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../utils/TestBaseCustody/functions/Deposit.sol";
 import "../TestBaseAeraVaultV2.sol";
+import "test/v2/utils/TestBaseCustody/functions/Deposit.sol";
 
 contract DepositTest is BaseDepositTest, TestBaseAeraVaultV2 {
     function setUp() public override {

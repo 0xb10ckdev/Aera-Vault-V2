@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {ERC20Mock} from "../../../../utils/ERC20Mock.sol";
 import "../TestBaseCustody.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 abstract contract BaseStartRebalanceTest is TestBaseCustody {
     function test_startRebalance_fail_whenCallerIsNotGuardian() public {

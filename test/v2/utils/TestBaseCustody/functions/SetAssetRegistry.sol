@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../../../../src/v2/AeraVaultAssetRegistry.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
 import "../TestBaseCustody.sol";
 
 abstract contract BaseSetAssetRegistryTest is TestBaseCustody {

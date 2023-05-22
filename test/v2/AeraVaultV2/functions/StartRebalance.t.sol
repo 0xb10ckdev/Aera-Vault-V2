@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../utils/TestBaseCustody/functions/StartRebalance.sol";
 import "../TestBaseAeraVaultV2.sol";
+import "test/v2/utils/TestBaseCustody/functions/StartRebalance.sol";
 
 interface IERC4626Mock {
     function setMaxDepositAmount(uint256 amount, bool use) external;

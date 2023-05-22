@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Deployer} from "../../../utils/Deployer.sol";
-import {TestBase} from "../../../utils/TestBase.sol";
-import {TestBaseVariables} from "../../utils/TestBase/TestBaseVariables.sol";
-import {IAsset} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
-import {IManagedPool} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
-import {IVault} from "../../../../src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
-import "../../../../src/v2/dependencies/openzeppelin/IERC4626.sol";
-import "../../../../src/v2/interfaces/IBalancerExecution.sol";
-import "../../../../src/v2/AeraBalancerExecution.sol";
-import "../../../../src/v2/AeraVaultAssetRegistry.sol";
-import {ERC20, ERC4626Mock} from "../../../utils/ERC4626Mock.sol";
-import {IOracleMock, OracleMock} from "../../../utils/OracleMock.sol";
+import "src/v2/dependencies/openzeppelin/IERC4626.sol";
+import "src/v2/interfaces/IBalancerExecution.sol";
+import "src/v2/AeraBalancerExecution.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
+import {IAsset} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
+import {IManagedPool} from "src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
+import {IVault} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
+import {Deployer} from "test/utils/Deployer.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
+import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
+import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBaseBalancer} from "../utils/TestBase/TestBaseBalancer.sol";
-import "../../../src/v2/AeraVaultV2.sol";
-import "../utils/TestBaseCustody/TestBaseCustody.sol";
+import "src/v2/AeraVaultV2.sol";
+import "test/v2/utils/TestBaseCustody/TestBaseCustody.sol";
+import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseBalancer, TestBaseCustody {
     AeraVaultV2 vault;

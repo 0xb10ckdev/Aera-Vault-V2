@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBase} from "../../../utils/TestBase.sol";
-import {TestBaseVariables} from "../../utils/TestBase/TestBaseVariables.sol";
-import "../../../../src/v2/dependencies/openzeppelin/IERC20.sol";
-import "../../../../src/v2/dependencies/openzeppelin/IERC4626.sol";
-import "../../../../src/v2/interfaces/ICustody.sol";
-import "../../../../src/v2/interfaces/ICustodyEvents.sol";
+import "src/v2/interfaces/ICustody.sol";
+import "src/v2/interfaces/ICustodyEvents.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 
 abstract contract TestBaseCustody is
     TestBase,

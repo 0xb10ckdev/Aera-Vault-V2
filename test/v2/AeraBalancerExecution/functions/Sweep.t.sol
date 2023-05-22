@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../utils/TestBase/TestBaseSweepable.sol";
 import "../TestBaseBalancerExecution.sol";
+import "test/v2/utils/TestBase/TestBaseSweepable.sol";
 
 contract SweepTest is TestBaseSweepable, TestBaseBalancerExecution {
     function setUp() public override {
