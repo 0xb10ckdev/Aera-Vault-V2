@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
-import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
     uint256 minThreshold;

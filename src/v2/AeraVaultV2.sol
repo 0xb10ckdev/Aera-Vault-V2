@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "./AeraCustody.sol";
-import "./dependencies/openzeppelin/IERC4626.sol";
+import "@openzeppelin/IERC4626.sol";
 import "./interfaces/IBalancerExecution.sol";
 
 /// @title Aera Vault V2 Custody contract.

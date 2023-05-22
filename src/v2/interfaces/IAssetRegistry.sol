@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "../dependencies/openzeppelin/IERC20.sol";
+import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/IERC20.sol";
 
 /// @title Interface for vault asset registry.
 interface IAssetRegistry {

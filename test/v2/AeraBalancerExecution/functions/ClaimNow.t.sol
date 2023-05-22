@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../utils/TestBaseExecution/functions/ClaimNow.sol";
 import "../TestBaseBalancerExecution.sol";
+import "test/v2/utils/TestBaseExecution/functions/ClaimNow.sol";
 
 contract ClaimNowTest is BaseClaimNowTest, TestBaseBalancerExecution {
     function test_claimNow_success() public {

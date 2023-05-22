@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBaseBalancer} from "../utils/TestBase/TestBaseBalancer.sol";
-import "../../../src/v2/AeraBalancerExecution.sol";
-import "../../../src/v2/interfaces/IBalancerExecution.sol";
-import "../../../src/v2/interfaces/IBalancerExecutionEvents.sol";
-import "../utils/TestBaseExecution/TestBaseExecution.sol";
+import "src/v2/AeraBalancerExecution.sol";
+import "src/v2/interfaces/IBalancerExecution.sol";
+import "src/v2/interfaces/IBalancerExecutionEvents.sol";
+import "test/v2/utils/TestBaseExecution/TestBaseExecution.sol";
+import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
 contract TestBaseBalancerExecution is
     TestBaseBalancer,

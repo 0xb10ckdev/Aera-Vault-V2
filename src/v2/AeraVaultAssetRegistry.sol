@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "./dependencies/openzeppelin/ERC165.sol";
-import "./dependencies/openzeppelin/IERC20Metadata.sol";
-import "./dependencies/openzeppelin/Ownable.sol";
+import "@openzeppelin/ERC165.sol";
+import "@openzeppelin/IERC20Metadata.sol";
+import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAssetRegistry.sol";
 import {ONE} from "./Constants.sol";
 

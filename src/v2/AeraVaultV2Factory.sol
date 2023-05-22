@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "./dependencies/openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 import "./AeraVaultV2.sol";
 

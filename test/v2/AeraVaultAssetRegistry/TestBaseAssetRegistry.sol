@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBase} from "../../utils/TestBase.sol";
-import "../../../src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "../../../src/v2/dependencies/openzeppelin/IERC20.sol";
-import "../../../src/v2/interfaces/IAssetRegistry.sol";
-import "../../../src/v2/AeraVaultAssetRegistry.sol";
-import {ERC20Mock} from "../../utils/ERC20Mock.sol";
-import {ERC4626Mock} from "../../utils/ERC4626Mock.sol";
-import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
+import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/IERC20.sol";
+import "src/v2/interfaces/IAssetRegistry.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
+import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBase {
     AeraVaultAssetRegistry assetRegistry;

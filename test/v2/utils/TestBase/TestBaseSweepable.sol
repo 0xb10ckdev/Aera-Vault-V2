@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBase} from "../../../utils/TestBase.sol";
-import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
-import "../../../../src/v2/dependencies/openzeppelin/IERC20.sol";
-import "../../../../src/v2/interfaces/ISweepable.sol";
-import "../../../../src/v2/interfaces/ISweepableEvents.sol";
+import "@openzeppelin/IERC20.sol";
+import "src/v2/interfaces/ISweepable.sol";
+import "src/v2/interfaces/ISweepableEvents.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 abstract contract TestBaseSweepable is TestBase, ISweepableEvents {
     ISweepable sweepable;
