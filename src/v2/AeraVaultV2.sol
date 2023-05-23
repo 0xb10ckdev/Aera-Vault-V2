@@ -207,11 +207,11 @@ contract AeraVaultV2 is AeraCustody {
             AssetValue[] memory assetAmounts = _getHoldings(assets);
 
             IAssetRegistry.AssetInformation memory asset;
-            uint256 index;
+            uint256 newIndex;
             for (uint256 i = 0; i < numAssets; i++) {
                 asset = assets[i];
                 if (!asset.isERC4626 && underlyingTargetWeights[i] > 0) {
-                    requests[index] = IExecution.AssetRebalanceRequest(
+                    requests[newIndex] = IExecution.AssetRebalanceRequest(
                         asset.asset,
                         assetAmounts[i].value,
                         underlyingTargetWeights[i]
@@ -221,7 +221,7 @@ contract AeraVaultV2 is AeraCustody {
                         address(execution),
                         assetAmounts[i].value
                     );
-                    index++;
+                    newIndex++;
                 }
             }
 
@@ -252,11 +252,11 @@ contract AeraVaultV2 is AeraCustody {
         IERC4626 yieldAsset;
         AssetValue memory assetValue;
         uint256 availableAmount;
-        uint256 index;
+        uint256 assetIndex;
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            (isRegistered, index) = _isAssetRegistered(
+            (isRegistered, assetIndex) = _isAssetRegistered(
                 assetValue.asset,
                 assets
             );
@@ -271,10 +271,12 @@ contract AeraVaultV2 is AeraCustody {
                 }
             }
 
-            availableAmount = assetAmounts[index].value;
+            availableAmount = assetAmounts[assetIndex].value;
 
-            if (assets[index].isERC4626 && !assets[index].withdrawable) {
-                yieldAsset = IERC4626(address(assets[index].asset));
+            if (
+                assets[assetIndex].isERC4626 && !assets[assetIndex].withdrawable
+            ) {
+                yieldAsset = IERC4626(address(assets[assetIndex].asset));
                 availableAmount = yieldAsset.convertToAssets(availableAmount);
                 availableAmount = Math.min(
                     availableAmount,
@@ -290,7 +292,7 @@ contract AeraVaultV2 is AeraCustody {
                 );
             }
 
-            assetIndexes[i] = index;
+            assetIndexes[i] = assetIndex;
         }
     }
 
@@ -576,13 +578,13 @@ contract AeraVaultV2 is AeraCustody {
 
         AssetValue memory assetWeight;
         bool isRegistered;
-        uint256 index;
+        uint256 assetIndex;
         uint256 weightSum = 0;
 
         for (uint256 i = 0; i < numAssetWeights; i++) {
             assetWeight = assetWeights[i];
 
-            (isRegistered, index) = _isAssetRegistered(
+            (isRegistered, assetIndex) = _isAssetRegistered(
                 assetWeight.asset,
                 assets
             );
@@ -591,7 +593,7 @@ contract AeraVaultV2 is AeraCustody {
                 revert Aera__AssetIsNotRegistered(assetWeight.asset);
             }
 
-            targetWeights[index] = assetWeight.value;
+            targetWeights[assetIndex] = assetWeight.value;
             weightSum += assetWeight.value;
 
             for (uint256 j = 0; j < numAssetWeights; j++) {

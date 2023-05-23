@@ -712,18 +712,18 @@ contract AeraBalancerExecution is
         validStartWeights = new uint256[](numValidAssets);
         validEndWeights = new uint256[](numValidAssets);
 
-        uint256 index;
+        uint256 newIndex;
         for (uint256 i = 0; i < numRequests; i++) {
             if (startAmounts[i] == 0) {
                 continue;
             }
 
-            rebalancingAssets[index] = requests[i].asset;
-            validStartAmounts[index] = startAmounts[i];
-            validStartWeights[index] = startWeights[i];
-            validEndWeights[index] = endWeights[i];
+            rebalancingAssets[newIndex] = requests[i].asset;
+            validStartAmounts[newIndex] = startAmounts[i];
+            validStartWeights[newIndex] = startWeights[i];
+            validEndWeights[newIndex] = endWeights[i];
 
-            index++;
+            newIndex++;
         }
 
         if (startWeightSum != ONE) {
@@ -787,7 +787,7 @@ contract AeraBalancerExecution is
         _resetPoolWeights(poolTokens, numPoolTokens);
 
         bool isRegistered;
-        uint256 index;
+        uint256 registeredIndex;
         uint256 startAmount;
         IERC20 asset;
         for (uint256 i = 0; i < numAssets; i++) {
@@ -795,7 +795,7 @@ contract AeraBalancerExecution is
 
             asset = rebalancingAssets[i];
 
-            (isRegistered, index) = _isAssetRegisteredToPool(
+            (isRegistered, registeredIndex) = _isAssetRegisteredToPool(
                 asset,
                 poolTokens,
                 numPoolTokens
@@ -805,7 +805,7 @@ contract AeraBalancerExecution is
                 _adjustAssetAmountInPoolToNewRequest(
                     asset,
                     startAmount,
-                    poolHoldings[index]
+                    poolHoldings[registeredIndex]
                 );
             } else {
                 asset.safeTransferFrom(vault, address(this), startAmount);
@@ -856,16 +856,16 @@ contract AeraBalancerExecution is
     /// @param poolTokens IERC20 tokens of Balancer Pool.
     /// @param numPoolTokens Number of pool tokens.
     /// @return isRegistered True if asset is registered.
-    /// @return index Index of asset in Balancer pool.
+    /// @return assetIndex Index of asset in Balancer pool.
     function _isAssetRegisteredToPool(
         IERC20 asset,
         IERC20[] memory poolTokens,
         uint256 numPoolTokens
-    ) internal pure returns (bool isRegistered, uint256 index) {
+    ) internal pure returns (bool isRegistered, uint256 assetIndex) {
         for (uint256 i = 0; i < numPoolTokens; i++) {
             if (asset == poolTokens[i]) {
                 isRegistered = true;
-                index = i;
+                assetIndex = i;
                 break;
             }
         }
