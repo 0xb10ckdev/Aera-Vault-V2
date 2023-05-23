@@ -152,15 +152,20 @@ contract AeraCustody is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
 
         uint256 numAssets = assets.length;
         uint256 numAmounts = amounts.length;
         bool isRegistered;
+        uint256 registeredIndex;
         AssetValue memory assetValue;
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            (isRegistered, ) = _isAssetRegistered(assetValue.asset, assets);
+            (isRegistered, registeredIndex) = _isAssetRegistered(
+                assetValue.asset,
+                assets
+            );
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
@@ -170,6 +175,14 @@ contract AeraCustody is ICustody, Ownable, Pausable, ReentrancyGuard {
                 if (i != j && assetValue.asset == amounts[j].asset) {
                     revert Aera__AssetIsDuplicated(assetValue.asset);
                 }
+            }
+
+            if (assetAmounts[registeredIndex].value < assetValue.value) {
+                revert Aera__AmountExceedsAvailable(
+                    assetValue.asset,
+                    assetValue.value,
+                    assetAmounts[registeredIndex].value
+                );
             }
         }
 
