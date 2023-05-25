@@ -74,7 +74,7 @@ interface ICustody is ICustodyEvents, ISweepable {
     function pauseVault() external;
 
     /// @notice Resumes vault operations.
-    function resumeVault() external;
+    function unpauseVault() external;
 
     /// @notice Initiate weight change of assets in the custody module
     ///         to a target distribution.

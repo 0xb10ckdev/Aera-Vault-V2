@@ -313,7 +313,7 @@ contract AeraCustody is ICustody, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function resumeVault()
+    function unpauseVault()
         external
         virtual
         override
