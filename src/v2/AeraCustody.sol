@@ -558,13 +558,13 @@ contract AeraCustody is ICustody, Ownable, Pausable, ReentrancyGuard {
             executionHolding = executionHoldings[i];
 
             for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset < executionHolding.asset) {
-                    continue;
-                }
                 if (assets[j].asset == executionHolding.asset) {
                     assetAmounts[j].value += executionHolding.value;
+                    break;
                 }
-                break;
+                if (assets[j].asset > executionHolding.asset) {
+                    break;
+                }
             }
         }
 
