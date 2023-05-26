@@ -2,10 +2,10 @@
 pragma solidity 0.8.19;
 
 import "src/v2/AeraVaultV2.sol";
-import "test/v2/utils/TestBaseCustody/TestBaseCustody.sol";
+import "src/v2/interfaces/ICustodyEvents.sol";
 import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
-contract TestBaseAeraVaultV2 is TestBaseBalancer, TestBaseCustody {
+contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
     AeraVaultV2 vault;
 
     function setUp() public virtual override {
@@ -24,8 +24,6 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, TestBaseCustody {
         }
 
         balancerExecution.initialize(address(vault));
-
-        custody = ICustody(address(vault));
 
         _deposit();
     }
@@ -75,10 +73,10 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, TestBaseCustody {
         uint256 startTime = block.timestamp + 10;
         uint256 endTime = startTime + 10000;
 
-        vm.expectEmit(true, true, true, true, address(custody));
+        vm.expectEmit(true, true, true, true, address(vault));
         emit StartRebalance(requests, startTime, endTime);
 
-        custody.startRebalance(requests, startTime, endTime);
+        vault.startRebalance(requests, startTime, endTime);
     }
 
     function _normalizeWeights(

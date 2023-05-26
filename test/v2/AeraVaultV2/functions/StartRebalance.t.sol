@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
-import "test/v2/utils/TestBaseCustody/functions/StartRebalance.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 interface IERC4626Mock {
     function setMaxDepositAmount(uint256 amount, bool use) external;
@@ -12,7 +12,122 @@ interface IERC4626Mock {
     function pause() external;
 }
 
-contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
+contract StartRebalanceTest is TestBaseAeraVaultV2 {
+    function test_startRebalance_fail_whenCallerIsNotGuardian() public {
+        vm.prank(_USER);
+
+        vm.expectRevert(ICustody.Aera__CallerIsNotGuardian.selector);
+
+        vault.startRebalance(
+            _generateValidRequest(),
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
+    function test_startRebalance_fail_whenFinalized() public {
+        vault.finalize();
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+
+        vault.startRebalance(
+            _generateValidRequest(),
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
+    function test_startRebalance_fail_whenVaultIsPaused() public {
+        vault.pauseVault();
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(bytes("Pausable: paused"));
+
+        vault.startRebalance(
+            _generateValidRequest(),
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
+    function test_startRebalance_fail_whenSumOfWeightsIsNotOne() public {
+        ICustody.AssetValue[] memory requests = _generateValidRequest();
+        requests[0].value++;
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(ICustody.Aera__SumOfWeightsIsNotOne.selector);
+
+        vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+    }
+
+    function test_startRebalance_fail_whenValueLengthIsNotSame() public {
+        ICustody.AssetValue[] memory requests = _generateValidRequest();
+        ICustody.AssetValue[]
+            memory invalidRequests = new ICustody.AssetValue[](
+                requests.length - 1
+            );
+
+        for (uint256 i = 0; i < requests.length - 1; i++) {
+            invalidRequests[i] = requests[i];
+        }
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__ValueLengthIsNotSame.selector,
+                vault.assetRegistry().assets().length,
+                invalidRequests.length
+            )
+        );
+
+        vault.startRebalance(
+            invalidRequests,
+            block.timestamp,
+            block.timestamp + 100
+        );
+    }
+
+    function test_startRebalance_fail_whenAssetIsNotRegistered() public {
+        IERC20 erc20 = IERC20(
+            address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
+        );
+
+        ICustody.AssetValue[] memory requests = _generateValidRequest();
+        requests[0].asset = erc20;
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetIsNotRegistered.selector,
+                erc20
+            )
+        );
+
+        vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+    }
+
+    function test_startRebalance_fail_whenAssetIsDuplicated() public {
+        ICustody.AssetValue[] memory requests = _generateValidRequest();
+        requests[0].asset = requests[1].asset;
+
+        vm.startPrank(vault.guardian());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetIsDuplicated.selector,
+                requests[0].asset
+            )
+        );
+
+        vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+    }
+
     function test_startRebalance_success_whenNoYieldAssetsShouldBeAdjusted()
         public
     {
@@ -249,10 +364,7 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
     function _rebalance(ICustody.AssetValue[] memory requests) internal {
         vm.startPrank(vault.guardian());
 
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit StartRebalance(requests, block.timestamp, block.timestamp + 100);
-
-        vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+        _startRebalance(requests);
 
         vm.stopPrank();
 
@@ -322,14 +434,5 @@ contract StartRebalanceTest is BaseStartRebalanceTest, TestBaseAeraVaultV2 {
         for (uint256 i = 0; i < numAssets; i++) {
             weights[i] = (values[i] * _ONE) / totalValue;
         }
-    }
-
-    function _generateRequest()
-        internal
-        view
-        override
-        returns (ICustody.AssetValue[] memory requests)
-    {
-        return _generateValidRequest();
     }
 }
