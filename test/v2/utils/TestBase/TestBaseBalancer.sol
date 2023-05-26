@@ -24,6 +24,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
     address internal _GUARDIAN = address(0x123456);
     uint256 internal _MAX_GUARDIAN_FEE = 10 ** 9;
+    uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 
     AeraBalancerExecution balancerExecution;
     AeraVaultAssetRegistry assetRegistry;
@@ -267,9 +268,9 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                             assetIn: IAsset(address(erc20Assets[i])),
                             assetOut: IAsset(address(erc20Assets[i + 1])),
                             amount: necessaryAmount <
-                                (holdings[i].value * 3) / 10
+                                (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
                                 ? necessaryAmount
-                                : (holdings[i].value * 3) / 10,
+                                : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
                             userData: "0x"
                         }),
                         fundManagement,
@@ -285,9 +286,10 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                             kind: IVault.SwapKind.GIVEN_OUT,
                             assetIn: IAsset(address(erc20Assets[i + 1])),
                             assetOut: IAsset(address(erc20Assets[i])),
-                            amount: necessaryAmount < holdings[i].value / 4
+                            amount: necessaryAmount <
+                                (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
                                 ? necessaryAmount
-                                : holdings[i].value / 4,
+                                : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
                             userData: "0x"
                         }),
                         fundManagement,
