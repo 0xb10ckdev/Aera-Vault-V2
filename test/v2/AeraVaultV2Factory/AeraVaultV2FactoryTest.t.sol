@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../TestBaseAeraVaultV2Factory.sol";
+import "src/v2/interfaces/ICustodyEvents.sol";
+import "src/v2/AeraVaultV2Factory.sol";
+import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
-contract CreateTest is TestBaseAeraVaultV2Factory {
-    uint256 minThreshold;
-    uint256 minYieldActionThreshold;
-
+contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
     error Aera__MinThresholdIsZero();
     error Aera__MinYieldActionThresholdIsZero();
 
-    function setUp() public override {
+    AeraVaultV2Factory factory;
+    uint256 minThreshold;
+    uint256 minYieldActionThreshold;
+
+    function setUp() public virtual override {
         super.setUp();
 
         minThreshold = _getScaler(assets[numeraire]);
         minYieldActionThreshold = _getScaler(assets[numeraire]);
+
+        factory = new AeraVaultV2Factory();
     }
 
     function test_createAeraVaultV2_fail_whenCallerIsNotOwner() public {
