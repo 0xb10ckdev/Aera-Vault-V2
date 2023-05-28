@@ -399,33 +399,22 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         uint256 totalValue;
         uint256 balance;
-        uint256 spotPrice;
-        uint256 assetUnit;
+        uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
             if (assetsInformation[i].isERC4626) {
                 balance = IERC4626(address(assetsInformation[i].asset))
                     .convertToAssets(holdings[i].value);
-                assetUnit = _getScaler(assets[underlyingIndex[assets[i]]]);
-                if (underlyingIndex[assets[i]] == numeraire) {
-                    spotPrice = assetUnit;
-                } else {
-                    spotPrice = uint256(
-                        assetsInformation[underlyingIndex[assets[i]]]
-                            .oracle
-                            .latestAnswer()
-                    );
-                }
+                index = underlyingIndex[assets[i]];
             } else {
                 balance = holdings[i].value;
-                assetUnit = _getScaler(assets[i]);
-                if (i == numeraire) {
-                    spotPrice = assetUnit;
-                } else {
-                    spotPrice = uint256(
-                        assetsInformation[i].oracle.latestAnswer()
-                    );
-                }
+                index = i;
             }
+
+            uint256 assetUnit = _getScaler(assets[index]);
+
+            uint256 spotPrice = index == numeraire
+                ? assetUnit
+                : uint256(assetsInformation[index].oracle.latestAnswer());
 
             values[i] = (balance * spotPrice) / assetUnit;
             totalValue += values[i];
