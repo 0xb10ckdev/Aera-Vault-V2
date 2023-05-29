@@ -7,6 +7,7 @@ import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
     AeraVaultV2 vault;
+    ICustody.AssetValue[] validRequest;
 
     function setUp() public virtual override {
         super.setUp();
@@ -26,6 +27,8 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         balancerExecution.initialize(address(vault));
 
         _deposit();
+
+        _generateValidRequest();
     }
 
     function _deployAeraVaultV2() internal {
@@ -39,18 +42,66 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         );
     }
 
-    function _generateValidRequest()
+    function _generateValidRequest() internal {
+        uint256[] memory weights = _normalizeWeights(_getAssetWeights());
+
+        uint256 numERC20 = erc20Assets.length;
+        uint256 index;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (!assetsInformation[i].isERC4626) {
+                if (numERC20 % 2 == 0 || index < numERC20 - 1) {
+                    uint256 adjustmentWeight = ((index / 2 + 1) * _ONE) / 100;
+                    if (index % 2 == 0) {
+                        weights[i] = weights[i] + adjustmentWeight;
+                    } else {
+                        weights[i] = weights[i] - adjustmentWeight;
+                    }
+                }
+
+                index++;
+            }
+
+            validRequest.push(
+                ICustody.AssetValue({asset: assets[i], value: weights[i]})
+            );
+        }
+    }
+
+    function _getAssetWeights()
         internal
         view
-        returns (ICustody.AssetValue[] memory requests)
+        returns (uint256[] memory weights)
     {
-        requests = new ICustody.AssetValue[](assets.length);
+        uint256 numAssets = assets.length;
+        uint256[] memory values = new uint256[](numAssets);
+        weights = new uint256[](numAssets);
+        ICustody.AssetValue[] memory holdings = vault.holdings();
 
-        for (uint256 i = 0; i < assets.length; i++) {
-            requests[i] = ICustody.AssetValue({
-                asset: assets[i],
-                value: 0.2e18
-            });
+        uint256 totalValue;
+        uint256 balance;
+        uint256 index;
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assetsInformation[i].isERC4626) {
+                balance = IERC4626(address(assetsInformation[i].asset))
+                    .convertToAssets(holdings[i].value);
+                index = underlyingIndex[assets[i]];
+            } else {
+                balance = holdings[i].value;
+                index = i;
+            }
+
+            uint256 assetUnit = _getScaler(assets[index]);
+
+            uint256 spotPrice = index == numeraire
+                ? assetUnit
+                : uint256(assetsInformation[index].oracle.latestAnswer());
+
+            values[i] = (balance * spotPrice) / assetUnit;
+            totalValue += values[i];
+        }
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            weights[i] = (values[i] * _ONE) / totalValue;
         }
     }
 

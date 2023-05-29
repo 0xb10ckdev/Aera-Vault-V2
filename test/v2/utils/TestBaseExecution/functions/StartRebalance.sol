@@ -5,7 +5,7 @@ import "../TestBaseExecution.sol";
 
 abstract contract BaseStartRebalanceTest is TestBaseExecution {
     function test_startRebalance_fail_whenCallerIsNotVault() public virtual {
-        vm.startPrank(_USER);
+        vm.prank(_USER);
 
         vm.expectRevert(IExecution.Aera__CallerIsNotVault.selector);
 

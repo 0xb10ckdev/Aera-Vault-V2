@@ -30,8 +30,8 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
     }
 
     function test_finalize_success_whenRebalancingIsOnGoing() public virtual {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         ICustody.AssetValue[] memory holdings = vault.holdings();
         uint256[] memory balances = new uint256[](holdings.length);
@@ -54,8 +54,8 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
     }
 
     function test_finalize_success() public virtual {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         vm.warp(vault.execution().rebalanceEndTime());
 

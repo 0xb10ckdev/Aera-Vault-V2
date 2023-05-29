@@ -33,8 +33,8 @@ contract EndRebalanceEarlyTest is TestBaseAeraVaultV2 {
         public
         virtual
     {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit EndRebalanceEarly();
@@ -43,8 +43,8 @@ contract EndRebalanceEarlyTest is TestBaseAeraVaultV2 {
     }
 
     function test_endRebalanceEarly_success() public virtual {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         vm.warp(vault.execution().rebalanceEndTime());
 

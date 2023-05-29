@@ -33,8 +33,8 @@ contract EndRebalanceTest is TestBaseAeraVaultV2 {
     }
 
     function test_endRebalance_fail_whenRebalancingIsOnGoing() public {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -47,8 +47,8 @@ contract EndRebalanceTest is TestBaseAeraVaultV2 {
     }
 
     function test_endRebalance_success() public virtual {
-        vm.prank(vault.guardian());
-        _startRebalance(_generateValidRequest());
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
 
         vm.warp(vault.execution().rebalanceEndTime());
 

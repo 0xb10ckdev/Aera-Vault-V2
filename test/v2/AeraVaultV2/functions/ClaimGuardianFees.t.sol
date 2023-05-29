@@ -24,12 +24,10 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
     }
 
     function test_claimGuardianFees_success() public virtual {
-        address guardian = vault.guardian();
-
-        vm.startPrank(guardian);
+        vm.startPrank(_GUARDIAN);
 
         vm.warp(block.timestamp + 1000);
-        _startRebalance(_generateValidRequest());
+        _startRebalance(validRequest);
 
         ICustody.AssetValue[] memory holdings = vault.holdings();
         ICustody.AssetValue[] memory fees = new ICustody.AssetValue[](
@@ -39,19 +37,19 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
         uint256[] memory balances = new uint256[](holdings.length);
 
         for (uint256 i = 0; i < holdings.length; i++) {
-            fees[i] = IGuardiansFee(address(vault)).guardiansFee(guardian, i);
-            balances[i] = holdings[i].asset.balanceOf(guardian);
+            fees[i] = IGuardiansFee(address(vault)).guardiansFee(_GUARDIAN, i);
+            balances[i] = holdings[i].asset.balanceOf(_GUARDIAN);
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit ClaimGuardianFees(guardian, fees);
+        emit ClaimGuardianFees(_GUARDIAN, fees);
 
         vault.claimGuardianFees();
 
         for (uint256 i = 0; i < holdings.length; i++) {
             assertEq(
                 balances[i] + fees[i].value,
-                holdings[i].asset.balanceOf(guardian)
+                holdings[i].asset.balanceOf(_GUARDIAN)
             );
         }
     }
