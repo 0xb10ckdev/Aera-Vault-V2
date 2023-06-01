@@ -493,7 +493,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         view
         virtual
         override
-        returns (AssetValue[] memory assetAmounts)
+        returns (AssetValue[] memory)
     {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
