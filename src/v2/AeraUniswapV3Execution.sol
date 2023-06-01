@@ -6,6 +6,7 @@ import "./dependencies/openzeppelin/Math.sol";
 import "./dependencies/openzeppelin/Ownable.sol";
 import "./dependencies/openzeppelin/ReentrancyGuard.sol";
 import "./dependencies/openzeppelin/SafeERC20.sol";
+import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/IUniswapV3Execution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
@@ -45,7 +46,8 @@ contract AeraUniswapV3Execution is
 
     error Aera__AssetRegistryIsZeroAddress();
     error Aera__DescriptionIsEmpty();
-    error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
+    error Aera__PoolPreferenceTokenIsNotRegistered(IERC20 poolPreferenceToken);
+    error Aera__VehicleIsNotRegistered(IERC20 vehicle);
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
     error Aera__CannotSweepPoolAsset();
@@ -71,17 +73,46 @@ contract AeraUniswapV3Execution is
         if (bytes(executionParams.description).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
-
-        IAssetRegistry.AssetInformation[] memory assets = IAssetRegistry(
-            executionParams.assetRegistry
-        ).assets();
-
-        // TODO: make sure valid ERC20 token
-        vehicle = IERC20(executionParams.vehicle);
-        // TODO: make sure maxSlippage in valid range
-        maxSlippage = executionParams.maxSlippage;
         description = executionParams.description;
+
         assetRegistry = IAssetRegistry(executionParams.assetRegistry);
+
+        vehicle = IERC20(executionParams.vehicle);
+        if (!_assetRegistered(executionParams.vehicle)) {
+            revert Aera__VehicleIsNotRegistered(vehicle);
+        }
+
+        // TODO: do we want to add a max limit to maxSlippage or does it not matter?
+        maxSlippage = executionParams.maxSlippage;
+
+        for (uint256 i = 0; i < executionParams.poolPreferences.length; i++) {
+            PoolPreference memory poolPreference = executionParams
+                .poolPreferences[i];
+            if (!_assetRegistered(address(poolPreference.asset0))) {
+                revert Aera__PoolPreferenceTokenIsNotRegistered(
+                    poolPreference.asset0
+                );
+            }
+            if (!_assetRegistered(address(poolPreference.asset1))) {
+                revert Aera__PoolPreferenceTokenIsNotRegistered(
+                    poolPreference.asset1
+                );
+            }
+            poolPreferences.push(poolPreference);
+        }
+    }
+
+    // TODO: can optimize gas by passing in a list of all the assets to check
+    // and returning which are registered
+    function _assetRegistered(address asset) internal view returns (bool) {
+        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
+            .assets();
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (address(assets[i].asset) == asset) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @inheritdoc IExecution
@@ -129,7 +160,7 @@ contract AeraUniswapV3Execution is
     }
 
     /// @inheritdoc IExecution
-    function holdings() public view override returns (AssetValue[] memory) {
+    function holdings() public pure override returns (AssetValue[] memory) {
         return new AssetValue[](0);
     }
 

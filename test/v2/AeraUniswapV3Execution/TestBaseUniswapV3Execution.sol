@@ -22,7 +22,11 @@ contract TestBaseUniswapV3Execution is TestBaseExecution, Deployer {
     address vehicle;
     uint256 numeraire;
     uint256 maxSlippage;
-    PoolPreference[] poolPreferences;
+
+    // TODO: if we do this here we and use to initialize executionParams we get
+    // `Copying of type struct memory[] memory to storage not yet supported`
+    // IUniswapV3Execution.PoolPreference[] poolPreferences =
+    //    new IUniswapV3Execution.PoolPreference[](0);
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
@@ -35,8 +39,6 @@ contract TestBaseUniswapV3Execution is TestBaseExecution, Deployer {
         for (uint256 i = 0; i < 3; i++) {
             erc20Assets[i].approve(address(uniswapV3Execution), 1);
         }
-
-        uniswapV3Execution.initialize(address(this));
 
         execution = IExecution(address(uniswapV3Execution));
     }
@@ -71,8 +73,6 @@ contract TestBaseUniswapV3Execution is TestBaseExecution, Deployer {
             int256(15_000e6)
         );
         IOracleMock(address(assets[2].oracle)).setLatestAnswer(int256(1_000e6));
-
-        poolPreferences = new PoolPreference[](0);
     }
 
     function _deployAssetRegistry() internal {
@@ -100,11 +100,11 @@ contract TestBaseUniswapV3Execution is TestBaseExecution, Deployer {
         }
         weights[0] = weights[0] + _ONE - weightSum;
 
-        executionParams = IUniswapv3Execution.NewUniswapv3ExecutionParams({
+        executionParams = IUniswapV3Execution.NewUniswapV3ExecutionParams({
             assetRegistry: address(assetRegistry),
             vehicle: address(vehicle),
             maxSlippage: maxSlippage,
-            poolPreference: poolPreferences,
+            poolPreferences: new IUniswapV3Execution.PoolPreference[](0),
             description: "Test Execution"
         });
     }

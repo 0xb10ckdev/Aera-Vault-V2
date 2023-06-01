@@ -7,9 +7,9 @@ import "./IExecution.sol";
 interface IUniswapV3Execution is IExecution {
     // NOTE: The ordering should always be asset0 < asset1
     struct PoolPreference {
-        asset0: IERC20, // first asset
-        asset1: IERC20, // second asset
-        pool: address, // preferred Uni V3 pool for the asset pair
+        IERC20 asset0; // first asset
+        IERC20 asset1; // second asset
+        address pool; // preferred Uni V3 pool for the asset pair
     }
 
     // Use struct parameter to avoid stack too deep error.
@@ -22,7 +22,7 @@ interface IUniswapV3Execution is IExecution {
         address assetRegistry;
         address vehicle;
         uint256 maxSlippage;
-        PoolPreference[] poolPreferences;
+        IUniswapV3Execution.PoolPreference[] poolPreferences;
         string description;
     }
 
@@ -32,10 +32,4 @@ interface IUniswapV3Execution is IExecution {
         external
         view
         returns (IAssetRegistry assetRegistry);
-
-    /// @notice address of vehicle used as an intermediate asset for trading. Must be in asset registry.
-    function vehicle() external view returns (address vehicle);
-
-    /// @notice Return max slippage per-trade maximum slippage bound. Encoded as a fraction with 10^18 decimal fixed point implementation.
-    function maxSlippage() external view returns (uint256 maxSlippage);
 }

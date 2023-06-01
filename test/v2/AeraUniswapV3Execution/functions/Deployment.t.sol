@@ -40,11 +40,11 @@ contract DeploymentTest is TestBaseUniswapV3Execution {
 
         IUniswapV3Execution.NewUniswapV3ExecutionParams
             memory executionParams = _generateExecutionParams();
-        executionParams.vehicle = erc20;
+        executionParams.vehicle = address(erc20);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraUniswapV3Execution.Aera__PoolTokenIsNotRegistered.selector,
+                AeraUniswapV3Execution.Aera__VehicleIsNotRegistered.selector,
                 erc20
             )
         );
