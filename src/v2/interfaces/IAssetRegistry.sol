@@ -8,12 +8,10 @@ import "@openzeppelin/IERC20.sol";
 interface IAssetRegistry {
     /// @param asset Address of an asset.
     /// @param isERC4626 True if yield-bearing asset, false if plain ERC20 asset.
-    /// @param withdrawable True if can be directly withdrawn by owner (this applies to ERC4626 assets only).
     /// @param oracle If applicable, oracle address for asset.
     struct AssetInformation {
         IERC20 asset;
         bool isERC4626;
-        bool withdrawable;
         AggregatorV2V3Interface oracle;
     }
 

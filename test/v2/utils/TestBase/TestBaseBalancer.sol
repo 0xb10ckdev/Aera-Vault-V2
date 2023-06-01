@@ -94,7 +94,6 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 IAssetRegistry.AssetInformation({
                     asset: assets[i],
                     isERC4626: isERC4626[assets[i]],
-                    withdrawable: true,
                     oracle: AggregatorV2V3Interface(
                         i == numeraire || isERC4626[assets[i]]
                             ? address(0)
