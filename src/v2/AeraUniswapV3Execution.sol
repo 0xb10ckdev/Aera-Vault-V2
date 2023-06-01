@@ -127,9 +127,95 @@ contract AeraUniswapV3Execution is
 
         _validateRequests(requests, startTime, endTime);
 
-        // TODO
+        TradePair[] memory pairs = _calcInputOutputPairs(requests);
+        TradeStage[] memory tradeStages = _calcTradeStages(requests);
+        _executeTradeStages(tradeStages);
+
+
+        _claim(requests);
 
         emit StartRebalance(requests, startTime, endTime);
+    }
+
+    function _calcInputOutputPairs(
+        AssetRebalanceRequest[] calldata requests
+    )
+        internal
+        returns (TradePair[] memory pairs)
+    {}
+
+    function _calcTradeStages(
+        TradePair[] memory pairs
+    ) internal returns (TradeStage[] memory tradeStages) {
+        mapping(TradePair => bool)
+            memory completed_pairs = new mapping(TradePair => bool)();
+        // TODO: this needs to happen at the request/calcInputOutputPairs level
+        for (uint256 i = 0; i < poolPreferences.length; i++) {
+            uint256 matchingPairI = MAXINT;
+            for (uint256 j = 0; j < pairs.length; j++) {
+                if (poolPreferences[i].asset0 == pairs[j].input && poolPreferences[i].asset1 == pairs[j].output) {
+                    matchingPairI = j;
+                    break;
+                }
+            }
+            if (matchingPairI < MAXINT) {
+                // TODO: figure out which direction to swap, and only
+                // add to completed assets if:
+                // - all of input asset was used (for input)
+                // - all of output asset was gained (for output)
+                // - add leftover to "adjusted amounts"
+                AssetValue minAmountOut = _calcMinAmountOut(
+                    pair.input,
+                    pair.output,
+                    pair.amount
+                );
+                tradeStages.push(
+                    TradeStage({input: pair.input, output: pair.output, inputAmount: pair.amount, minAmountOut: minAmountOut})
+                );
+                completed_pairs[pair] = true;
+            }
+        }
+        for (uint256 j = 0; j < pairs.length; j++) {
+            if (
+                completed_pairs[pairs[j]] == false
+            ) {
+                AssetValue minAmountOut = _calcMinAmountOut(
+                    pairs[j].input,
+                    pairs[j].output,
+                    pairs[j].amount
+                );
+                tradeStages.push(
+                    TradeStage({
+                        input: pair.input,
+                        output: pair.output,
+                        inputAmount: pair.amount,
+                        minAmountOut: minAmountOut
+                    })
+                );
+            }
+        }
+    }
+
+    function _executeTradeStages(TradeStage[] memory tradeStages);
+        for (uint256 i = 0; i < tradeStages.length; i++) {
+            _executeTradeStage(tradeStages[i]);
+        }
+    }
+
+    function _executeTradeStage(TradeStage tradeStage) internal {
+        if (tradeStage.inputToken.getBalance(address(this)) == 0) {
+            asset.safeTransferFrom(vault, address(this), tradeStage.amountIn);
+        }
+        _setAllowance(
+            tradeStage.tokens[0],
+            address(tradeStage.pool),
+            tradeStage.amountIn
+        );
+        tradeStage.pool.swapExactTokensForTokens(
+            tradeStage.inputToken,
+            tradeStage.outputToken,
+            tradeStage.minAmountOut
+        );
     }
 
     /// @inheritdoc IExecution
@@ -152,10 +238,22 @@ contract AeraUniswapV3Execution is
         emit ClaimNow();
     }
 
+    function _claim(AssetRebalanceRequest[] calldata requests) internal {
+        for (uint256 i = 0; i < requests.length; i++) {
+            AssetRebalanceRequest memory request = requests[i];
+            if (requests.outputToken.getBalance(address(this)) > 0) {
+                requests.outputToken.safeTransfer(
+                    vault,
+                    requests.outputToken.getBalance(address(this))
+                );
+            }
+        }
+    }
+
     /// @inheritdoc IExecution
     function sweep(IERC20 token) external override nonReentrant {
-        // TODO
-
+        uint256 amount = token.balanceOf(address(this));
+        token.safeTransfer(owner(), amount);
         emit Sweep(token);
     }
 
