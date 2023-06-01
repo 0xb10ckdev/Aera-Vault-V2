@@ -12,7 +12,7 @@ import "./interfaces/IBManagedPoolFactory.sol";
 import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
 
-/// @title Aera Balancer Execution.
+/// @title Aera Uniswap V3 Execution.
 contract AeraUniswapV3Execution is
     IUniswapV3Execution,
     Ownable,
@@ -62,13 +62,7 @@ contract AeraUniswapV3Execution is
 
     /// FUNCTIONS ///
 
-    /// @notice Initialize the contract by deploying a new Balancer Pool using the provided factory.
-    /// @dev Tokens should be unique.
-    ///      The following pre-conditions are checked by Balancer in internal transactions:
-    ///       If tokens are sorted in ascending order.
-    ///       If swapFeePercentage is greater than the minimum and less than the maximum.
-    ///       If the total sum of weights is one.
-    /// @param executionParams Struct vault parameter.
+    /// @param executionParams Struct execution parameters.
     constructor(NewUniswapV3ExecutionParams memory executionParams) {
         if (executionParams.assetRegistry == address(0)) {
             revert Aera__AssetRegistryIsZeroAddress();
