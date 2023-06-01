@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBase} from "../../utils/TestBase.sol";
-import "solmate/tokens/ERC20.sol";
-import "../../../src/v2/dependencies/chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "../../../src/v2/dependencies/openzeppelin/IERC20.sol";
-import "../../../src/v2/interfaces/IAssetRegistry.sol";
-import "../../../src/v2/AeraVaultAssetRegistry.sol";
-import {ERC20Mock} from "../../utils/ERC20Mock.sol";
-import {ERC4626Mock} from "../../utils/ERC4626Mock.sol";
-import {IOracleMock, OracleMock} from "../../utils/OracleMock.sol";
+import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/IERC20.sol";
+import "src/v2/interfaces/IAssetRegistry.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
+import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBase {
     AeraVaultAssetRegistry assetRegistry;
@@ -37,13 +36,20 @@ contract TestBaseAssetRegistry is TestBase {
             .assets();
 
         uint256 numYieldAssets = 0;
-        for (uint256 i = 0; i < registryAssets.length; i++) {
-            if (registryAssets[i].isERC4626) {
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (assets[i].isERC4626) {
                 numYieldAssets++;
             }
         }
 
-        assertEq(numYieldAssets, assetRegistry.numYieldAssets());
+        uint256 numRegisteredYieldAssets = 0;
+        for (uint256 i = 0; i < registryAssets.length; i++) {
+            if (registryAssets[i].isERC4626) {
+                numRegisteredYieldAssets++;
+            }
+        }
+
+        assertEq(numYieldAssets, numRegisteredYieldAssets);
     }
 
     function propAssetsSorted() internal {
@@ -153,6 +159,7 @@ contract TestBaseAssetRegistry is TestBase {
 
     function _generateValidWeights()
         internal
+        view
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
         IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry

@@ -35,7 +35,7 @@ contract InitializeTest is TestBaseBalancerExecution {
     }
 
     function test_initialize_fail_whenCallerIsNotOwner() public {
-        vm.startPrank(_USER);
+        vm.prank(_USER);
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         balancerExecution.initialize(address(this));

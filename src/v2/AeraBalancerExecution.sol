@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "./dependencies/openzeppelin/IERC20Metadata.sol";
-import "./dependencies/openzeppelin/Math.sol";
-import "./dependencies/openzeppelin/Ownable.sol";
-import "./dependencies/openzeppelin/ReentrancyGuard.sol";
-import "./dependencies/openzeppelin/SafeERC20.sol";
+import "@openzeppelin/ERC165.sol";
+import "@openzeppelin/IERC20Metadata.sol";
+import "@openzeppelin/Math.sol";
+import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/ReentrancyGuard.sol";
+import "@openzeppelin/SafeERC20.sol";
 import "./interfaces/IBalancerExecution.sol";
 import "./interfaces/IBManagedPool.sol";
 import "./interfaces/IBManagedPoolFactory.sol";
 import "./interfaces/IBMerkleOrchard.sol";
 import "./interfaces/IBVault.sol";
+import {ONE} from "./Constants.sol";
 
 /// @title Aera Balancer Execution.
-contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
+contract AeraBalancerExecution is
+    IBalancerExecution,
+    ERC165,
+    Ownable,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
-
-    uint256 internal constant _ONE = 1e18;
 
     /// @notice Mininum weight of pool tokens in Balancer Pool.
     uint256 private constant _MIN_WEIGHT = 0.01e18;
@@ -50,11 +55,11 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
 
     /// ERRORS ///
 
-    error Aera__AssetRegistryIsZeroAddress();
     error Aera__DescriptionIsEmpty();
     error Aera__PoolTokenIsNotRegistered(IERC20 poolToken);
     error Aera__ModuleIsAlreadyInitialized();
     error Aera__VaultIsZeroAddress();
+    error Aera__WeightIsBelowMin(uint256 actual, uint256 min);
     error Aera__CannotSweepPoolAsset();
 
     /// MODIFIERS ///
@@ -97,8 +102,8 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < numPoolTokens; i++) {
             for (; assetIndex < numAssets; assetIndex++) {
                 if (
-                    vaultParams.poolTokens[i] == assets[i].asset &&
-                    !assets[i].isERC4626
+                    vaultParams.poolTokens[i] == assets[assetIndex].asset &&
+                    !assets[assetIndex].isERC4626
                 ) {
                     break;
                 }
@@ -236,33 +241,40 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                 if (startAmounts[i] != 0) {
                     startAmounts[i] -= adjustableAmount;
                     startWeights[i] =
-                        (startAmounts[i] * spotPrice * _ONE) /
+                        (startAmounts[i] * spotPrice * ONE) /
                         necessaryTotalValue /
                         assetUnit;
+                    if (startWeights[i] < _MIN_WEIGHT) {
+                        startWeights[i] = _MIN_WEIGHT;
+                    }
                 }
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
                     endWeights[i] =
-                        (endAmounts[i] * spotPrice * _ONE) /
+                        (endAmounts[i] * spotPrice * ONE) /
                         necessaryTotalValue /
                         assetUnit;
+                    if (endWeights[i] < _MIN_WEIGHT) {
+                        endWeights[i] = _MIN_WEIGHT;
+                    }
                 }
             }
         }
 
-        {
-            uint256 sumStartWeights;
-            uint256 sumEndWeights;
-            for (uint256 i = 0; i < numRequests; i++) {
-                sumStartWeights += startWeights[i];
-                sumEndWeights += endWeights[i];
-            }
+        IERC20[] memory rebalancingAssets;
+        (
+            rebalancingAssets,
+            startAmounts,
+            startWeights,
+            endWeights
+        ) = _getValidRebalanceData(
+            requests,
+            startAmounts,
+            startWeights,
+            endWeights
+        );
 
-            startWeights[0] = startWeights[0] + _ONE - sumStartWeights;
-            endWeights[0] = endWeights[0] + _ONE - sumEndWeights;
-        }
-
-        _adjustPool(requests, startAmounts);
+        _adjustPool(rebalancingAssets, startAmounts);
 
         IERC20[] memory poolTokens = _getPoolTokens();
 
@@ -309,8 +321,11 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         merkleOrchard.claimDistributions(owner(), claims, tokens);
     }
 
-    /// @inheritdoc IExecution
-    function sweep(IERC20 token) external override nonReentrant {
+    /// @inheritdoc ISweepable
+    function sweep(
+        IERC20 token,
+        uint256 amount
+    ) external override nonReentrant {
         (IERC20[] memory poolAssets, , ) = bVault.getPoolTokens(poolId);
         uint256 numPoolAssets = poolAssets.length;
 
@@ -320,10 +335,9 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             }
         }
 
-        uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(owner(), amount);
 
-        emit Sweep(token);
+        emit Sweep(token, amount);
     }
 
     /// @inheritdoc IBalancerExecution
@@ -353,10 +367,18 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IERC165
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IBalancerExecution).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Claim all funds from Balancer Pool.
-    /// @dev Will only be called by endRebalance() and claimNow().
     function _claim() internal {
         (
             IERC20[] memory poolTokens,
@@ -373,7 +395,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Check if the requests are valid.
-    /// @dev Will only be called by startRebalance().
+
     /// @param requests Struct details for requests.
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
@@ -388,7 +410,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             weightSum += requests[i].weight;
         }
 
-        if (weightSum != _ONE) {
+        if (weightSum != ONE) {
             revert Aera__SumOfWeightsIsNotOne();
         }
 
@@ -399,7 +421,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Get spot prices and units of requested assets.
-    /// @dev Will only be called by startRebalance().
     /// @param requests Each request specifies amount of asset to rebalance and target weight.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
@@ -438,7 +459,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Register a token to Balancer pool and deposit to the pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param token Token to register.
     /// @param amount Amount to deposit.
     function _bindAndDepositToken(IERC20 token, uint256 amount) internal {
@@ -448,7 +468,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Withdraw a token from Balancer pool and unregister from the pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param token Token to unregister.
     /// @param amount Amount to withdraw.
     function _unbindAndWithdrawToken(IERC20 token, uint256 amount) internal {
@@ -458,7 +477,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Deposit token from Execution module to Balancer Pool.
-    /// @dev Will only be called by _bindAndDepositTokens().
     /// @param token The token to deposit.
     /// @param amount The amount of token to deposit.
     function _depositTokenToPool(IERC20 token, uint256 amount) internal {
@@ -473,7 +491,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Withdraw token from Balancer Pool to Execution module.
-    /// @dev Will only be called by _unbindAndWithdrawTokens().
     /// @param token The token to withdraw.
     /// @param amount The amount of token to withdraw.
     function _withdrawTokenFromPool(IERC20 token, uint256 amount) internal {
@@ -486,7 +503,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Update token balance of Balancer Pool.
-    /// @dev Will only be called by _depositTokenToPool() and _withdrawTokenFromPool().
     /// @param token Address of pool token.
     /// @param amount Amount of pool token.
     /// @param kind Kind of pool balance operation.
@@ -553,7 +569,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Reset allowance of token for a spender.
-    /// @dev Will only be called by _setAllowance().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     function _clearAllowance(IERC20 token, address spender) internal {
@@ -564,7 +579,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Set allowance of token for a spender.
-    /// @dev Will only be called by initialize() and _depositTokenToPool().
     /// @param token Token of address to set allowance.
     /// @param spender Address to give spend approval to.
     /// @param amount Amount to approve for spending.
@@ -578,7 +592,6 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Calculate the amounts and adjustable values for rebalancing.
-    /// @dev Will only be called by startRebalance().
     /// @param requests Struct details for requests.
     /// @param spotPrices Spot prices of requested assets.
     /// @param assetUnits Units in asset decimals.
@@ -621,7 +634,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         {
             uint256 targetValue;
             for (uint256 i = 0; i < numRequests; i++) {
-                targetValue = (totalValue * requests[i].weight) / _ONE;
+                targetValue = (totalValue * requests[i].weight) / ONE;
                 if (values[i] != targetValue) {
                     startAmounts[i] = requests[i].amount;
                     endAmounts[i] =
@@ -642,27 +655,127 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
             }
         }
 
-        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / _ONE;
+        uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / ONE;
 
         if (minAssetValue > minValue) {
             adjustableAssetValue =
-                (((minAssetValue - minValue)) * _ONE) /
-                (_ONE - _MIN_WEIGHT * adjustableCount);
+                (((minAssetValue - minValue)) * ONE) /
+                (ONE - _MIN_WEIGHT * adjustableCount);
+            necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+        } else if (minAssetValue < minValue) {
+            revert Aera__WeightIsBelowMin(
+                (minAssetValue * ONE) / necessaryTotalValue,
+                _MIN_WEIGHT
+            );
+        }
+    }
+
+    /// @notice Get valid data for rebalancing.
+    /// @param requests Struct details for amount to rebalance and
+    ///                 target weight for each asset.
+    /// @param startAmounts Start amount of each asset to rebalance as requests.
+    /// @param startWeights Start weights of each asset.
+    /// @param endWeights End weights of each asset.
+    /// @return rebalancingAssets Assets that will participate in rebalancing.
+    /// @return validStartAmounts Amount of assets that will participate.
+    /// @return validStartWeights Start weights of assets that will participate.
+    /// @return validEndWeights End weights of assets that will participate.
+    function _getValidRebalanceData(
+        AssetRebalanceRequest[] calldata requests,
+        uint256[] memory startAmounts,
+        uint256[] memory startWeights,
+        uint256[] memory endWeights
+    )
+        internal
+        pure
+        returns (
+            IERC20[] memory rebalancingAssets,
+            uint256[] memory validStartAmounts,
+            uint256[] memory validStartWeights,
+            uint256[] memory validEndWeights
+        )
+    {
+        uint256 numRequests = requests.length;
+        uint256 numValidAssets;
+        uint256 startWeightSum;
+        uint256 endWeightSum;
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (startAmounts[i] > 0) {
+                numValidAssets++;
+            }
+            startWeightSum += startWeights[i];
+            endWeightSum += endWeights[i];
         }
 
-        necessaryTotalValue -= adjustableAssetValue * adjustableCount;
+        rebalancingAssets = new IERC20[](numValidAssets);
+        validStartAmounts = new uint256[](numValidAssets);
+        validStartWeights = new uint256[](numValidAssets);
+        validEndWeights = new uint256[](numValidAssets);
+
+        uint256 newIndex;
+        for (uint256 i = 0; i < numRequests; i++) {
+            if (startAmounts[i] == 0) {
+                continue;
+            }
+
+            rebalancingAssets[newIndex] = requests[i].asset;
+            validStartAmounts[newIndex] = startAmounts[i];
+            validStartWeights[newIndex] = startWeights[i];
+            validEndWeights[newIndex] = endWeights[i];
+
+            newIndex++;
+        }
+
+        if (startWeightSum != ONE) {
+            validStartWeights = _normalizeWeights(
+                validStartWeights,
+                startWeightSum
+            );
+        }
+
+        if (endWeightSum != ONE) {
+            validEndWeights = _normalizeWeights(validEndWeights, endWeightSum);
+        }
+    }
+
+    /// @notice Normalize weights to make their sum equal to one.
+    /// @param weights Array of weights to be normalized.
+    /// @param weightSum Sum of weights.
+    /// @return newWeights Array of normalized weights.
+    function _normalizeWeights(
+        uint256[] memory weights,
+        uint256 weightSum
+    ) internal pure returns (uint256[] memory newWeights) {
+        uint256 numWeights = weights.length;
+        newWeights = new uint256[](numWeights);
+
+        for (uint256 i = 0; i < numWeights; i++) {
+            newWeights[i] = weights[i];
+        }
+
+        if (weightSum > ONE) {
+            uint256 deviation = weightSum - ONE;
+            uint256 reducibleMinWeight = _MIN_WEIGHT + deviation;
+            for (uint256 i = 0; i < numWeights; i++) {
+                if (weights[i] > reducibleMinWeight) {
+                    newWeights[i] -= deviation;
+                    break;
+                }
+            }
+        } else {
+            newWeights[0] = newWeights[0] + ONE - weightSum;
+        }
     }
 
     /// @notice Adjust a Balancer pool so that the pool has only assets to be rebalanced.
-    /// @dev Will only be called by startRebalance().
-    /// @param requests Struct details for requests.
+    /// @param rebalancingAssets Assets to rebalance.
     /// @param startAmounts Adjusted start amount of each assets to rebalance.
     ///                     It rebalances the minimal necessary amounts of assets.
     function _adjustPool(
-        AssetRebalanceRequest[] calldata requests,
+        IERC20[] memory rebalancingAssets,
         uint256[] memory startAmounts
     ) internal {
-        uint256 numRequests = requests.length;
+        uint256 numAssets = rebalancingAssets.length;
 
         (
             IERC20[] memory poolTokens,
@@ -674,19 +787,15 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         _resetPoolWeights(poolTokens, numPoolTokens);
 
         bool isRegistered;
-        uint256 index;
+        uint256 registeredIndex;
         uint256 startAmount;
         IERC20 asset;
-        for (uint256 i = 0; i < numRequests; i++) {
+        for (uint256 i = 0; i < numAssets; i++) {
             startAmount = startAmounts[i];
 
-            if (startAmount == 0) {
-                continue;
-            }
+            asset = rebalancingAssets[i];
 
-            asset = requests[i].asset;
-
-            (isRegistered, index) = _isAssetRegisteredToPool(
+            (isRegistered, registeredIndex) = _isAssetRegisteredToPool(
                 asset,
                 poolTokens,
                 numPoolTokens
@@ -696,7 +805,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
                 _adjustAssetAmountInPoolToNewRequest(
                     asset,
                     startAmount,
-                    poolHoldings[index]
+                    poolHoldings[registeredIndex]
                 );
             } else {
                 asset.safeTransferFrom(vault, address(this), startAmount);
@@ -710,12 +819,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
             if (
-                !_isTokenNecessary(
-                    poolTokens[i],
-                    requests,
-                    startAmounts,
-                    numRequests
-                )
+                !_isTokenNecessary(poolTokens[i], rebalancingAssets, numAssets)
             ) {
                 _unbindAndWithdrawToken(poolTokens[i], poolHoldings[i]);
             }
@@ -723,8 +827,7 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Reset weights of pool tokens.
-    /// @dev Will only be called by _adjustPool().
-    ///      It resets weights to avoid MIN_WEIGHT error while binding.
+    /// @dev It resets weights to avoid MIN_WEIGHT error while binding.
     /// @param poolTokens IERC20 tokens of Balancer Pool.
     /// @param numPoolTokens Number of pool tokens.
     function _resetPoolWeights(
@@ -735,10 +838,10 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
         uint256 avgWeightSum;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            avgWeights[i] = _ONE / numPoolTokens;
+            avgWeights[i] = ONE / numPoolTokens;
             avgWeightSum += avgWeights[i];
         }
-        avgWeights[0] = avgWeights[0] + _ONE - avgWeightSum;
+        avgWeights[0] = avgWeights[0] + ONE - avgWeightSum;
 
         pool.updateWeightsGradually(
             block.timestamp,
@@ -749,51 +852,44 @@ contract AeraBalancerExecution is IBalancerExecution, Ownable, ReentrancyGuard {
     }
 
     /// @notice Check whether asset is registered to Balancer pool or not.
-    /// @dev Will only be called by _adjustPool().
     /// @param asset Asset to check.
     /// @param poolTokens IERC20 tokens of Balancer Pool.
     /// @param numPoolTokens Number of pool tokens.
     /// @return isRegistered True if asset is registered.
-    /// @return index Index of asset in Balancer pool.
+    /// @return assetIndex Index of asset in Balancer pool.
     function _isAssetRegisteredToPool(
         IERC20 asset,
         IERC20[] memory poolTokens,
         uint256 numPoolTokens
-    ) internal pure returns (bool isRegistered, uint256 index) {
+    ) internal pure returns (bool isRegistered, uint256 assetIndex) {
         for (uint256 i = 0; i < numPoolTokens; i++) {
             if (asset == poolTokens[i]) {
                 isRegistered = true;
-                index = i;
+                assetIndex = i;
                 break;
             }
         }
     }
 
     /// @notice Check whether asset is necessary in Balancer pool or not.
-    /// @dev Will only be called by _adjustPool().
     /// @param poolToken IERC20 token to check.
-    /// @param requests Struct details for requests.
-    /// @param startAmounts Start amount of each assets to rebalance.
-    /// @param numRequests Number of requests.
+    /// @param rebalancingAssets Assets to rebalance.
+    /// @param numAssets Number of assets.
     /// @return isNecessary True if asset is necessary.
     function _isTokenNecessary(
         IERC20 poolToken,
-        AssetRebalanceRequest[] calldata requests,
-        uint256[] memory startAmounts,
-        uint256 numRequests
+        IERC20[] memory rebalancingAssets,
+        uint256 numAssets
     ) internal pure returns (bool isNecessary) {
-        for (uint256 i = 0; i < numRequests; i++) {
-            if (poolToken == requests[i].asset) {
-                if (startAmounts[i] > 0) {
-                    isNecessary = true;
-                }
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (poolToken == rebalancingAssets[i]) {
+                isNecessary = true;
                 break;
             }
         }
     }
 
     /// @notice Adjust asset amounts in Balancer pool.
-    /// @dev Will only be called by _adjustPool().
     /// @param asset Asset to adjust.
     /// @param startAmount Start amount of asset to rebalance.
     /// @param poolHolding Balance of asset in Balancer Pool.

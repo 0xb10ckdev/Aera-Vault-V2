@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../dependencies/openzeppelin/IERC20.sol";
+import "@openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
 import "./IBManagedPool.sol";
 import "./IBVault.sol";
 import "./IExecutionEvents.sol";
+import "./ISweepable.sol";
 
 /// @title Interface for execution module.
-interface IExecution is IExecutionEvents {
+interface IExecution is IExecutionEvents, ISweepable {
     /// TYPES ///
 
     /// @param asset Address of asset.
@@ -29,6 +30,7 @@ interface IExecution is IExecutionEvents {
 
     /// ERRORS ///
 
+    error Aera__AssetRegistryIsZeroAddress();
     error Aera__CallerIsNotVault();
     error Aera__SumOfWeightsIsNotOne();
     error Aera__WeightChangeEndBeforeStart();
@@ -54,9 +56,12 @@ interface IExecution is IExecutionEvents {
     /// @notice Return all funds in execution module to vault.
     function claimNow() external;
 
-    /// @notice Return a non-listed asset to the owner.
-    /// @param asset Address of an asset.
-    function sweep(IERC20 asset) external;
+    /// @notice Return the address of vault's asset registry.
+    /// @return assetRegistry The address of asset registry.
+    function assetRegistry()
+        external
+        view
+        returns (IAssetRegistry assetRegistry);
 
     /// @notice Get the current vault contract that the execution layer is linked to.
     /// @return vault Address of linked vault contract.

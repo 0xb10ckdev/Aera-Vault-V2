@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../dependencies/openzeppelin/IERC20.sol";
+import "@openzeppelin/IERC20.sol";
 import "./IExecution.sol";
 
 /// @title Interface for execution module events.
@@ -21,8 +21,4 @@ interface IExecutionEvents {
 
     /// @notice Emitted when claimNow is called.
     event ClaimNow();
-
-    /// @notice Emitted when sweep is called.
-    /// @param asset Address of an asset.
-    event Sweep(IERC20 asset);
 }

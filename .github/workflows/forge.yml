@@ -5,6 +5,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: contracts
     steps:
       - uses: actions/checkout@v3
         with:
@@ -26,10 +27,10 @@ jobs:
 
       - name: Run forge tests
         env:
-          ETH_NODE_URI_MAINNET: ${{ secrets.ALCHEMY_URL_DEV_MAINNET }}
+          ETH_NODE_URI_MAINNET: ${{ secrets.ALCHEMY_URL_DEV }}
         run: forge test
 
       - name: Get forge test coverage
         env:
-          ETH_NODE_URI_MAINNET: ${{ secrets.ALCHEMY_URL_DEV_MAINNET }}
+          ETH_NODE_URI_MAINNET: ${{ secrets.ALCHEMY_URL_DEV }}
         run: forge coverage

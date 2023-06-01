@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {TestBase} from "../../../utils/TestBase.sol";
-import "../../../../src/v2/dependencies/openzeppelin/IERC20.sol";
-import "../../../../src/v2/interfaces/IExecution.sol";
-import "../../../../src/v2/interfaces/IExecutionEvents.sol";
+import "src/v2/interfaces/IExecution.sol";
+import "src/v2/interfaces/IExecutionEvents.sol";
+import {TestBase} from "test/utils/TestBase.sol";
+import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 
-abstract contract TestBaseExecution is TestBase, IExecutionEvents {
+abstract contract TestBaseExecution is
+    TestBase,
+    TestBaseVariables,
+    IExecutionEvents
+{
     IExecution execution;
-    IERC20[] erc20Assets;
 
     function _generateRequest()
         internal
+        view
         virtual
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {

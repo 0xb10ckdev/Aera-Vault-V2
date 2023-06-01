@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../../utils/TestBaseExecution/functions/EndRebalance.sol";
 import "../TestBaseBalancerExecution.sol";
+import "test/v2/utils/TestBaseExecution/functions/EndRebalance.sol";
 
 contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
     function test_endRebalance_success() public {
@@ -34,6 +34,7 @@ contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
 
     function _generateRequest()
         internal
+        view
         override
         returns (IExecution.AssetRebalanceRequest[] memory requests)
     {

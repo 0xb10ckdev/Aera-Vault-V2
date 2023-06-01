@@ -6,7 +6,7 @@ import {stdJson} from "forge-std/Script.sol";
 
 /// @title Deployer Contract
 /// @dev It deploys contract of a given name with arguments.
-///      Used to support deployment of contracts with external linked libraries. 
+///      Used to support deployment of contracts with external linked libraries.
 contract Deployer is Test {
     using stdJson for string;
 
@@ -99,7 +99,9 @@ contract Deployer is Test {
         }
     }
 
-    function _getPath(string memory name) internal returns (string memory) {
+    function _getPath(
+        string memory name
+    ) internal pure returns (string memory) {
         return string.concat("./out/", name, ".sol/", name, ".json");
     }
 
@@ -153,7 +155,7 @@ contract Deployer is Test {
     }
 
     // Convert an hexadecimal string to raw bytes
-    function _fromHex(string memory s) internal view returns (bytes memory) {
+    function _fromHex(string memory s) internal pure returns (bytes memory) {
         bytes memory ss = bytes(s);
         require(ss.length % 2 == 0); // length must be even
         bytes memory r = new bytes(ss.length / 2 - 1);

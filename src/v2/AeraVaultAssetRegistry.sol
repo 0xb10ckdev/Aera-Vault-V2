@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "./dependencies/openzeppelin/IERC20Metadata.sol";
-import "./dependencies/openzeppelin/Ownable.sol";
+import "@openzeppelin/ERC165.sol";
+import "@openzeppelin/IERC20Metadata.sol";
+import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAssetRegistry.sol";
+import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
-contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
-    uint256 internal constant _ONE = 1e18;
-
+contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice Minimum period for weight change duration.
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
 
@@ -73,7 +73,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
-            } else if (address(assets_[i].oracle) == address(0)) {
+            } else if (
+                !assets_[i].isERC4626 &&
+                address(assets_[i].oracle) == address(0)
+            ) {
                 revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
             }
 
@@ -182,7 +185,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
             weightSum += targetWeights[i].weight;
         }
 
-        if (weightSum != _ONE) {
+        if (weightSum != ONE) {
             return false;
         }
 
@@ -258,10 +261,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
         return prices;
     }
 
+    /// @inheritdoc IERC165
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IAssetRegistry).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Insert asset at the given index in an array of assets.
-    /// @dev Will only be called by constructor() and addAsset().
     /// @param asset New asset details.
     /// @param index Index of the new asset in the array.
     function _insertAsset(
@@ -296,7 +307,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     }
 
     /// @notice Calculate a change ratio for weight upgrade.
-    /// @dev Will only be called by checkWeights().
     /// @param currentWeight Current weight.
     /// @param targetWeight Target weight.
     /// @return ratio Change ratio(>1) from current weight to target weight.
@@ -306,7 +316,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Ownable {
     ) internal pure returns (uint256 ratio) {
         return
             currentWeight > targetWeight
-                ? (_ONE * currentWeight) / targetWeight
-                : (_ONE * targetWeight) / currentWeight;
+                ? (ONE * currentWeight) / targetWeight
+                : (ONE * targetWeight) / currentWeight;
     }
 }

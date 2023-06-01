@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseBalancerExecution.sol";
-import {ERC20Mock} from "../../../utils/ERC20Mock.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 contract DeploymentTest is TestBaseBalancerExecution {
     function test_balancerExecutionDeployment_fail_whenAssetRegistryIsZeroAddress()
@@ -13,7 +13,7 @@ contract DeploymentTest is TestBaseBalancerExecution {
         vaultParams.assetRegistry = address(0);
 
         vm.expectRevert(
-            AeraBalancerExecution.Aera__AssetRegistryIsZeroAddress.selector
+            IExecution.Aera__AssetRegistryIsZeroAddress.selector
         );
         new AeraBalancerExecution(vaultParams);
     }
