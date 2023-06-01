@@ -5,6 +5,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: contracts
     steps:
       - uses: actions/checkout@v3
         with:
