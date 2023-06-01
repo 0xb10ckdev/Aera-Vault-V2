@@ -178,9 +178,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
 
-        uint256 numAssets = assets.length;
+        _checkWithdrawRequest(assets, amounts);
+
         uint256 numAmounts = amounts.length;
-        uint256[] memory assetIndexes = _checkWithdrawRequest(assets, amounts);
         AssetValue memory assetValue;
 
         for (uint256 i = 0; i < numAmounts; i++) {
@@ -199,13 +199,6 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 break;
             }
         }
-
-        uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
-        uint256[] memory withdrawAmounts = new uint256[](numAssets);
-        (
-            uint256[] memory spotPrices,
-            uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets);
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
@@ -566,15 +559,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Check request to withdraw.
     /// @param assets Struct details for asset information from asset registry.
     /// @param amounts Struct details for assets and amounts to withdraw.
-    /// @return assetIndexes Array of requested asset indexes in order of registered assets.
     function _checkWithdrawRequest(
         IAssetRegistry.AssetInformation[] memory assets,
         AssetValue[] memory amounts
-    ) internal view returns (uint256[] memory assetIndexes) {
+    ) internal view {
         uint256 numAmounts = amounts.length;
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
-        assetIndexes = new uint256[](numAmounts);
 
         bool isRegistered;
         AssetValue memory assetValue;
@@ -604,8 +595,6 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                     assetAmounts[assetIndex].value
                 );
             }
-
-            assetIndexes[i] = assetIndex;
         }
     }
 
