@@ -26,6 +26,13 @@ interface IUniswapV3Execution is IExecution {
         string description;
     }
 
+    struct TradePair {
+        IERC20 assetIn;
+        IERC20 assetOut;
+        uint256 amount;
+        address pool;
+    }
+
     /// @notice Return the address of vault's asset registry.
     /// @return assetRegistry The address of asset registry.
     function assetRegistry()

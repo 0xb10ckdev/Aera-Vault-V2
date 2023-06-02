@@ -116,6 +116,7 @@ contract AeraUniswapV3Execution is
     }
 
     /// @inheritdoc IExecution
+    // TODO: this ignore yield assets
     function startRebalance(
         AssetRebalanceRequest[] calldata requests,
         uint256 startTime,
@@ -127,94 +128,310 @@ contract AeraUniswapV3Execution is
 
         _validateRequests(requests, startTime, endTime);
 
-        TradePair[] memory pairs = _calcInputOutputPairs(requests);
-        TradeStage[] memory tradeStages = _calcTradeStages(requests);
-        _executeTradeStages(tradeStages);
+        mapping(address => bool)
+            memory completedOutputs = new mapping(address => bool)();
+        mapping(address => bool)
+            memory completedInputs = new mapping(address => bool)();
+        TradePair[] memory stage1 = new TradePair[](0);
+        TradePair[] memory stage2 = new TradePair[](0);
+        mapping(address => uint256)
+            memory currentWeights = _getCurrentWeights();
+        for (uint i = 0; i < requests.length; i++) {
+            // TODO: what do we do with ERC4626 assets?
+            if (_isERC4626(requests[i].asset)) {
+                continue;
+            }
+            uint256 currentWeight = currentWeights[address(requests[i].asset)];
+            [
+                poolPrefInPair,
+                poolPrefOutPair,
+                inRemainderPair,
+                outRemainderPair
+            ] = _getPoolPreferencesSwapPair(requests[i].asset, i, currentWeights, spotPrices);
+            if (poolPrefInPair || poolPrefOutPair) {
+                if (inRemainder) {
+                    stage1.push(inRemainderPair);
+                }
+                if (outRemainderPair) {
+                    stage2.push(outRemainderPair);
+                }
+                if (poolPrefInPair) {
+                    stage1.push(poolPrefInPair);
+                    completedInputs[poolPrefInPair.assetIn] = true;
+                    completedOutputs[poolPrefInPair.assetOut] = true;
+                } else {
+                    stage2.push(poolPrefOutPair);
+                    completedInputs[poolPrefOutPair.assetIn] = true;
+                    completedOutputs[poolPrefOutPair.assetOut] = true;
+                }
+            } else if (currentWeight > requests[i].weight) {
+                // if current weight is greater than requested weight, we need to sell
+                if (!completedInputs[requests[i].asset]) {
+                    stage1.push(
+                        TradePair({
+                            input: requests[i].asset,
+                            output: vehicle,
+                            amount: _getAmountToTradeInWETH(currentWeight, request.weight, totalNotionalVaultValue, spotPrice),
+                            pool: _getPool(requests[i].asset, vehicle)
+                        })
+                    );
+                    completedInputs[requests[i].asset] = true;
+                }
+            } else {
+                // else buy
+                if (!completedOutputs[requests[i].asset]) {
+                    stage2.push(
+                        TradePair({
+                            input: vehicle,
+                            output: requests[i].asset,
+                            amount: _getAmountToTrade(currentWeight, request.weight, totalNotionalVaultValue, spotPrice),
+                            pool: _getPool(vehicle, requests[i].asset)
+                        })
+                    );
+                    completedOutputs[requests[i].asset] = true;
+                }
+            }
+        }
 
-
+        for (uint256 i = 0; i < stage1.length; i++) {
+            _executeTrade(stage1[i]);
+        }
+        for (uint256 i = 0; i < stage2.length - 1; i++) {
+            _executeTrade(stage2[i]);
+        }
+        // TODO: this assumes WETH is in requests
+        // decide if there is extra ETH and not enough of the last asset. Basically does it make sense to swap the rest of the ETH into the last asset to be closer to the final percent, or leave it as ETH
+        // TODO can save gas by checking for weth asset index above
+        uint256 desiredWETHAmt = requests[_getWethAssetIndex()].weight * totalNotionalVaultValue / spotPrices[_getWethAssetIndex()];
+        uint256 wethBalance = weth.getBalance(address(this));
+        uint256 lastIndex = requests.length - 1;
+        IERC20 lastAsset = requests[lastIndex];
+        if (wethBalance > desiredWETHAmt) {
+            uint256 extraWETH = wethBalance - desiredWETHAmt;
+            uint256 percentExtraWETH = ONE * extraWETH / desiredWETHAmt;
+            uint256 desiredAmountOfLastAsset = stage2[lastIndex];
+            uint256 extraWETHInAssetTerms = extraWETH * spotPrices[lastIndex] / ONE;
+            uint256 percentExtraWETHInAssetTerms = ONE * extraWETHInAssetTerms / desiredAmountOfLastAsset; 
+            stage2[lastIndex].amount += extraWETHInAssetTerms;
+            if (percentExtraWETHInAssetTerms < percentExtraWETH) {
+                // trade the extra WETH for the last asset because the percentage off from desired is less
+                // than keeping it as WETH
+                desiredAmountOfLastAsset += extraWETHInAssetTerms;
+                _executeTrade(stage2[lastIndex]);
+            }
+        } else {
+            // TODO: we could also subtract from the amount we trade if that gets us closer to target weights for both weth and last asset 
+        }
         _claim(requests);
 
         emit StartRebalance(requests, startTime, endTime);
     }
 
-    function _calcInputOutputPairs(
-        AssetRebalanceRequest[] calldata requests
+    function _getCurrentWeights()
+        internal
+        returns (mapping(address => uint256) weights)
+    {
+        AssetValue[] memory _holdings = vault.getHoldings();
+        AssetPriceReading[] spotPrices = assetRegistry.spotPrices();
+        AssetInformation[] assets = assetRegistry.assets();
+        weights = new mapping(address => uint256)();
+        uint256 totalValue = 0;
+        uint256[] notionalAmounts = new uint256[](_holdings.length);
+        for (uint256 i = 0; i < _holdings.length; i++) {
+            if (assets[i].isERC4626) {
+                // TODO: what do we do with ERC4626 assets?
+                continue;
+            }
+            notionalAmount = spotPrices[i] * _holdings[i].value;
+            notionalAmounts[i] = notionalAmount;
+            totalValue += notionalAmount;
+        }
+        for (uint256 i = 0; i < _holdings.length; i++) {
+            if (assets[i].isERC4626) {
+                // TODO: what do we do with ERC4626 assets?
+                continue;
+            }
+            weights[assets[i].address] =
+                (ONE * notionalAmounts[i]) /
+                totalValue;
+        }
+    }
+
+    function _getPoolPreferencesSwapPair(
+        AssetRebalanceRequest[] requests,
+        uint256 assetIndex,
+        mapping(address => uint256) currentWeights,
+        uint256[] spotPrices
     )
         internal
-        returns (TradePair[] memory pairs)
-    {}
-
-    function _calcTradeStages(
-        TradePair[] memory pairs
-    ) internal returns (TradeStage[] memory tradeStages) {
-        mapping(TradePair => bool)
-            memory completed_pairs = new mapping(TradePair => bool)();
-        // TODO: this needs to happen at the request/calcInputOutputPairs level
-        for (uint256 i = 0; i < poolPreferences.length; i++) {
-            uint256 matchingPairI = MAXINT;
-            for (uint256 j = 0; j < pairs.length; j++) {
-                if (poolPreferences[i].asset0 == pairs[j].input && poolPreferences[i].asset1 == pairs[j].output) {
-                    matchingPairI = j;
-                    break;
+        returns (
+            TradePair poolPrefInPair,
+            TradePair poolPrefOutPair,
+            TradePair inRemainderPair,
+            TradePair outRemainderPair
+        )
+    {
+        IERC20 asset = requests[i].asset;
+        uint256 desiredAssetAmount = _getAmountToTrade(currentWeights[address(asset)], requests[assetIndex].weight, totalNotionalVaultValue, spotPrices[assetIndex]);
+        // TODO: amount units are wrong throughout this function. Should be in terms of output asset
+        for (uint i = 0; i < requests.length; i++) {
+            if (i == assetIndex) {
+                continue
+            }
+            [bool isPoolPref, bool reversed] = _isPoolPref(asset, requests[i].asset);
+            // TODO: can consolidate some of these that are the same in both cases
+            // TODO: combine _isPoolPref with _getPoolPref
+            if (isPoolPref && !reversed) {
+                PoolPreference poolPref = _getPoolPref(
+                    asset,
+                    requests[i].asset
+                );
+                uint256 desiredOtherAssetAmount = _getAmountToTrade(
+                    currentWeights[address(asset)],
+                    requests[i].weight,
+                    totalNotionalVaultValue,
+                    spotPrices[i]
+                );
+                uint256 desiredNotionalOtherAssetAmount = _getNotional(
+                    desiredOtherAssetAmount,
+                    asset
+                );
+                if (desiredAssetAmount > desiredNotionalOtherAssetAmount) {
+                    inRemainderPair = TradePair({
+                        input: asset,
+                        output: vehicle,
+                        amount: desiredAssetAmount -
+                            desiredNotionalOtherAssetAmount,
+                        pool: poolPref.pool
+                    });
+                    poolPrefInPair = TradePair({
+                        input: asset,
+                        output: requests[i].asset,
+                        amount: desiredNotionalOtherAssetAmount,
+                        pool: poolPref.pool
+                    });
+                } else {
+                    outRemainderPair = TradePair({
+                        input: vehicle,
+                        output: asset,
+                        amount: desiredNotionalOtherAssetAmount -
+                            desiredAssetAmount,
+                        pool: poolPref.pool
+                    });
+                    poolPrefInPair = TradePair({
+                        input: asset,
+                        output: requests[i].asset,
+                        amount: desiredAssetAmount,
+                        pool: poolPref.pool
+                    });
+                }
+            } else if (isPoolPref) {
+                uint256 desiredOtherAssetAmount = _getAmountToTrade(
+                    currentWeights[address(requests[i].asset)],
+                    requests[i].weight,
+                    totalNotionalVaultValue,
+                    spotPrices[i]
+                );
+                uint256 desiredNotionalOtherAssetAmount = _getNotional(
+                    desiredOtherAssetAmount,
+                    asset
+                );
+                if (desiredAssetAmount > desiredNotionalOtherAssetAmount) {
+                    outRemainderPair = TradePair({
+                        input: vehicle,
+                        output: asset,
+                        amount: desiredAssetAmount -
+                            desiredNotionalOtherAssetAmount,
+                        pool: poolPref.pool
+                    });
+                    poolPrefInPair = TradePair({
+                        input: requests[i].asset,
+                        output: asset,
+                        amount: desiredNotionalOtherAssetAmount,
+                        pool: poolPref.pool
+                    });
+                } else {
+                    inRemainderPair = TradePair({
+                        input: asset,
+                        output: vehicle,
+                        amount: desiredNotionalOtherAssetAmount -
+                            desiredAssetAmount,
+                        pool: poolPref.pool
+                    });
+                    poolPrefOutPair = TradePair({
+                        input: requests[i].asset,
+                        output: asset,
+                        amount: desiredAssetAmount,
+                        pool: poolPref.pool
+                    });
                 }
             }
-            if (matchingPairI < MAXINT) {
-                // TODO: figure out which direction to swap, and only
-                // add to completed assets if:
-                // - all of input asset was used (for input)
-                // - all of output asset was gained (for output)
-                // - add leftover to "adjusted amounts"
-                AssetValue minAmountOut = _calcMinAmountOut(
-                    pair.input,
-                    pair.output,
-                    pair.amount
-                );
-                tradeStages.push(
-                    TradeStage({input: pair.input, output: pair.output, inputAmount: pair.amount, minAmountOut: minAmountOut})
-                );
-                completed_pairs[pair] = true;
+        }
+    }
+    
+    function _isPoolPref(asset1, asset2) internal returns (boolean isPoolPref, boolean reversed) {
+        for (uint256 i = 0; i < poolPreferences.length; i++) {
+            if (poolPreferences[i].asset0 == asset0 &&
+                    poolPreferences[i].asset1 == asset1) {
+                return (true, false);
+            } else if (poolPreferences[i].asset1 == asset1 &&
+                    poolPreferences[i].asset0 == asset0) {
+                return (true, true);
             }
         }
-        for (uint256 j = 0; j < pairs.length; j++) {
-            if (
-                completed_pairs[pairs[j]] == false
-            ) {
-                AssetValue minAmountOut = _calcMinAmountOut(
-                    pairs[j].input,
-                    pairs[j].output,
-                    pairs[j].amount
-                );
-                tradeStages.push(
-                    TradeStage({
-                        input: pair.input,
-                        output: pair.output,
-                        inputAmount: pair.amount,
-                        minAmountOut: minAmountOut
-                    })
-                );
+        return (false, false);
+    }
+
+    function _getPoolPref(
+        address asset0,
+        address asset1
+    ) internal returns (PoolPreference poolPref) {
+        for (uint256 i = 0; i < poolPreferences.length; i++) {
+            if (poolPreferences[i].asset0 == asset0 &&
+                    poolPreferences[i].asset1 == asset1) {
+                return poolPreferences[i];
             }
         }
     }
 
-    function _executeTradeStages(TradeStage[] memory tradeStages);
-        for (uint256 i = 0; i < tradeStages.length; i++) {
-            _executeTradeStage(tradeStages[i]);
+    // amount to trade (TODO: change name)
+    function _getAmountToTrade(
+        uint256 currentWeight,
+        uint256 targetWeight,
+        uint256 totalNotionalVaultValue,
+        uint256 spotPrice
+    ) internal returns (uint256 amount) {
+        if (targetWeight > currentWeight) {
+            return
+                targetWeight -
+                (currentWeight * totalNotionalVaultValue) /
+                ONE /
+                spotPrice;
+        } else {
+            return
+                currentWeight -
+                (targetWeight * totalNotionalVaultValue) /
+                ONE /
+                spotPrice;
         }
     }
 
-    function _executeTradeStage(TradeStage tradeStage) internal {
-        if (tradeStage.inputToken.getBalance(address(this)) == 0) {
-            asset.safeTransferFrom(vault, address(this), tradeStage.amountIn);
+    function _getNotional(
+        uint256 nativeAmount,
+        address otherAsset
+    ) internal returns (uint256 notional) {
+        // notional = spotPrice(otherAsset) * nativeAmount
+    }
+
+    function _executeTrade(TradePair trade) internal {
+        if (trade.inputToken.getBalance(address(this)) == 0) {
+            asset.safeTransferFrom(vault, address(this), trade.amountIn);
         }
-        _setAllowance(
-            tradeStage.tokens[0],
-            address(tradeStage.pool),
-            tradeStage.amountIn
-        );
-        tradeStage.pool.swapExactTokensForTokens(
-            tradeStage.inputToken,
-            tradeStage.outputToken,
-            tradeStage.minAmountOut
+        _setAllowance(trade.tokens[0], address(trade.pool), trade.amountIn);
+        trade.pool.swapExactTokensForTokens(
+            trade.inputToken,
+            trade.outputToken,
+            trade.minAmountOut
         );
     }
 
