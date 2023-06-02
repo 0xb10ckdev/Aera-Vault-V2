@@ -178,9 +178,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
 
-        uint256 numAssets = assets.length;
+        _checkWithdrawRequest(assets, amounts);
+
         uint256 numAmounts = amounts.length;
-        uint256[] memory assetIndexes = _checkWithdrawRequest(assets, amounts);
         AssetValue memory assetValue;
 
         for (uint256 i = 0; i < numAmounts; i++) {
@@ -200,14 +200,6 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             }
         }
 
-        uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
-        uint256[] memory withdrawAmounts = new uint256[](numAssets);
-        (
-            uint256[] memory spotPrices,
-            uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets);
-
-        uint256 assetIndex;
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
 
@@ -215,30 +207,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 continue;
             }
 
-            assetIndex = assetIndexes[i];
-
-            if (assets[assetIndex].isERC4626) {
-                if (assets[assetIndex].withdrawable) {
-                    assetValue.asset.safeTransfer(owner(), assetValue.value);
-                } else {
-                    withdrawAmounts[
-                        underlyingIndexes[assetIndex]
-                    ] += _withdrawUnderlyingAsset(
-                        assets[assetIndex],
-                        assetValue.value,
-                        spotPrices[assetIndex],
-                        assetUnits[assetIndex]
-                    );
-                }
-            } else {
-                withdrawAmounts[assetIndex] += assetValue.value;
-            }
-        }
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (withdrawAmounts[i] > 0) {
-                assets[i].asset.safeTransfer(owner(), withdrawAmounts[i]);
-            }
+            assetValue.asset.safeTransfer(owner(), assetValue.value);
         }
 
         emit Withdraw(amounts, force);
@@ -524,7 +493,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         view
         virtual
         override
-        returns (AssetValue[] memory assetAmounts)
+        returns (AssetValue[] memory)
     {
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
@@ -590,20 +559,16 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Check request to withdraw.
     /// @param assets Struct details for asset information from asset registry.
     /// @param amounts Struct details for assets and amounts to withdraw.
-    /// @return assetIndexes Array of requested asset indexes in order of registered assets.
     function _checkWithdrawRequest(
         IAssetRegistry.AssetInformation[] memory assets,
         AssetValue[] memory amounts
-    ) internal view returns (uint256[] memory assetIndexes) {
+    ) internal view {
         uint256 numAmounts = amounts.length;
 
         AssetValue[] memory assetAmounts = _getHoldings(assets);
-        assetIndexes = new uint256[](numAmounts);
 
         bool isRegistered;
-        IERC4626 yieldAsset;
         AssetValue memory assetValue;
-        uint256 availableAmount;
         uint256 assetIndex;
 
         for (uint256 i = 0; i < numAmounts; i++) {
@@ -623,28 +588,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 }
             }
 
-            availableAmount = assetAmounts[assetIndex].value;
-
-            if (
-                assets[assetIndex].isERC4626 && !assets[assetIndex].withdrawable
-            ) {
-                yieldAsset = IERC4626(address(assets[assetIndex].asset));
-                availableAmount = yieldAsset.convertToAssets(availableAmount);
-                availableAmount = Math.min(
-                    availableAmount,
-                    yieldAsset.maxWithdraw(address(this))
-                );
-            }
-
-            if (availableAmount < assetValue.value) {
+            if (assetAmounts[assetIndex].value < assetValue.value) {
                 revert Aera__AmountExceedsAvailable(
                     assetValue.asset,
                     assetValue.value,
-                    availableAmount
+                    assetAmounts[assetIndex].value
                 );
             }
-
-            assetIndexes[i] = assetIndex;
         }
     }
 

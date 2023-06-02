@@ -90,20 +90,21 @@ contract AeraBalancerExecution is
             revert Aera__DescriptionIsEmpty();
         }
 
-        IAssetRegistry.AssetInformation[] memory assets = IAssetRegistry(
-            vaultParams.assetRegistry
-        ).assets();
+        IAssetRegistry.AssetInformation[]
+            memory registeredAssets = IAssetRegistry(vaultParams.assetRegistry)
+                .assets();
 
         uint256 numPoolTokens = vaultParams.poolTokens.length;
-        uint256 numAssets = assets.length;
+        uint256 numAssets = registeredAssets.length;
         address[] memory assetManagers = new address[](numPoolTokens);
         uint256 assetIndex = 0;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
             for (; assetIndex < numAssets; assetIndex++) {
                 if (
-                    vaultParams.poolTokens[i] == assets[assetIndex].asset &&
-                    !assets[assetIndex].isERC4626
+                    vaultParams.poolTokens[i] ==
+                    registeredAssets[assetIndex].asset &&
+                    !registeredAssets[assetIndex].isERC4626
                 ) {
                     break;
                 }
@@ -341,8 +342,13 @@ contract AeraBalancerExecution is
     }
 
     /// @inheritdoc IBalancerExecution
-    function assets() public view override returns (IERC20[] memory assets) {
-        assets = _getPoolTokens();
+    function assets()
+        public
+        view
+        override
+        returns (IERC20[] memory poolTokens)
+    {
+        poolTokens = _getPoolTokens();
     }
 
     /// @inheritdoc IExecution
@@ -350,17 +356,17 @@ contract AeraBalancerExecution is
         public
         view
         override
-        returns (AssetValue[] memory holdings)
+        returns (AssetValue[] memory assetHoldings)
     {
         (
             IERC20[] memory poolTokens,
             uint256[] memory poolHoldings
         ) = _getPoolTokensData();
         uint256 numPoolTokens = poolTokens.length;
-        holdings = new AssetValue[](numPoolTokens);
+        assetHoldings = new AssetValue[](numPoolTokens);
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            holdings[i] = AssetValue({
+            assetHoldings[i] = AssetValue({
                 asset: poolTokens[i],
                 value: poolHoldings[i]
             });
@@ -556,15 +562,15 @@ contract AeraBalancerExecution is
         returns (IERC20[] memory poolTokens, uint256[] memory poolHoldings)
     {
         IERC20[] memory tokens;
-        uint256[] memory holdings;
-        (tokens, holdings, ) = bVault.getPoolTokens(poolId);
+        uint256[] memory poolTokenHoldings;
+        (tokens, poolTokenHoldings, ) = bVault.getPoolTokens(poolId);
 
-        uint256 numPoolTokens = holdings.length - 1;
+        uint256 numPoolTokens = poolTokenHoldings.length - 1;
         poolTokens = new IERC20[](numPoolTokens);
         poolHoldings = new uint256[](numPoolTokens);
         for (uint256 i = 0; i < numPoolTokens; i++) {
             poolTokens[i] = tokens[i + 1];
-            poolHoldings[i] = holdings[i + 1];
+            poolHoldings[i] = poolTokenHoldings[i + 1];
         }
     }
 

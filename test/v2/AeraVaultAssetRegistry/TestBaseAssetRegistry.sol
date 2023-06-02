@@ -73,7 +73,6 @@ contract TestBaseAssetRegistry is TestBase {
                 address(assets[i].asset)
             );
             assertEq(registryAssets[i].isERC4626, assets[i].isERC4626);
-            assertEq(registryAssets[i].withdrawable, assets[i].withdrawable);
             assertEq(
                 address(registryAssets[i].oracle),
                 address(assets[i].oracle)
@@ -111,7 +110,6 @@ contract TestBaseAssetRegistry is TestBase {
                     IAssetRegistry.AssetInformation({
                         asset: IERC20(address(erc4626)),
                         isERC4626: true,
-                        withdrawable: true,
                         oracle: AggregatorV2V3Interface(
                             address(new OracleMock(18))
                         )
@@ -150,7 +148,6 @@ contract TestBaseAssetRegistry is TestBase {
         newAsset = IAssetRegistry.AssetInformation({
             asset: IERC20(address(erc20)),
             isERC4626: false,
-            withdrawable: true,
             oracle: AggregatorV2V3Interface(address(new OracleMock(18)))
         });
 
