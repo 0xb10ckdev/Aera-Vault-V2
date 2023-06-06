@@ -15,6 +15,7 @@ contract TestBaseAssetRegistry is TestBase {
     IAssetRegistry.AssetInformation[] assets;
     IERC20 feeToken;
     address numeraireAsset;
+    address nonNumeraireAsset;
     uint256 numeraire;
     uint256 nonNumeraire;
     uint256 numAssets;
@@ -84,10 +85,6 @@ contract TestBaseAssetRegistry is TestBase {
     function _deploy() internal {
         _createAssets(4, 2);
 
-        feeToken = IERC20(
-            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
-        );
-
         assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
@@ -101,6 +98,10 @@ contract TestBaseAssetRegistry is TestBase {
             if (i == 0) {
                 numeraireAsset = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
+            } else if (i == 1) {
+                nonNumeraireAsset = address(asset.asset);
+            } else if (i == 2) {
+                feeToken = asset.asset;
             }
 
             assets.push(asset);
@@ -136,10 +137,10 @@ contract TestBaseAssetRegistry is TestBase {
 
             if (address(assets[i].asset) == numeraireAsset) {
                 numeraire = i;
+            } else if (address(assets[i].asset) == nonNumeraireAsset) {
+                nonNumeraire = i;
             }
         }
-
-        nonNumeraire = (numeraire + 1) % numAssets;
     }
 
     function _createAsset()

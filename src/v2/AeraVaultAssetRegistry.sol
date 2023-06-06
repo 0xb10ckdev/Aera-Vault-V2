@@ -20,13 +20,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     ///      Weight growth range for 2000 seconds is [-50%, 100%]
     uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 0.001e18;
 
+    /// @notice Fee token.
+    IERC20 public immutable feeToken;
+
     /// STORAGE ///
 
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
-
-    /// @notice Fee token.
-    IERC20 public feeToken;
 
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
@@ -46,7 +46,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// ERRORS ///
 
-    error Aera__FeeTokenIsZeroAddress();
+    error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__OracleIsZeroAddress(address asset);
@@ -55,6 +55,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__AssetIsAlreadyRegistered(uint256 index);
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
+    error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
 
     /// FUNCTIONS ///
@@ -64,11 +65,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         uint256 numeraire_,
         IERC20 feeToken_
     ) {
-        if (address(feeToken_) == address(0)) {
-            revert Aera__FeeTokenIsZeroAddress();
+        uint256 numAssets = assets_.length;
+
+        uint256 feeTokenIndex = 0;
+        for (; feeTokenIndex < numAssets; feeTokenIndex++) {
+            if (assets_[feeTokenIndex].asset == feeToken_) {
+                break;
+            }
         }
 
-        uint256 numAssets = assets_.length;
+        if (feeTokenIndex == numAssets) {
+            revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
+        }
 
         if (numeraire_ >= numAssets) {
             revert Aera__NumeraireIndexTooHigh(numAssets, numeraire_);
@@ -127,6 +135,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     function removeAsset(address asset) external override onlyOwner {
         if (address(_assets[numeraire].asset) == asset) {
             revert Aera__CannotRemoveNumeraireAsset(asset);
+        }
+        if (address(feeToken) == asset) {
+            revert Aera__CannotRemoveFeeToken(asset);
         }
 
         uint256 numAssets = _assets.length;

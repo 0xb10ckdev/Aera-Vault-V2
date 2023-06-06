@@ -144,6 +144,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 }
             }
         }
+
+        feeToken = IERC20(_USDC_ADDRESS);
     }
 
     function _deployYieldAssets() internal {
@@ -170,10 +172,6 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     }
 
     function _deployAssetRegistry() internal {
-        feeToken = IERC20(
-            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
-        );
-
         assetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
             numeraire,

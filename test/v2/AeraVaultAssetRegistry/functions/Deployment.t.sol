@@ -7,18 +7,23 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function setUp() public override {
         _createAssets(4, 2);
 
+        feeToken = assets[numeraire].asset;
+    }
+
+    function test_assetRegistryDeployment_fail_whenFeeTokenIsNotRegistered()
+        public
+    {
         feeToken = IERC20(
             address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
         );
-    }
 
-    function test_assetRegistryDeployment_fail_whenFeeTokenIsZeroAddress()
-        public
-    {
         vm.expectRevert(
-            AeraVaultAssetRegistry.Aera__FeeTokenIsZeroAddress.selector
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__FeeTokenIsNotRegistered.selector,
+                feeToken
+            )
         );
-        new AeraVaultAssetRegistry(assets, numeraire, IERC20(address(0)));
+        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
