@@ -33,6 +33,10 @@ contract TestBaseAssetRegistry is TestBase {
         assertEq(address(registryAssets[numeraire].oracle), address(0));
     }
 
+    function propFeeToken() public {
+        assertEq(address(feeToken), address(assetRegistry.feeToken()));
+    }
+
     function propNumYieldAssets() public {
         IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
             .assets();

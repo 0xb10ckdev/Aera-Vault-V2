@@ -86,6 +86,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         }
 
         propNumeraire();
+        propFeeToken();
         propNumYieldAssets();
         propAssetsSorted();
     }

@@ -8,7 +8,7 @@ contract SetGuardianTest is TestBaseAeraVaultV2 {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
-        vault.setGuardian(_USER);
+        vault.setGuardian(_USER, _FEE_RECIPIENT);
     }
 
     function test_setGuardian_fail_whenFinalized() public {
@@ -16,27 +16,40 @@ contract SetGuardianTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
 
-        vault.setGuardian(_USER);
+        vault.setGuardian(_USER, _FEE_RECIPIENT);
     }
 
     function test_setGuardian_fail_whenGuardianIsZeroAddress() public {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
 
-        vault.setGuardian(address(0));
+        vault.setGuardian(address(0), _FEE_RECIPIENT);
     }
 
     function test_setGuardian_fail_whenGuardianIsOwner() public {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
 
-        vault.setGuardian(address(this));
+        vault.setGuardian(address(this), _FEE_RECIPIENT);
+    }
+
+    function test_setGuardian_fail_whenFeeRecipientIsZeroAddress() public {
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
+
+        vault.setGuardian(_GUARDIAN, address(0));
+    }
+
+    function test_setGuardian_fail_whenFeeRecipientIsOwner() public {
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
+
+        vault.setGuardian(_GUARDIAN, address(this));
     }
 
     function test_setGuardian_success() public virtual {
         vm.expectEmit(true, true, true, true, address(vault));
-        emit SetGuardian(_USER);
+        emit SetGuardian(_USER, address(1));
 
-        vault.setGuardian(_USER);
+        vault.setGuardian(_USER, address(1));
 
         assertEq(vault.guardian(), _USER);
+        assertEq(vault.feeRecipient(), address(1));
     }
 }

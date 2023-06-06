@@ -17,7 +17,8 @@ interface ICustodyEvents {
 
     /// @notice Emitted when guardian is set.
     /// @param guardian Address of new guardian.
-    event SetGuardian(address guardian);
+    /// @param feeRecipient Address of new fee recipient.
+    event SetGuardian(address guardian, address feeRecipient);
 
     /// @notice Emitted when asset registry is set.
     /// @param assetRegistry Address of new asset registry.

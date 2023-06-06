@@ -24,6 +24,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     address internal _MERKLE_ORCHARDS =
         0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
     address internal _GUARDIAN = address(0x123456);
+    address internal _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal _MAX_GUARDIAN_FEE = 10 ** 9;
     uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 

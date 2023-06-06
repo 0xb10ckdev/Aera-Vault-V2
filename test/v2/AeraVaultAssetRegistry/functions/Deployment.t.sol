@@ -88,6 +88,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
 
         propNumeraire();
+        propFeeToken();
         propNumYieldAssets();
         propAssetsSorted();
         propAssets();

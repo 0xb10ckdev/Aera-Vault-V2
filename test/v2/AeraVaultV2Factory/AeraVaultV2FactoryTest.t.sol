@@ -30,6 +30,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(0),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -45,6 +46,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(0),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -63,6 +65,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(1),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -75,6 +78,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(0),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -93,6 +97,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(1),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -105,6 +110,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(balancerExecution),
             address(0),
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold
@@ -116,6 +122,35 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         factory.create(
             address(assetRegistry),
             address(balancerExecution),
+            address(factory),
+            _FEE_RECIPIENT,
+            _MAX_GUARDIAN_FEE,
+            minThreshold,
+            minYieldActionThreshold
+        );
+    }
+
+    function test_createAeraVaultV2_fail_whenFeeRecipientIsZeroAddress()
+        public
+    {
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
+        factory.create(
+            address(assetRegistry),
+            address(balancerExecution),
+            _GUARDIAN,
+            address(0),
+            _MAX_GUARDIAN_FEE,
+            minThreshold,
+            minYieldActionThreshold
+        );
+    }
+
+    function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
+        factory.create(
+            address(assetRegistry),
+            address(balancerExecution),
+            _GUARDIAN,
             address(factory),
             _MAX_GUARDIAN_FEE,
             minThreshold,
@@ -135,6 +170,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE + 1,
             minThreshold,
             minYieldActionThreshold
@@ -147,6 +183,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             0,
             minYieldActionThreshold
@@ -161,6 +198,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             0
@@ -173,12 +211,13 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectEmit(true, true, true, true);
         emit SetExecution(address(balancerExecution));
         vm.expectEmit(true, true, true, true);
-        emit SetGuardian(_GUARDIAN);
+        emit SetGuardian(_GUARDIAN, _FEE_RECIPIENT);
 
         factory.create(
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             minThreshold,
             minYieldActionThreshold

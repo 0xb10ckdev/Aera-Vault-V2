@@ -26,6 +26,8 @@ interface ICustody is ICustodyEvents, ISweepable {
     error Aera__ExecutionIsNotValid(address execution);
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
+    error Aera__FeeRecipientIsZeroAddress();
+    error Aera__FeeRecipientIsOwner();
     error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotGuardian();
     error Aera__CallerIsNotOwnerOrGuardian();
@@ -55,9 +57,10 @@ interface ICustody is ICustodyEvents, ISweepable {
     /// @param force Whether it can touch assets inside execution module or not.
     function withdraw(AssetValue[] memory amounts, bool force) external;
 
-    /// @notice Sets current vault guardian.
+    /// @notice Sets current vault guardian and fee recipient.
     /// @param guardian Address of new guardian.
-    function setGuardian(address guardian) external;
+    /// @param feeRecipient Address of new fee recipient.
+    function setGuardian(address guardian, address feeRecipient) external;
 
     /// @notice Sets current asset registry.
     /// @param assetRegistry Address of new asset registry.
@@ -99,6 +102,10 @@ interface ICustody is ICustodyEvents, ISweepable {
     /// @notice Get the current vault guardian.
     /// @return guardian Address of guardian.
     function guardian() external view returns (address guardian);
+
+    /// @notice Get the current management fee recipient.
+    /// @return feeRecipient Address of fee recipient.
+    function feeRecipient() external view returns (address feeRecipient);
 
     /// @notice Get the current execution module.
     /// @return execution Address of execution module.

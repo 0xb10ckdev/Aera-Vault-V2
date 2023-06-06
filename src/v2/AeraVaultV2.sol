@@ -41,6 +41,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice The address of guardian.
     address public guardian;
 
+    /// @notice The address of management fee recipient.
+    address public feeRecipient;
+
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
 
@@ -94,6 +97,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @param assetRegistry_ The address of asset registry.
     /// @param execution_ The address of execution module.
     /// @param guardian_ The address of guardian.
+    /// @param feeRecipient_ The address of fee recipient.
     /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
     /// @param minThreshold_ Minimum action threshold for erc20 assets measured
     ///                      in base token terms.
@@ -103,6 +107,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         address assetRegistry_,
         address execution_,
         address guardian_,
+        address feeRecipient_,
         uint256 guardianFee_,
         uint256 minThreshold_,
         uint256 minYieldActionThreshold_
@@ -110,6 +115,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkExecutionAddress(execution_);
         _checkGuardianAddress(guardian_);
+        _checkFeeRecipientAddress(feeRecipient_);
 
         if (guardianFee_ > _MAX_GUARDIAN_FEE) {
             revert Aera__GuardianFeeIsAboveMax(guardianFee_, _MAX_GUARDIAN_FEE);
@@ -124,6 +130,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         assetRegistry = IAssetRegistry(assetRegistry_);
         execution = IExecution(execution_);
         guardian = guardian_;
+        feeRecipient = feeRecipient_;
         guardianFee = guardianFee_;
         minThreshold = minThreshold_;
         minYieldActionThreshold = minYieldActionThreshold_;
@@ -131,7 +138,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetExecution(execution_);
-        emit SetGuardian(guardian_);
+        emit SetGuardian(guardian_, feeRecipient_);
     }
 
     /// @inheritdoc ICustody
@@ -215,14 +222,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function setGuardian(
-        address newGuardian
+        address newGuardian,
+        address newFeeRecipient
     ) external virtual override onlyOwner whenNotFinalized {
         _checkGuardianAddress(newGuardian);
+        _checkFeeRecipientAddress(newFeeRecipient);
         _updateGuardianFees();
 
         guardian = newGuardian;
+        feeRecipient = newFeeRecipient;
 
-        emit SetGuardian(newGuardian);
+        emit SetGuardian(newGuardian, newFeeRecipient);
     }
 
     /// @inheritdoc ICustody
@@ -1104,6 +1114,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         }
         if (newGuardian == owner()) {
             revert Aera__GuardianIsOwner();
+        }
+    }
+
+    /// @notice Check if the address can be a fee recipient.
+    /// @param newFeeRecipient Address to check.
+    function _checkFeeRecipientAddress(address newFeeRecipient) internal view {
+        if (newFeeRecipient == address(0)) {
+            revert Aera__FeeRecipientIsZeroAddress();
+        }
+        if (newFeeRecipient == owner()) {
+            revert Aera__FeeRecipientIsOwner();
         }
     }
 
