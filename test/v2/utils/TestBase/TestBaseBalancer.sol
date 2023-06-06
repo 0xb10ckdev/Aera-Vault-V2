@@ -11,6 +11,7 @@ import {IVault} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vau
 import {Deployer} from "test/utils/Deployer.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
@@ -32,6 +33,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     mapping(IERC20 => bool) isERC4626;
     mapping(IERC20 => uint256) underlyingIndex;
     IAssetRegistry.AssetInformation[] assetsInformation;
+    IERC20 feeToken;
     uint256[] oraclePrices;
     uint256 numeraire;
 
@@ -168,9 +170,14 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     }
 
     function _deployAssetRegistry() internal {
+        feeToken = IERC20(
+            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
+        );
+
         assetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
-            numeraire
+            numeraire,
+            feeToken
         );
     }
 

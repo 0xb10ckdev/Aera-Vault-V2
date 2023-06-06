@@ -13,6 +13,7 @@ import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 contract TestBaseAssetRegistry is TestBase {
     AeraVaultAssetRegistry assetRegistry;
     IAssetRegistry.AssetInformation[] assets;
+    IERC20 feeToken;
     address numeraireAsset;
     uint256 numeraire;
     uint256 nonNumeraire;
@@ -83,7 +84,11 @@ contract TestBaseAssetRegistry is TestBase {
     function _deploy() internal {
         _createAssets(4, 2);
 
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+        feeToken = IERC20(
+            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
+        );
+
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {

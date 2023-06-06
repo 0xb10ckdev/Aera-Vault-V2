@@ -33,6 +33,10 @@ interface IAssetRegistry {
     /// @return assets List of assets.
     function assets() external view returns (AssetInformation[] memory assets);
 
+    /// @notice Get address of fee token.
+    /// @return feeToken Address of fee token.
+    function feeToken() external view returns (IERC20 feeToken);
+
     /// @notice Get the index of the numeraire asset in the assets array.
     /// @return numeraire Index of numeraire asset.
     function numeraire() external view returns (uint256 numeraire);
@@ -50,16 +54,12 @@ interface IAssetRegistry {
     /// @param targetWeights Target weights of assets.
     /// @param duration Weight change duration.
     /// @return valid True if weights are valid.
-    function checkWeights(
-        AssetWeight[] memory currentWeights,
-        AssetWeight[] memory targetWeights,
-        uint256 duration
-    ) external view returns (bool valid);
+    function checkWeights(AssetWeight[] memory currentWeights, AssetWeight[] memory targetWeights, uint256 duration)
+        external
+        view
+        returns (bool valid);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets.
-    function spotPrices()
-        external
-        view
-        returns (AssetPriceReading[] memory spotPrices);
+    function spotPrices() external view returns (AssetPriceReading[] memory spotPrices);
 }

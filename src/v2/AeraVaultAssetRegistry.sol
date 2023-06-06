@@ -25,6 +25,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
 
+    /// @notice Fee token.
+    IERC20 public feeToken;
+
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
 
@@ -43,6 +46,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// ERRORS ///
 
+    error Aera__FeeTokenIsZeroAddress();
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__OracleIsZeroAddress(address asset);
@@ -55,7 +59,15 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// FUNCTIONS ///
 
-    constructor(AssetInformation[] memory assets_, uint256 numeraire_) {
+    constructor(
+        AssetInformation[] memory assets_,
+        uint256 numeraire_,
+        IERC20 feeToken_
+    ) {
+        if (address(feeToken_) == address(0)) {
+            revert Aera__FeeTokenIsZeroAddress();
+        }
+
         uint256 numAssets = assets_.length;
 
         if (numeraire_ >= numAssets) {
@@ -84,6 +96,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         }
 
         numeraire = numeraire_;
+        feeToken = feeToken_;
     }
 
     /// @inheritdoc IAssetRegistry

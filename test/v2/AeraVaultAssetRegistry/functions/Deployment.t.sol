@@ -6,6 +6,19 @@ import "../TestBaseAssetRegistry.sol";
 contract DeploymentTest is TestBaseAssetRegistry {
     function setUp() public override {
         _createAssets(4, 2);
+
+        feeToken = IERC20(
+            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenFeeTokenIsZeroAddress()
+        public
+    {
+        vm.expectRevert(
+            AeraVaultAssetRegistry.Aera__FeeTokenIsZeroAddress.selector
+        );
+        new AeraVaultAssetRegistry(assets, numeraire, IERC20(address(0)));
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
@@ -20,7 +33,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 invalidNumeraire
             )
         );
-        new AeraVaultAssetRegistry(assets, invalidNumeraire);
+        new AeraVaultAssetRegistry(assets, invalidNumeraire, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenAssetOrderIsIncorrect()
@@ -36,7 +49,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 1
             )
         );
-        new AeraVaultAssetRegistry(assets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress()
@@ -49,7 +62,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 .Aera__NumeraireOracleIsNotZeroAddress
                 .selector
         );
-        new AeraVaultAssetRegistry(assets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress()
@@ -63,11 +76,11 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 assets[nonNumeraire].asset
             )
         );
-        new AeraVaultAssetRegistry(assets, numeraire);
+        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function test_assetRegistryDeployment_success() public {
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
 
         propNumeraire();
         propNumYieldAssets();

@@ -12,7 +12,8 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
 
         newAssetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
-            numeraire
+            numeraire,
+            feeToken
         );
     }
 
