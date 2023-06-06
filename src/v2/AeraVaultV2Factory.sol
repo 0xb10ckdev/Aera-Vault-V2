@@ -52,6 +52,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
             minThreshold,
             minYieldActionThreshold
         );
+        vault.transferOwnership(msg.sender);
 
         emit VaultCreated(
             address(vault),
