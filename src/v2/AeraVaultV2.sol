@@ -50,6 +50,12 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Timestamp at when rebalancing ends.
     uint256 public rebalanceEndTime;
 
+    /// @notice Last total value of assets in vault.
+    uint256 public lastVaultValue;
+
+    /// @notice Last spot price of fee token.
+    uint256 public lastFeeTokenPrice;
+
     /// @notice Fee earned amount for each guardian.
     mapping(address => uint256) public guardiansFee;
 
@@ -515,34 +521,40 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             .assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);
         IERC20 feeToken = assetRegistry.feeToken();
-        (
-            uint256[] memory spotPrices,
-            uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets);
 
-        uint256 numAssets = assets.length;
-        uint256 feeTokenIndex;
-        uint256 totalValue;
-        uint256 balance;
+        try assetRegistry.spotPrices() returns (
+            IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
+        ) {
+            (
+                uint256[] memory spotPrices,
+                uint256[] memory assetUnits
+            ) = _getSpotPricesAndUnits(assets, erc20SpotPrices);
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                balance = IERC4626(address(assets[i].asset)).convertToAssets(
-                    assetAmounts[i].value
-                );
-            } else {
-                balance = assetAmounts[i].value;
+            uint256 numAssets = assets.length;
+            uint256 totalValue;
+            uint256 balance;
+
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (assets[i].isERC4626) {
+                    balance = IERC4626(address(assets[i].asset))
+                        .convertToAssets(assetAmounts[i].value);
+                } else {
+                    balance = assetAmounts[i].value;
+                }
+
+                if (assets[i].asset == feeToken) {
+                    lastFeeTokenPrice = spotPrices[i];
+                }
+
+                totalValue += (balance * spotPrices[i]) / assetUnits[i];
             }
 
-            if (assets[i].asset == feeToken) {
-                feeTokenIndex = i;
-            }
+            lastVaultValue = totalValue;
+        } catch {}
 
-            totalValue += (balance * spotPrices[i]) / assetUnits[i];
-        }
-
-        uint256 newFee = (((totalValue * feeIndex * guardianFee) / ONE) *
-            assetUnits[feeTokenIndex]) / spotPrices[feeTokenIndex];
+        uint256 newFee = (((lastVaultValue * feeIndex * guardianFee) / ONE) *
+            10 ** IERC20Metadata(address(feeToken)).decimals()) /
+            lastFeeTokenPrice;
 
         guardiansFee[feeRecipient] += newFee;
         guardiansFeeTotal += newFee;
@@ -604,7 +616,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         (
             uint256[] memory spotPrices,
             uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets);
+        ) = _getSpotPricesAndUnits(assets, assetRegistry.spotPrices());
 
         uint256[] memory depositAmounts = new uint256[](numAssets);
         uint256[] memory withdrawAmounts = new uint256[](numAssets);
@@ -948,19 +960,18 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Get spot prices and units of requested assets.
     /// @param assets Struct details for registered assets in asset registry.
+    /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
     function _getSpotPricesAndUnits(
-        IAssetRegistry.AssetInformation[] memory assets
+        IAssetRegistry.AssetInformation[] memory assets,
+        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
     )
         internal
         view
         returns (uint256[] memory spotPrices, uint256[] memory assetUnits)
     {
         uint256 numAssets = assets.length;
-
-        IAssetRegistry.AssetPriceReading[]
-            memory erc20SpotPrices = assetRegistry.spotPrices();
         uint256 numERC20SpotPrices = erc20SpotPrices.length;
 
         spotPrices = new uint256[](numAssets);
