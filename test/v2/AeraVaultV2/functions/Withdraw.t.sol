@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract WithdrawTest is TestBaseAeraVaultV2 {
     ICustody.AssetValue[] withdrawAmounts;
@@ -102,6 +103,18 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
                 withdrawAmounts[0].value - 1
             )
         );
+
+        vault.withdraw(withdrawAmounts, false);
+    }
+
+    function test_withdraw_success_whenOraclePriceIsInvalid() public virtual {
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.warp(block.timestamp + 1000);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit Withdraw(withdrawAmounts, false);
 
         vault.withdraw(withdrawAmounts, false);
     }

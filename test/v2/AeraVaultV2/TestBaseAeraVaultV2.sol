@@ -26,6 +26,8 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
 
         balancerExecution.initialize(address(vault));
 
+        vm.warp(block.timestamp + 1000);
+
         _deposit();
 
         _generateValidRequest();

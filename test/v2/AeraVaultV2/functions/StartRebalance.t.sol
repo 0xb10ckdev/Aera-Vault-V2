@@ -2,7 +2,9 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 interface IERC4626Mock {
     function setMaxDepositAmount(uint256 amount, bool use) external;
@@ -121,6 +123,29 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
         );
 
         vault.startRebalance(requests, block.timestamp, block.timestamp + 100);
+    }
+
+    function test_startRebalance_fail_whenOraclePriceIsInvalid() public {
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.prank(_GUARDIAN);
+
+        vm.warp(block.timestamp + 1000);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                nonNumeraire,
+                -1
+            )
+        );
+
+        vault.startRebalance(
+            validRequest,
+            block.timestamp,
+            block.timestamp + 100
+        );
     }
 
     function test_startRebalance_success_whenNoYieldAssetsShouldBeAdjusted()

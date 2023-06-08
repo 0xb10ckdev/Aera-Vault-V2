@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/AeraVaultAssetRegistry.sol";
 import "../TestBaseAeraVaultV2.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
     AeraVaultAssetRegistry newAssetRegistry;
@@ -49,6 +50,19 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
         );
 
         vault.setAssetRegistry(address(1));
+    }
+
+    function test_setAssetRegistry_success_whenOraclePriceIsInvalid()
+        public
+        virtual
+    {
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SetAssetRegistry(address(newAssetRegistry));
+
+        vault.setAssetRegistry(address(newAssetRegistry));
     }
 
     function test_setAssetRegistry_success() public virtual {

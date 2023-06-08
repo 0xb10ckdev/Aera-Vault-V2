@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract EndRebalanceTest is TestBaseAeraVaultV2 {
     function test_endRebalance_fail_whenCallerIsNotOwnerOrGuardian() public {
@@ -42,6 +43,21 @@ contract EndRebalanceTest is TestBaseAeraVaultV2 {
                 vault.rebalanceEndTime()
             )
         );
+
+        vault.endRebalance();
+    }
+
+    function test_endRebalance_success_whenOraclePriceIsInvalid() public {
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
+
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.warp(vault.execution().rebalanceEndTime());
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit EndRebalance();
 
         vault.endRebalance();
     }

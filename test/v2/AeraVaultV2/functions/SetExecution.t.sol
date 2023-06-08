@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/AeraBalancerExecution.sol";
 import "../TestBaseAeraVaultV2.sol";
+import "src/v2/AeraBalancerExecution.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract SetExecutionTest is TestBaseAeraVaultV2 {
     AeraBalancerExecution newExecution;
@@ -43,6 +44,19 @@ contract SetExecutionTest is TestBaseAeraVaultV2 {
         );
 
         vault.setExecution(address(1));
+    }
+
+    function test_setExecution_success_whenOraclePriceIsInvalid()
+        public
+        virtual
+    {
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SetExecution(address(newExecution));
+
+        vault.setExecution(address(newExecution));
     }
 
     function test_setExecution_success() public virtual {

@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract PauseVaultTest is TestBaseAeraVaultV2 {
     event Paused(address);
@@ -25,6 +26,16 @@ contract PauseVaultTest is TestBaseAeraVaultV2 {
         vault.pauseVault();
 
         vm.expectRevert(bytes("Pausable: paused"));
+
+        vault.pauseVault();
+    }
+
+    function test_pauseVault_success_whenOraclePriceIsInvalid() public virtual {
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit Paused(address(this));
 
         vault.pauseVault();
     }

@@ -37,6 +37,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     IERC20 feeToken;
     uint256[] oraclePrices;
     uint256 numeraire;
+    uint256 nonNumeraire;
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
@@ -70,6 +71,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 assets.push(erc20Assets[erc20Index]);
                 if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
                     numeraire = i;
+                } else if (address(erc20Assets[erc20Index]) == _WETH_ADDRESS) {
+                    nonNumeraire = i;
                 }
                 erc20Index++;
             } else {
