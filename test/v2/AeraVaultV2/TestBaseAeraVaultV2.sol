@@ -26,6 +26,8 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
 
         balancerExecution.initialize(address(vault));
 
+        vm.warp(block.timestamp + 1000);
+
         _deposit();
 
         _generateValidRequest();
@@ -36,6 +38,7 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
             address(assetRegistry),
             address(balancerExecution),
             _GUARDIAN,
+            _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
             _getScaler(assets[numeraire]),
             _getScaler(assets[numeraire])

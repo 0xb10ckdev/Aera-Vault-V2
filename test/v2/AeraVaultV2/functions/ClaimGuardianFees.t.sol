@@ -3,13 +3,6 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 
-interface IGuardiansFee {
-    function guardiansFee(
-        address guardian,
-        uint256 index
-    ) external view returns (ICustody.AssetValue memory fee);
-}
-
 contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
     function test_claimGuardianFees_fail_whenNoAvailableFeeForCaller() public {
         vm.expectRevert(
@@ -29,28 +22,39 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
         vm.warp(block.timestamp + 1000);
         _startRebalance(validRequest);
 
+        vm.stopPrank();
+
         ICustody.AssetValue[] memory holdings = vault.holdings();
-        ICustody.AssetValue[] memory fees = new ICustody.AssetValue[](
-            holdings.length
-        );
+        uint256 fee = vault.guardiansFee(_FEE_RECIPIENT);
+        uint256 feeTotal = vault.guardiansFeeTotal();
 
         uint256[] memory balances = new uint256[](holdings.length);
 
         for (uint256 i = 0; i < holdings.length; i++) {
-            fees[i] = IGuardiansFee(address(vault)).guardiansFee(_GUARDIAN, i);
-            balances[i] = holdings[i].asset.balanceOf(_GUARDIAN);
+            balances[i] = holdings[i].asset.balanceOf(_FEE_RECIPIENT);
         }
 
+        vm.startPrank(_FEE_RECIPIENT);
+
         vm.expectEmit(true, true, true, true, address(vault));
-        emit ClaimGuardianFees(_GUARDIAN, fees);
+        emit ClaimGuardianFees(_FEE_RECIPIENT, fee);
 
         vault.claimGuardianFees();
 
+        assertEq(feeTotal - fee, vault.guardiansFeeTotal());
+
         for (uint256 i = 0; i < holdings.length; i++) {
-            assertEq(
-                balances[i] + fees[i].value,
-                holdings[i].asset.balanceOf(_GUARDIAN)
-            );
+            if (holdings[i].asset == feeToken) {
+                assertEq(
+                    balances[i] + fee,
+                    holdings[i].asset.balanceOf(_FEE_RECIPIENT)
+                );
+            } else {
+                assertEq(
+                    balances[i],
+                    holdings[i].asset.balanceOf(_FEE_RECIPIENT)
+                );
+            }
         }
     }
 }

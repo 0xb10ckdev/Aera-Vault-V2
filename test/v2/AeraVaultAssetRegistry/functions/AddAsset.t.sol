@@ -82,6 +82,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
         }
 
         propNumeraire();
+        propFeeToken();
         propNumYieldAssets();
         propAssetsSorted();
     }

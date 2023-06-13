@@ -17,7 +17,8 @@ interface ICustodyEvents {
 
     /// @notice Emitted when guardian is set.
     /// @param guardian Address of new guardian.
-    event SetGuardian(address guardian);
+    /// @param feeRecipient Address of new fee recipient.
+    event SetGuardian(address guardian, address feeRecipient);
 
     /// @notice Emitted when asset registry is set.
     /// @param assetRegistry Address of new asset registry.
@@ -48,9 +49,6 @@ interface ICustodyEvents {
 
     /// @notice Emitted when guardian fees are claimed.
     /// @param guardian Guardian address.
-    /// @param claimedFees Claimed amount of each asset.
-    event ClaimGuardianFees(
-        address guardian,
-        ICustody.AssetValue[] claimedFees
-    );
+    /// @param claimedFee Claimed amount of fee token.
+    event ClaimGuardianFees(address guardian, uint256 claimedFee);
 }

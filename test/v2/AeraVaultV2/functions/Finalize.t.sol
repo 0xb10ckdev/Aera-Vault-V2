@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import {IOracleMock} from "test/utils/OracleMock.sol";
 
 interface ILastFeeCheckpoint {
     function lastFeeCheckpoint() external view returns (uint256 checkpoint);
@@ -51,6 +52,21 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
                 holdings[i].asset.balanceOf(address(this))
             );
         }
+    }
+
+    function test_finalize_success_whenOraclePriceIsInvalid() public virtual {
+        vm.prank(_GUARDIAN);
+        _startRebalance(validRequest);
+
+        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
+            .setLatestAnswer(-1);
+
+        vm.warp(vault.execution().rebalanceEndTime());
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit Finalized();
+
+        vault.finalize();
     }
 
     function test_finalize_success() public virtual {

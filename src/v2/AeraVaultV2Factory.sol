@@ -14,6 +14,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
     /// @param assetRegistry The address of asset registry.
     /// @param execution The address of execution module.
     /// @param guardian The address of guardian.
+    /// @param feeRecipient The address of fee recipient.
     /// @param guardianFee Guardian fee per second in 18 decimal fixed point format.
     /// @param minThreshold Minimum action threshold for erc20 assets measured
     ///                     in base token terms.
@@ -24,6 +25,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         address assetRegistry,
         address execution,
         address guardian,
+        address feeRecipient,
         uint256 guardianFee,
         uint256 minThreshold,
         uint256 minYieldActionThreshold
@@ -36,6 +38,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         address assetRegistry,
         address execution,
         address guardian,
+        address feeRecipient,
         uint256 guardianFee,
         uint256 minThreshold,
         uint256 minYieldActionThreshold
@@ -44,16 +47,19 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
             assetRegistry,
             execution,
             guardian,
+            feeRecipient,
             guardianFee,
             minThreshold,
             minYieldActionThreshold
         );
+        vault.transferOwnership(msg.sender);
 
         emit VaultCreated(
             address(vault),
             assetRegistry,
             execution,
             guardian,
+            feeRecipient,
             guardianFee,
             minThreshold,
             minYieldActionThreshold

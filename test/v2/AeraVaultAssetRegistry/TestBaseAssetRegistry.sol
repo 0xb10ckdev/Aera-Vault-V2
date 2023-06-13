@@ -13,7 +13,9 @@ import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 contract TestBaseAssetRegistry is TestBase {
     AeraVaultAssetRegistry assetRegistry;
     IAssetRegistry.AssetInformation[] assets;
+    IERC20 feeToken;
     address numeraireAsset;
+    address nonNumeraireAsset;
     uint256 numeraire;
     uint256 nonNumeraire;
     uint256 numAssets;
@@ -29,6 +31,10 @@ contract TestBaseAssetRegistry is TestBase {
         assertEq(numeraire, assetRegistry.numeraire());
         assertEq(numeraireAsset, address(registryAssets[numeraire].asset));
         assertEq(address(registryAssets[numeraire].oracle), address(0));
+    }
+
+    function propFeeToken() public {
+        assertEq(address(feeToken), address(assetRegistry.feeToken()));
     }
 
     function propNumYieldAssets() public {
@@ -83,7 +89,7 @@ contract TestBaseAssetRegistry is TestBase {
     function _deploy() internal {
         _createAssets(4, 2);
 
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire);
+        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
@@ -96,6 +102,10 @@ contract TestBaseAssetRegistry is TestBase {
             if (i == 0) {
                 numeraireAsset = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
+            } else if (i == 1) {
+                nonNumeraireAsset = address(asset.asset);
+            } else if (i == 2) {
+                feeToken = asset.asset;
             }
 
             assets.push(asset);
@@ -131,10 +141,10 @@ contract TestBaseAssetRegistry is TestBase {
 
             if (address(assets[i].asset) == numeraireAsset) {
                 numeraire = i;
+            } else if (address(assets[i].asset) == nonNumeraireAsset) {
+                nonNumeraire = i;
             }
         }
-
-        nonNumeraire = (numeraire + 1) % numAssets;
     }
 
     function _createAsset()

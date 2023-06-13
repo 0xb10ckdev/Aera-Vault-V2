@@ -11,6 +11,7 @@ import {IVault} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vau
 import {Deployer} from "test/utils/Deployer.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
+import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
@@ -23,6 +24,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     address internal _MERKLE_ORCHARDS =
         0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
     address internal _GUARDIAN = address(0x123456);
+    address internal _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal _MAX_GUARDIAN_FEE = 10 ** 9;
     uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 
@@ -32,8 +34,10 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     mapping(IERC20 => bool) isERC4626;
     mapping(IERC20 => uint256) underlyingIndex;
     IAssetRegistry.AssetInformation[] assetsInformation;
+    IERC20 feeToken;
     uint256[] oraclePrices;
     uint256 numeraire;
+    uint256 nonNumeraire;
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
@@ -67,6 +71,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 assets.push(erc20Assets[erc20Index]);
                 if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
                     numeraire = i;
+                } else if (address(erc20Assets[erc20Index]) == _WETH_ADDRESS) {
+                    nonNumeraire = i;
                 }
                 erc20Index++;
             } else {
@@ -142,6 +148,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 }
             }
         }
+
+        feeToken = IERC20(_USDC_ADDRESS);
     }
 
     function _deployYieldAssets() internal {
@@ -170,7 +178,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     function _deployAssetRegistry() internal {
         assetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
-            numeraire
+            numeraire,
+            feeToken
         );
     }
 

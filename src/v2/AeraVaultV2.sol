@@ -41,17 +41,26 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice The address of guardian.
     address public guardian;
 
+    /// @notice The address of management fee recipient.
+    address public feeRecipient;
+
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
 
     /// @notice Timestamp at when rebalancing ends.
     uint256 public rebalanceEndTime;
 
+    /// @notice Last total value of assets in vault.
+    uint256 public lastVaultValue;
+
+    /// @notice Last spot price of fee token.
+    uint256 public lastFeeTokenPrice;
+
     /// @notice Fee earned amount for each guardian.
-    mapping(address => AssetValue[]) public guardiansFee;
+    mapping(address => uint256) public guardiansFee;
 
     /// @notice Total guardian fee earned amount.
-    mapping(IERC20 => uint256) public guardiansFeeTotal;
+    uint256 public guardiansFeeTotal;
 
     /// @notice Last timestamp where guardian fee index was locked.
     uint256 public lastFeeCheckpoint = type(uint256).max;
@@ -94,6 +103,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @param assetRegistry_ The address of asset registry.
     /// @param execution_ The address of execution module.
     /// @param guardian_ The address of guardian.
+    /// @param feeRecipient_ The address of fee recipient.
     /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
     /// @param minThreshold_ Minimum action threshold for erc20 assets measured
     ///                      in base token terms.
@@ -103,6 +113,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         address assetRegistry_,
         address execution_,
         address guardian_,
+        address feeRecipient_,
         uint256 guardianFee_,
         uint256 minThreshold_,
         uint256 minYieldActionThreshold_
@@ -110,6 +121,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkExecutionAddress(execution_);
         _checkGuardianAddress(guardian_);
+        _checkFeeRecipientAddress(feeRecipient_);
 
         if (guardianFee_ > _MAX_GUARDIAN_FEE) {
             revert Aera__GuardianFeeIsAboveMax(guardianFee_, _MAX_GUARDIAN_FEE);
@@ -124,6 +136,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         assetRegistry = IAssetRegistry(assetRegistry_);
         execution = IExecution(execution_);
         guardian = guardian_;
+        feeRecipient = feeRecipient_;
         guardianFee = guardianFee_;
         minThreshold = minThreshold_;
         minYieldActionThreshold = minYieldActionThreshold_;
@@ -131,13 +144,15 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetExecution(execution_);
-        emit SetGuardian(guardian_);
+        emit SetGuardian(guardian_, feeRecipient_);
     }
 
     /// @inheritdoc ICustody
     function deposit(
         AssetValue[] calldata amounts
     ) external override nonReentrant onlyOwner whenNotFinalized {
+        _lockGuardianFees();
+
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         uint256 numAmounts = amounts.length;
@@ -173,7 +188,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         AssetValue[] calldata amounts,
         bool force
     ) external override nonReentrant onlyOwner whenNotFinalized {
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
@@ -215,14 +230,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function setGuardian(
-        address newGuardian
+        address newGuardian,
+        address newFeeRecipient
     ) external virtual override onlyOwner whenNotFinalized {
         _checkGuardianAddress(newGuardian);
-        _updateGuardianFees();
+        _checkFeeRecipientAddress(newFeeRecipient);
+        _lockGuardianFees();
 
         guardian = newGuardian;
+        feeRecipient = newFeeRecipient;
 
-        emit SetGuardian(newGuardian);
+        emit SetGuardian(newGuardian, newFeeRecipient);
     }
 
     /// @inheritdoc ICustody
@@ -230,7 +248,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         address newAssetRegistry
     ) external virtual override onlyOwner whenNotFinalized {
         _checkAssetRegistryAddress(newAssetRegistry);
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         assetRegistry = IAssetRegistry(newAssetRegistry);
 
@@ -244,7 +262,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         _checkExecutionAddress(newExecution);
 
         // Note: we could remove this but leaving it to protect the guardian
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         execution = IExecution(newExecution);
 
@@ -261,8 +279,6 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         whenNotFinalized
     {
         finalized = true;
-
-        _updateGuardianFees();
 
         execution.claimNow();
 
@@ -306,7 +322,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         whenNotFinalized
     {
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         execution.claimNow();
 
@@ -340,7 +356,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         whenNotFinalized
     {
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
@@ -416,7 +432,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
         }
 
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         execution.endRebalance();
 
@@ -433,7 +449,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         whenNotFinalized
     {
-        _updateGuardianFees();
+        _lockGuardianFees();
 
         execution.claimNow();
 
@@ -442,49 +458,23 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @inheritdoc ICustody
     function claimGuardianFees() external override nonReentrant {
-        if (msg.sender == guardian) {
-            _updateGuardianFees();
-        }
+        uint256 fee = guardiansFee[msg.sender];
 
-        AssetValue[] storage fees = guardiansFee[msg.sender];
-        uint256 numFees = fees.length;
-
-        if (numFees == 0) {
+        if (fee == 0) {
             revert Aera__NoAvailableFeeForCaller(msg.sender);
         }
 
-        AssetValue[] memory claimedFees = new AssetValue[](numFees);
-        AssetValue storage fee;
-        uint256 availableFee;
-        bool allFeesClaimed = true;
+        IERC20 feeToken = assetRegistry.feeToken();
 
-        for (uint256 i = 0; i < numFees; i++) {
-            fee = fees[i];
-            claimedFees[i].asset = fee.asset;
+        uint256 availableFee = Math.min(feeToken.balanceOf(address(this)), fee);
+        guardiansFeeTotal -= availableFee;
+        fee -= availableFee;
 
-            if (fee.value == 0) {
-                continue;
-            }
+        guardiansFee[msg.sender] = fee;
 
-            availableFee = Math.min(
-                fee.asset.balanceOf(address(this)),
-                fee.value
-            );
-            guardiansFeeTotal[fee.asset] -= availableFee;
-            fee.value -= availableFee;
-            fee.asset.safeTransfer(msg.sender, availableFee);
-            claimedFees[i].value = availableFee;
+        feeToken.safeTransfer(msg.sender, availableFee);
 
-            if (fee.value > 0) {
-                allFeesClaimed = false;
-            }
-        }
-
-        if (allFeesClaimed && msg.sender != guardian) {
-            delete guardiansFee[msg.sender];
-        }
-
-        emit ClaimGuardianFees(msg.sender, claimedFees);
+        emit ClaimGuardianFees(msg.sender, availableFee);
     }
 
     /// @inheritdoc ICustody
@@ -514,7 +504,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Calculate current guardian fees.
-    function _updateGuardianFees() internal {
+    function _lockGuardianFees() internal {
         if (guardianFee == 0) {
             return;
         }
@@ -525,35 +515,49 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             return;
         }
 
+        lastFeeCheckpoint = block.timestamp;
+
         IAssetRegistry.AssetInformation[] memory assets = assetRegistry
             .assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);
+        IERC20 feeToken = assetRegistry.feeToken();
 
-        lastFeeCheckpoint = block.timestamp;
+        try assetRegistry.spotPrices() returns (
+            IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
+        ) {
+            (
+                uint256[] memory spotPrices,
+                uint256[] memory assetUnits
+            ) = _getSpotPricesAndUnits(assets, erc20SpotPrices);
 
-        uint256 numAssets = assets.length;
-        uint256 numGuardiansFee = guardiansFee[guardian].length;
-        AssetValue memory assetAmount;
-        uint256 newFee;
+            uint256 numAssets = assets.length;
+            uint256 totalValue;
+            uint256 balance;
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            assetAmount = assetAmounts[i];
-            newFee = (assetAmount.value * feeIndex * guardianFee) / ONE;
-            uint256 j;
-            for (; j < numGuardiansFee; j++) {
-                if (guardiansFee[guardian][j].asset == assetAmount.asset) {
-                    guardiansFee[guardian][j].value += newFee;
-                    break;
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (assets[i].isERC4626) {
+                    balance = IERC4626(address(assets[i].asset))
+                        .convertToAssets(assetAmounts[i].value);
+                } else {
+                    balance = assetAmounts[i].value;
                 }
-            }
-            if (j == numGuardiansFee) {
-                guardiansFee[guardian].push(
-                    AssetValue(assetAmount.asset, newFee)
-                );
+
+                if (assets[i].asset == feeToken) {
+                    lastFeeTokenPrice = spotPrices[i];
+                }
+
+                totalValue += (balance * spotPrices[i]) / assetUnits[i];
             }
 
-            guardiansFeeTotal[assetAmount.asset] += newFee;
-        }
+            lastVaultValue = totalValue;
+        } catch {}
+
+        uint256 newFee = (((lastVaultValue * feeIndex * guardianFee) / ONE) *
+            10 ** IERC20Metadata(address(feeToken)).decimals()) /
+            lastFeeTokenPrice;
+
+        guardiansFee[feeRecipient] += newFee;
+        guardiansFeeTotal += newFee;
     }
 
     /// @notice Check request to withdraw.
@@ -612,7 +616,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         (
             uint256[] memory spotPrices,
             uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets);
+        ) = _getSpotPricesAndUnits(assets, assetRegistry.spotPrices());
 
         uint256[] memory depositAmounts = new uint256[](numAssets);
         uint256[] memory withdrawAmounts = new uint256[](numAssets);
@@ -956,19 +960,18 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Get spot prices and units of requested assets.
     /// @param assets Struct details for registered assets in asset registry.
+    /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
     function _getSpotPricesAndUnits(
-        IAssetRegistry.AssetInformation[] memory assets
+        IAssetRegistry.AssetInformation[] memory assets,
+        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
     )
         internal
         view
         returns (uint256[] memory spotPrices, uint256[] memory assetUnits)
     {
         uint256 numAssets = assets.length;
-
-        IAssetRegistry.AssetPriceReading[]
-            memory erc20SpotPrices = assetRegistry.spotPrices();
         uint256 numERC20SpotPrices = erc20SpotPrices.length;
 
         spotPrices = new uint256[](numAssets);
@@ -1068,8 +1071,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             }
         }
 
+        IERC20 feeToken = assetRegistry.feeToken();
+
         for (uint256 i = 0; i < numAssets; i++) {
-            assetAmounts[i].value -= guardiansFeeTotal[assets[i].asset];
+            if (assetAmounts[i].asset == feeToken) {
+                assetAmounts[i].value -= guardiansFeeTotal;
+                break;
+            }
         }
     }
 
@@ -1104,6 +1112,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         }
         if (newGuardian == owner()) {
             revert Aera__GuardianIsOwner();
+        }
+    }
+
+    /// @notice Check if the address can be a fee recipient.
+    /// @param newFeeRecipient Address to check.
+    function _checkFeeRecipientAddress(address newFeeRecipient) internal view {
+        if (newFeeRecipient == address(0)) {
+            revert Aera__FeeRecipientIsZeroAddress();
+        }
+        if (newFeeRecipient == owner()) {
+            revert Aera__FeeRecipientIsOwner();
         }
     }
 

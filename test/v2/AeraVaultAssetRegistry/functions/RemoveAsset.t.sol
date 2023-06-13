@@ -25,6 +25,16 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         assetRegistry.removeAsset(address(assets[numeraire].asset));
     }
 
+    function test_removeAsset_fail_whenRemovalAssetIsFeeToken() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__CannotRemoveFeeToken.selector,
+                feeToken
+            )
+        );
+        assetRegistry.removeAsset(address(feeToken));
+    }
+
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {
         (ERC20Mock erc20, ) = _createAsset();
 
@@ -76,6 +86,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         }
 
         propNumeraire();
+        propFeeToken();
         propNumYieldAssets();
         propAssetsSorted();
     }
