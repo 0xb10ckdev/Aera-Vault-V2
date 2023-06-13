@@ -5,9 +5,12 @@ import "@openzeppelin/IERC4626.sol";
 import "src/v2/interfaces/IBalancerExecution.sol";
 import "src/v2/AeraBalancerExecution.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
-import {IAsset} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
-import {IManagedPool} from "src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
-import {IVault} from "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
+import {IAsset} from
+    "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
+import {IManagedPool} from
+    "src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
+import {IVault} from
+    "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
 import {Deployer} from "test/utils/Deployer.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
@@ -63,10 +66,12 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
 
         for (uint256 i = 0; i < numERC20 + numERC4626; i++) {
             if (
-                erc4626Index == numERC4626 ||
-                (erc20Index < numERC20 &&
-                    address(erc20Assets[erc20Index]) <
-                    address(yieldAssets[erc4626Index]))
+                erc4626Index == numERC4626
+                    || (
+                        erc20Index < numERC20
+                            && address(erc20Assets[erc20Index])
+                                < address(yieldAssets[erc4626Index])
+                    )
             ) {
                 assets.push(erc20Assets[erc20Index]);
                 if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
@@ -104,15 +109,14 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                         i == numeraire || isERC4626[assets[i]]
                             ? address(0)
                             : address(new OracleMock(6))
-                    )
+                        )
                 })
             );
         }
 
         for (uint256 i = 0; i < yieldAssets.length; i++) {
             IERC20(yieldAssets[i].asset()).approve(
-                address(yieldAssets[i]),
-                type(uint256).max
+                address(yieldAssets[i]), type(uint256).max
             );
             yieldAssets[i].deposit(1_000_000e18, address(this));
         }
@@ -120,13 +124,13 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         for (uint256 i = 0; i < assets.length; i++) {
             if (assetsInformation[i].isERC4626) {
                 if (
-                    IERC4626(address(assetsInformation[i].asset)).asset() ==
-                    _WBTC_ADDRESS
+                    IERC4626(address(assetsInformation[i].asset)).asset()
+                        == _WBTC_ADDRESS
                 ) {
                     oraclePrices.push(15_000e6);
                 } else if (
-                    IERC4626(address(assetsInformation[i].asset)).asset() ==
-                    _WETH_ADDRESS
+                    IERC4626(address(assetsInformation[i].asset)).asset()
+                        == _WETH_ADDRESS
                 ) {
                     oraclePrices.push(1_000e6);
                 } else {
@@ -184,9 +188,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     }
 
     function _deployBalancerManagedPoolFactory() internal {
-        address managedPoolAddRemoveTokenLib = deploy(
-            "ManagedPoolAddRemoveTokenLib.sol"
-        );
+        address managedPoolAddRemoveTokenLib =
+            deploy("ManagedPoolAddRemoveTokenLib.sol");
 
         address circuitBreakerLib = deploy("CircuitBreakerLib.sol");
 
@@ -267,16 +270,16 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                 holdings = balancerExecution.holdings();
 
                 if (holdings[i].value < targetAmounts[i]) {
-                    uint256 necessaryAmount = targetAmounts[i] -
-                        holdings[i].value;
+                    uint256 necessaryAmount =
+                        targetAmounts[i] - holdings[i].value;
                     IVault(_BVAULT_ADDRESS).swap(
                         IVault.SingleSwap({
                             poolId: balancerExecution.poolId(),
                             kind: IVault.SwapKind.GIVEN_IN,
                             assetIn: IAsset(address(erc20Assets[i])),
                             assetOut: IAsset(address(erc20Assets[i + 1])),
-                            amount: necessaryAmount <
-                                (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
+                            amount: necessaryAmount
+                                < (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
                                 ? necessaryAmount
                                 : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
                             userData: "0x"
@@ -286,16 +289,16 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
                         block.timestamp + 100
                     );
                 } else if (holdings[i].value > targetAmounts[i]) {
-                    uint256 necessaryAmount = holdings[i].value -
-                        targetAmounts[i];
+                    uint256 necessaryAmount =
+                        holdings[i].value - targetAmounts[i];
                     IVault(_BVAULT_ADDRESS).swap(
                         IVault.SingleSwap({
                             poolId: balancerExecution.poolId(),
                             kind: IVault.SwapKind.GIVEN_OUT,
                             assetIn: IAsset(address(erc20Assets[i + 1])),
                             assetOut: IAsset(address(erc20Assets[i])),
-                            amount: necessaryAmount <
-                                (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
+                            amount: necessaryAmount
+                                < (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
                                 ? necessaryAmount
                                 : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
                             userData: "0x"
@@ -320,17 +323,16 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     {
         IERC20[] memory poolTokens = balancerExecution.assets();
         IExecution.AssetValue[] memory holdings = balancerExecution.holdings();
-        IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
-            .spotPrices();
+        IAssetRegistry.AssetPriceReading[] memory spotPrices =
+            assetRegistry.spotPrices();
         uint256[] memory values = new uint256[](poolTokens.length);
         uint256 totalValue;
 
         for (uint256 i = 0; i < poolTokens.length; i++) {
             for (uint256 j = 0; j < spotPrices.length; j++) {
                 if (poolTokens[i] == spotPrices[j].asset) {
-                    values[i] =
-                        (holdings[i].value * spotPrices[j].spotPrice) /
-                        _getScaler(poolTokens[i]);
+                    values[i] = (holdings[i].value * spotPrices[j].spotPrice)
+                        / _getScaler(poolTokens[i]);
                     totalValue += values[i];
 
                     break;
@@ -347,11 +349,10 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         for (uint256 i = 0; i < poolTokens.length; i++) {
             for (uint256 j = 0; j < spotPrices.length; j++) {
                 if (poolTokens[i] == spotPrices[j].asset) {
-                    targetAmounts[i] =
-                        ((totalValue * poolWeights[i]) *
-                            _getScaler(poolTokens[i])) /
-                        _ONE /
-                        spotPrices[j].spotPrice;
+                    targetAmounts[i] = (
+                        (totalValue * poolWeights[i])
+                            * _getScaler(poolTokens[i])
+                    ) / _ONE / spotPrices[j].spotPrice;
 
                     break;
                 }

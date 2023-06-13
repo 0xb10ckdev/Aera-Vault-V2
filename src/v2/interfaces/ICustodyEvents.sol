@@ -36,9 +36,7 @@ interface ICustodyEvents {
     /// @param startTime Timestamp at which weight movement should start.
     /// @param endTime Timestamp at which the weights should reach target values.
     event StartRebalance(
-        ICustody.AssetValue[] assetWeights,
-        uint256 startTime,
-        uint256 endTime
+        ICustody.AssetValue[] assetWeights, uint256 startTime, uint256 endTime
     );
 
     /// @notice Emitted when endRebalance is called.

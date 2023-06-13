@@ -58,10 +58,8 @@ contract Deployer is Test {
         ExternalLibrary[] memory libraries,
         bytes memory args
     ) public returns (address addr) {
-        bytes memory creationCode = abi.encodePacked(
-            _getCreationCode(name, libraries),
-            args
-        );
+        bytes memory creationCode =
+            abi.encodePacked(_getCreationCode(name, libraries), args);
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -88,10 +86,8 @@ contract Deployer is Test {
         bytes memory args,
         uint256 val
     ) public returns (address addr) {
-        bytes memory creationCode = abi.encodePacked(
-            _getCreationCode(name, libraries),
-            args
-        );
+        bytes memory creationCode =
+            abi.encodePacked(_getCreationCode(name, libraries), args);
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -99,23 +95,27 @@ contract Deployer is Test {
         }
     }
 
-    function _getPath(
-        string memory name
-    ) internal pure returns (string memory) {
+    function _getPath(string memory name)
+        internal
+        pure
+        returns (string memory)
+    {
         return string.concat("./out/", name, ".sol/", name, ".json");
     }
 
-    function _readBytecode(
-        string memory name
-    ) internal returns (string memory) {
+    function _readBytecode(string memory name)
+        internal
+        returns (string memory)
+    {
         string memory path = _getPath(name);
         string memory json = vm.readFile(path);
         return vm.parseJsonString(json, ".bytecode.object");
     }
 
-    function _getSourcePath(
-        string memory name
-    ) internal returns (string memory) {
+    function _getSourcePath(string memory name)
+        internal
+        returns (string memory)
+    {
         string memory path = _getPath(name);
         string memory json = vm.readFile(path);
         return vm.parseJsonString(json, ".ast.absolutePath");
@@ -132,9 +132,7 @@ contract Deployer is Test {
                 keccak256(abi.encodePacked(sourcePath, ":", libraries[i].name))
             );
             bytecodeStr = _replace(
-                bytecodeStr,
-                placeholder,
-                _toString(libraries[i].addr)
+                bytecodeStr, placeholder, _toString(libraries[i].addr)
             );
         }
 
@@ -159,11 +157,10 @@ contract Deployer is Test {
         bytes memory ss = bytes(s);
         require(ss.length % 2 == 0); // length must be even
         bytes memory r = new bytes(ss.length / 2 - 1);
-        for (uint i = 1; i < ss.length / 2; ++i) {
+        for (uint256 i = 1; i < ss.length / 2; ++i) {
             r[i - 1] = bytes1(
-                _fromHexChar(uint8(ss[2 * i])) *
-                    16 +
-                    _fromHexChar(uint8(ss[2 * i + 1]))
+                _fromHexChar(uint8(ss[2 * i])) * 16
+                    + _fromHexChar(uint8(ss[2 * i + 1]))
             );
         }
         return r;
@@ -193,36 +190,27 @@ contract Deployer is Test {
             let subjectEnd := add(subject, subjectLength)
             if iszero(gt(searchLength, subjectLength)) {
                 let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
-                for {
-
-                } lt(subject, subjectSearchEnd) {
-
-                } {
+                for {} lt(subject, subjectSearchEnd) {} {
                     let o := and(searchLength, 31)
                     // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
-                    let l := iszero(
-                        and(
-                            xor(mload(subject), mload(search)),
-                            mload(sub(0x20, o))
+                    let l :=
+                        iszero(
+                            and(
+                                xor(mload(subject), mload(search)),
+                                mload(sub(0x20, o))
+                            )
                         )
-                    )
                     // Iterate through the rest of `search` and check if any word mismatch.
                     // If any mismatch is detected, `l` is set to 0.
-                    for {
-
-                    } and(lt(o, searchLength), l) {
-
-                    } {
+                    for {} and(lt(o, searchLength), l) {} {
                         l := eq(mload(add(subject, o)), mload(add(search, o)))
                         o := add(o, 0x20)
                     }
                     // If `l` is one, there is a match, and we have to copy the `replacement`.
                     if l {
                         // Copy the `replacement` one word at a time.
-                        for {
-                            o := 0
-                        } lt(o, replacementLength) {
+                        for { o := 0 } lt(o, replacementLength) {
                             o := add(o, 0x20)
                         } {
                             mstore(
@@ -245,11 +233,7 @@ contract Deployer is Test {
             let resultRemainder := add(result, k)
             k := add(k, sub(subjectEnd, subject))
             // Copy the rest of the string one word at a time.
-            for {
-
-            } lt(subject, subjectEnd) {
-
-            } {
+            for {} lt(subject, subjectEnd) {} {
                 mstore(resultRemainder, mload(subject))
                 resultRemainder := add(resultRemainder, 0x20)
                 subject := add(subject, 0x20)
@@ -261,32 +245,40 @@ contract Deployer is Test {
         }
     }
 
-    function _toString(address account) internal pure returns (string memory) {
+    function _toString(address account)
+        internal
+        pure
+        returns (string memory)
+    {
         return _toString(abi.encodePacked(account));
     }
 
-    function _toString(
-        bytes memory data
-    ) internal pure returns (string memory) {
+    function _toString(bytes memory data)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory alphabet = "0123456789abcdef";
 
         bytes memory str = new bytes(data.length * 2);
-        for (uint i = 0; i < data.length; i++) {
-            str[0 + i * 2] = alphabet[uint(uint8(data[i] >> 4))];
-            str[1 + i * 2] = alphabet[uint(uint8(data[i] & 0x0f))];
+        for (uint256 i = 0; i < data.length; i++) {
+            str[0 + i * 2] = alphabet[uint256(uint8(data[i] >> 4))];
+            str[1 + i * 2] = alphabet[uint256(uint8(data[i] & 0x0f))];
         }
         return string(str);
     }
 
-    function _toPlaceholder(
-        bytes32 data
-    ) internal pure returns (string memory) {
+    function _toPlaceholder(bytes32 data)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory alphabet = "0123456789abcdef";
 
         bytes memory str = new bytes(17 * 2);
-        for (uint i = 0; i < 17; i++) {
-            str[0 + i * 2] = alphabet[uint(uint8(data[i] >> 4))];
-            str[1 + i * 2] = alphabet[uint(uint8(data[i] & 0x0f))];
+        for (uint256 i = 0; i < 17; i++) {
+            str[0 + i * 2] = alphabet[uint256(uint8(data[i] >> 4))];
+            str[1 + i * 2] = alphabet[uint256(uint8(data[i] & 0x0f))];
         }
         return string.concat("__$", string(str), "$__");
     }

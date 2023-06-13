@@ -38,8 +38,7 @@ contract SetExecutionTest is TestBaseAeraVaultV2 {
     function test_setExecution_fail_whenExecutionIsNotValid() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__ExecutionIsNotValid.selector,
-                address(1)
+                ICustody.Aera__ExecutionIsNotValid.selector, address(1)
             )
         );
 

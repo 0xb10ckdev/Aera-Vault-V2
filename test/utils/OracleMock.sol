@@ -38,13 +38,7 @@ contract OracleMock {
     function latestRoundData()
         external
         view
-        returns (
-            uint80,
-            int256,
-            uint256,
-            uint256,
-            uint80
-        )
+        returns (uint80, int256, uint256, uint256, uint80)
     {
         return (0, answer, 0, updatedAt, 0);
     }

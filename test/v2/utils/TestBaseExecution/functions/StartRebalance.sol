@@ -39,9 +39,7 @@ abstract contract BaseStartRebalanceTest is TestBaseExecution {
         vm.expectRevert(IExecution.Aera__SumOfWeightsIsNotOne.selector);
 
         execution.startRebalance(
-            requests,
-            block.timestamp,
-            block.timestamp + 10000
+            requests, block.timestamp, block.timestamp + 10000
         );
     }
 
@@ -52,9 +50,7 @@ abstract contract BaseStartRebalanceTest is TestBaseExecution {
         vm.expectRevert(IExecution.Aera__WeightChangeEndBeforeStart.selector);
 
         execution.startRebalance(
-            _generateRequest(),
-            block.timestamp + 100,
-            block.timestamp + 10
+            _generateRequest(), block.timestamp + 100, block.timestamp + 10
         );
     }
 }

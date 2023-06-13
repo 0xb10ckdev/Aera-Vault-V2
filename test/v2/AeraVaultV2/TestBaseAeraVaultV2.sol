@@ -19,8 +19,7 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         }
         for (uint256 i = 0; i < assets.length; i++) {
             assets[i].approve(
-                address(vault),
-                1_000_000 * _getScaler(assets[i])
+                address(vault), 1_000_000 * _getScaler(assets[i])
             );
         }
 
@@ -133,9 +132,11 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         vault.startRebalance(requests, startTime, endTime);
     }
 
-    function _normalizeWeights(
-        uint256[] memory weights
-    ) internal pure returns (uint256[] memory newWeights) {
+    function _normalizeWeights(uint256[] memory weights)
+        internal
+        pure
+        returns (uint256[] memory newWeights)
+    {
         uint256 numWeights = weights.length;
         newWeights = new uint256[](numWeights);
 

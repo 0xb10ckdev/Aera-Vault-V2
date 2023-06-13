@@ -53,11 +53,12 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         );
     }
 
-    function test_createAeraVaultV2_fail_whenAssetRegistryIsNotValid() public {
+    function test_createAeraVaultV2_fail_whenAssetRegistryIsNotValid()
+        public
+    {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetRegistryIsNotValid.selector,
-                address(1)
+                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
 
@@ -88,8 +89,7 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenExecutionIsNotValid() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__ExecutionIsNotValid.selector,
-                address(1)
+                ICustody.Aera__ExecutionIsNotValid.selector, address(1)
             )
         );
 

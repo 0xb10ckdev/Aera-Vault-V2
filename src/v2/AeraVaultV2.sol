@@ -148,20 +148,24 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function deposit(
-        AssetValue[] calldata amounts
-    ) external override nonReentrant onlyOwner whenNotFinalized {
+    function deposit(AssetValue[] calldata amounts)
+        external
+        override
+        nonReentrant
+        onlyOwner
+        whenNotFinalized
+    {
         _lockGuardianFees();
 
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
         bool isRegistered;
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            (isRegistered, ) = _isAssetRegistered(assetValue.asset, assets);
+            (isRegistered,) = _isAssetRegistered(assetValue.asset, assets);
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
@@ -174,9 +178,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             }
 
             assetValue.asset.safeTransferFrom(
-                owner(),
-                address(this),
-                assetValue.value
+                owner(), address(this), assetValue.value
             );
         }
 
@@ -190,8 +192,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ) external override nonReentrant onlyOwner whenNotFinalized {
         _lockGuardianFees();
 
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
 
         _checkWithdrawRequest(assets, amounts);
 
@@ -244,9 +246,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function setAssetRegistry(
-        address newAssetRegistry
-    ) external virtual override onlyOwner whenNotFinalized {
+    function setAssetRegistry(address newAssetRegistry)
+        external
+        virtual
+        override
+        onlyOwner
+        whenNotFinalized
+    {
         _checkAssetRegistryAddress(newAssetRegistry);
         _lockGuardianFees();
 
@@ -256,9 +262,13 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @inheritdoc ICustody
-    function setExecution(
-        address newExecution
-    ) external virtual override onlyOwner whenNotFinalized {
+    function setExecution(address newExecution)
+        external
+        virtual
+        override
+        onlyOwner
+        whenNotFinalized
+    {
         _checkExecutionAddress(newExecution);
 
         // Note: we could remove this but leaving it to protect the guardian
@@ -282,8 +292,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         execution.claimNow();
 
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);
         uint256 numAssetAmounts = assetAmounts.length;
 
@@ -299,10 +309,10 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         IERC20 token,
         uint256 amount
     ) external virtual override nonReentrant {
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
 
-        (bool isRegistered, ) = _isAssetRegistered(token, assets);
+        (bool isRegistered,) = _isAssetRegistered(token, assets);
 
         if (isRegistered) {
             revert Aera__CannotSweepRegisteredAsset();
@@ -358,18 +368,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     {
         _lockGuardianFees();
 
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
         uint256 numAssets = assets.length;
 
-        uint256[] memory targetWeights = _getTargetWeights(
-            assets,
-            assetWeights
-        );
-        uint256[] memory underlyingTargetWeights = _adjustYieldAssets(
-            assets,
-            targetWeights
-        );
+        uint256[] memory targetWeights =
+            _getTargetWeights(assets, assetWeights);
+        uint256[] memory underlyingTargetWeights =
+            _adjustYieldAssets(assets, targetWeights);
         underlyingTargetWeights = _normalizeWeights(underlyingTargetWeights);
 
         uint256 numValidAssets;
@@ -381,8 +387,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         }
 
         if (numValidAssets > 0) {
-            IExecution.AssetRebalanceRequest[]
-                memory requests = new IExecution.AssetRebalanceRequest[](
+            IExecution.AssetRebalanceRequest[] memory requests =
+            new IExecution.AssetRebalanceRequest[](
                     numValidAssets
                 );
 
@@ -399,9 +405,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                         underlyingTargetWeights[i]
                     );
                     _setAllowance(
-                        asset.asset,
-                        address(execution),
-                        assetAmounts[i].value
+                        asset.asset, address(execution), assetAmounts[i].value
                     );
                     newIndex++;
                 }
@@ -485,8 +489,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         override
         returns (AssetValue[] memory)
     {
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
 
         return _getHoldings(assets);
     }
@@ -517,18 +521,16 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         lastFeeCheckpoint = block.timestamp;
 
-        IAssetRegistry.AssetInformation[] memory assets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);
         IERC20 feeToken = assetRegistry.feeToken();
 
         try assetRegistry.spotPrices() returns (
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
-            (
-                uint256[] memory spotPrices,
-                uint256[] memory assetUnits
-            ) = _getSpotPricesAndUnits(assets, erc20SpotPrices);
+            (uint256[] memory spotPrices, uint256[] memory assetUnits) =
+                _getSpotPricesAndUnits(assets, erc20SpotPrices);
 
             uint256 numAssets = assets.length;
             uint256 totalValue;
@@ -552,9 +554,10 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             lastVaultValue = totalValue;
         } catch {}
 
-        uint256 newFee = (((lastVaultValue * feeIndex * guardianFee) / ONE) *
-            10 ** IERC20Metadata(address(feeToken)).decimals()) /
-            lastFeeTokenPrice;
+        uint256 newFee = (
+            ((lastVaultValue * feeIndex * guardianFee) / ONE)
+                * 10 ** IERC20Metadata(address(feeToken)).decimals()
+        ) / lastFeeTokenPrice;
 
         guardiansFee[feeRecipient] += newFee;
         guardiansFeeTotal += newFee;
@@ -577,10 +580,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
-            (isRegistered, assetIndex) = _isAssetRegistered(
-                assetValue.asset,
-                assets
-            );
+            (isRegistered, assetIndex) =
+                _isAssetRegistered(assetValue.asset, assets);
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
@@ -613,34 +614,22 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         uint256 numAssets = assets.length;
 
         uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
-        (
-            uint256[] memory spotPrices,
-            uint256[] memory assetUnits
-        ) = _getSpotPricesAndUnits(assets, assetRegistry.spotPrices());
+        (uint256[] memory spotPrices, uint256[] memory assetUnits) =
+            _getSpotPricesAndUnits(assets, assetRegistry.spotPrices());
 
         uint256[] memory depositAmounts = new uint256[](numAssets);
         uint256[] memory withdrawAmounts = new uint256[](numAssets);
         uint256[] memory currentWeights = new uint256[](numAssets);
         uint256 totalValue;
 
-        (
-            depositAmounts,
-            withdrawAmounts,
-            currentWeights,
-            totalValue
-        ) = _calcAdjustmentAmounts(
-            assets,
-            targetWeights,
-            spotPrices,
-            assetUnits
-        );
+        (depositAmounts, withdrawAmounts, currentWeights, totalValue) =
+        _calcAdjustmentAmounts(assets, targetWeights, spotPrices, assetUnits);
 
         underlyingTargetWeights = new uint256[](numAssets);
         for (uint256 i = 0; i < numAssets; i++) {
             if (assets[i].isERC4626) {
-                underlyingTargetWeights[underlyingIndexes[i]] += targetWeights[
-                    i
-                ];
+                underlyingTargetWeights[underlyingIndexes[i]] +=
+                    targetWeights[i];
             } else {
                 underlyingTargetWeights[i] += targetWeights[i];
             }
@@ -653,19 +642,14 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
             if (
                 _withdrawUnderlyingAsset(
-                    assets[i],
-                    withdrawAmounts[i],
-                    spotPrices[i],
-                    assetUnits[i]
+                    assets[i], withdrawAmounts[i], spotPrices[i], assetUnits[i]
                 ) > 0
             ) {
-                underlyingTargetWeights[underlyingIndexes[i]] -= targetWeights[
-                    i
-                ];
+                underlyingTargetWeights[underlyingIndexes[i]] -=
+                    targetWeights[i];
             } else {
-                underlyingTargetWeights[underlyingIndexes[i]] -= currentWeights[
-                    i
-                ];
+                underlyingTargetWeights[underlyingIndexes[i]] -=
+                    currentWeights[i];
             }
         }
 
@@ -676,23 +660,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             }
 
             if (
-                assetAmounts[underlyingIndexes[i]].value > depositAmounts[i] &&
-                _depositUnderlyingAsset(
-                    assets[i],
-                    depositAmounts[i],
-                    spotPrices[i],
-                    assetUnits[i]
-                ) >
-                0
+                assetAmounts[underlyingIndexes[i]].value > depositAmounts[i]
+                    && _depositUnderlyingAsset(
+                        assets[i], depositAmounts[i], spotPrices[i], assetUnits[i]
+                    ) > 0
             ) {
                 assetAmounts[underlyingIndexes[i]].value -= depositAmounts[i];
-                underlyingTargetWeights[underlyingIndexes[i]] -= targetWeights[
-                    i
-                ];
+                underlyingTargetWeights[underlyingIndexes[i]] -=
+                    targetWeights[i];
             } else {
-                underlyingTargetWeights[underlyingIndexes[i]] -= currentWeights[
-                    i
-                ];
+                underlyingTargetWeights[underlyingIndexes[i]] -=
+                    currentWeights[i];
             }
         }
 
@@ -771,10 +749,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
                 continue;
             }
 
-            targetBalance =
-                (totalValue * targetWeights[i] * assetUnits[i]) /
-                spotPrices[i] /
-                ONE;
+            targetBalance = (totalValue * targetWeights[i] * assetUnits[i])
+                / spotPrices[i] / ONE;
             if (targetBalance > underlyingBalances[i]) {
                 depositAmounts[i] = targetBalance - underlyingBalances[i];
             } else {
@@ -890,10 +866,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         for (uint256 i = 0; i < numAssetWeights; i++) {
             assetWeight = assetWeights[i];
 
-            (isRegistered, assetIndex) = _isAssetRegistered(
-                assetWeight.asset,
-                assets
-            );
+            (isRegistered, assetIndex) =
+                _isAssetRegistered(assetWeight.asset, assets);
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetWeight.asset);
@@ -917,9 +891,11 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Normalize weights to make a sum of weights one.
     /// @param weights Array of weights to be normalized.
     /// @return newWeights Array of normalized weights.
-    function _normalizeWeights(
-        uint256[] memory weights
-    ) internal pure returns (uint256[] memory newWeights) {
+    function _normalizeWeights(uint256[] memory weights)
+        internal
+        pure
+        returns (uint256[] memory newWeights)
+    {
         uint256 numWeights = weights.length;
         newWeights = new uint256[](numWeights);
 
@@ -1023,8 +999,8 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
             for (uint256 j = 0; j < numAssets; j++) {
                 if (
-                    IERC4626(address(assets[i].asset)).asset() ==
-                    address(assets[j].asset)
+                    IERC4626(address(assets[i].asset)).asset()
+                        == address(assets[j].asset)
                 ) {
                     underlyingIndexes[i] = j;
                     break;
@@ -1036,9 +1012,11 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     /// @notice Get total amount of assets in execution and custody module.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
-    function _getHoldings(
-        IAssetRegistry.AssetInformation[] memory assets
-    ) internal view returns (AssetValue[] memory assetAmounts) {
+    function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)
+        internal
+        view
+        returns (AssetValue[] memory assetAmounts)
+    {
         IExecution.AssetValue[] memory executionHoldings = execution.holdings();
 
         uint256 numAssets = assets.length;
@@ -1117,7 +1095,10 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Check if the address can be a fee recipient.
     /// @param newFeeRecipient Address to check.
-    function _checkFeeRecipientAddress(address newFeeRecipient) internal view {
+    function _checkFeeRecipientAddress(address newFeeRecipient)
+        internal
+        view
+    {
         if (newFeeRecipient == address(0)) {
             revert Aera__FeeRecipientIsZeroAddress();
         }
@@ -1128,16 +1109,16 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Check if the address can be an asset registry.
     /// @param newAssetRegistry Address to check.
-    function _checkAssetRegistryAddress(
-        address newAssetRegistry
-    ) internal view {
+    function _checkAssetRegistryAddress(address newAssetRegistry)
+        internal
+        view
+    {
         if (newAssetRegistry == address(0)) {
             revert Aera__AssetRegistryIsZeroAddress();
         }
         if (
             !ERC165Checker.supportsInterface(
-                newAssetRegistry,
-                type(IAssetRegistry).interfaceId
+                newAssetRegistry, type(IAssetRegistry).interfaceId
             )
         ) {
             revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
@@ -1152,8 +1133,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         }
         if (
             !ERC165Checker.supportsInterface(
-                newExecution,
-                type(IBalancerExecution).interfaceId
+                newExecution, type(IBalancerExecution).interfaceId
             )
         ) {
             revert Aera__ExecutionIsNotValid(newExecution);

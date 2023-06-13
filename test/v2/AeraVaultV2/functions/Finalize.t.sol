@@ -9,9 +9,10 @@ interface ILastFeeCheckpoint {
 }
 
 interface IGuardiansFeeTotal {
-    function guardiansFeeTotal(
-        address asset
-    ) external view returns (uint256 fee);
+    function guardiansFeeTotal(address asset)
+        external
+        view
+        returns (uint256 fee);
 }
 
 contract FinalizeTest is TestBaseAeraVaultV2 {
@@ -75,8 +76,8 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
 
         vm.warp(vault.execution().rebalanceEndTime());
 
-        uint256 lastFeeCheckpoint = ILastFeeCheckpoint(address(vault))
-            .lastFeeCheckpoint();
+        uint256 lastFeeCheckpoint =
+            ILastFeeCheckpoint(address(vault)).lastFeeCheckpoint();
 
         ICustody.AssetValue[] memory holdings = vault.holdings();
         uint256[] memory balances = new uint256[](holdings.length);

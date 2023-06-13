@@ -51,8 +51,8 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
         assetRegistry.addAsset(newAsset);
 
-        IAssetRegistry.AssetInformation[] memory updatedAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory updatedAssets =
+            assetRegistry.assets();
 
         bool exist;
         for (uint256 i = 0; i < numAssets; i++) {

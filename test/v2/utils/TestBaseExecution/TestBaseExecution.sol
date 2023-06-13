@@ -32,9 +32,7 @@ abstract contract TestBaseExecution is
 
     function _startRebalance() internal {
         execution.startRebalance(
-            _generateRequest(),
-            block.timestamp + 10,
-            block.timestamp + 10000
+            _generateRequest(), block.timestamp + 10, block.timestamp + 10000
         );
     }
 }

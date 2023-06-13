@@ -30,7 +30,10 @@ contract PauseVaultTest is TestBaseAeraVaultV2 {
         vault.pauseVault();
     }
 
-    function test_pauseVault_success_whenOraclePriceIsInvalid() public virtual {
+    function test_pauseVault_success_whenOraclePriceIsInvalid()
+        public
+        virtual
+    {
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
 

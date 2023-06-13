@@ -25,8 +25,8 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function propNumeraire() public {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
 
         assertEq(numeraire, assetRegistry.numeraire());
         assertEq(numeraireAsset, address(registryAssets[numeraire].asset));
@@ -38,8 +38,8 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function propNumYieldAssets() public {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
 
         uint256 numYieldAssets = 0;
         for (uint256 i = 0; i < assets.length; i++) {
@@ -59,8 +59,8 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function propAssetsSorted() internal {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
 
         for (uint256 i = 0; i < registryAssets.length - 1; i++) {
             assertTrue(registryAssets[i].asset < registryAssets[i + 1].asset);
@@ -68,20 +68,18 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function propAssets() internal {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
 
         assertEq(numAssets, registryAssets.length);
 
         for (uint256 i = 0; i < numAssets; i++) {
             assertEq(
-                address(registryAssets[i].asset),
-                address(assets[i].asset)
+                address(registryAssets[i].asset), address(assets[i].asset)
             );
             assertEq(registryAssets[i].isERC4626, assets[i].isERC4626);
             assertEq(
-                address(registryAssets[i].oracle),
-                address(assets[i].oracle)
+                address(registryAssets[i].oracle), address(assets[i].oracle)
             );
         }
     }
@@ -94,10 +92,8 @@ contract TestBaseAssetRegistry is TestBase {
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
         for (uint256 i = 0; i < numERC20; i++) {
-            (
-                ERC20Mock erc20,
-                IAssetRegistry.AssetInformation memory asset
-            ) = _createAsset();
+            (ERC20Mock erc20, IAssetRegistry.AssetInformation memory asset) =
+                _createAsset();
 
             if (i == 0) {
                 numeraireAsset = address(asset.asset);
@@ -122,7 +118,7 @@ contract TestBaseAssetRegistry is TestBase {
                         isERC4626: true,
                         oracle: AggregatorV2V3Interface(
                             address(new OracleMock(18))
-                        )
+                            )
                     })
                 );
             }
@@ -169,8 +165,8 @@ contract TestBaseAssetRegistry is TestBase {
         view
         returns (IAssetRegistry.AssetWeight[] memory weights)
     {
-        IAssetRegistry.AssetInformation[] memory registryAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
         weights = new IAssetRegistry.AssetWeight[](numAssets);
 
         uint256 weightSum;

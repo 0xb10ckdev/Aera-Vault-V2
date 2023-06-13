@@ -36,12 +36,11 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {
-        (ERC20Mock erc20, ) = _createAsset();
+        (ERC20Mock erc20,) = _createAsset();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__AssetNotRegistered.selector,
-                erc20
+                AeraVaultAssetRegistry.Aera__AssetNotRegistered.selector, erc20
             )
         );
         assetRegistry.removeAsset(address(erc20));
@@ -56,8 +55,8 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
         assetRegistry.removeAsset(address(removalAsset));
 
-        IAssetRegistry.AssetInformation[] memory updatedAssets = assetRegistry
-            .assets();
+        IAssetRegistry.AssetInformation[] memory updatedAssets =
+            assetRegistry.assets();
 
         bool exist;
         for (uint256 i = 0; i < numAssets; i++) {

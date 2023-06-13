@@ -14,8 +14,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         for (uint256 i = 0; i < erc20Assets.length; i++) {
             withdrawAmounts.push(
                 ICustody.AssetValue(
-                    erc20Assets[i],
-                    5 * _getScaler(erc20Assets[i])
+                    erc20Assets[i], 5 * _getScaler(erc20Assets[i])
                 )
             );
         }
@@ -37,15 +36,13 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     }
 
     function test_withdraw_fail_whenAssetIsNotRegistered() public {
-        IERC20 erc20 = IERC20(
-            address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
-        );
+        IERC20 erc20 =
+            IERC20(address(new ERC20Mock("Token", "TOKEN", 18, 1e30)));
         withdrawAmounts[0].asset = erc20;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsNotRegistered.selector,
-                erc20
+                ICustody.Aera__AssetIsNotRegistered.selector, erc20
             )
         );
 
@@ -92,8 +89,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         _startRebalance(validRequest);
 
         withdrawAmounts[0].value =
-            withdrawAmounts[0].asset.balanceOf(address(vault)) +
-            1;
+            withdrawAmounts[0].asset.balanceOf(address(vault)) + 1;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -146,8 +142,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             balances[i] = withdrawAmounts[i].asset.balanceOf(address(this));
             withdrawAmounts[i].value =
-                withdrawAmounts[0].asset.balanceOf(address(vault)) +
-                1;
+                withdrawAmounts[0].asset.balanceOf(address(vault)) + 1;
         }
 
         vm.expectEmit(true, true, true, true, address(vault));

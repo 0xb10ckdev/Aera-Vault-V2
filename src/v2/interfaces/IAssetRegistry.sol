@@ -31,7 +31,10 @@ interface IAssetRegistry {
 
     /// @notice Get a list of all active assets for the vault.
     /// @return assets List of assets.
-    function assets() external view returns (AssetInformation[] memory assets);
+    function assets()
+        external
+        view
+        returns (AssetInformation[] memory assets);
 
     /// @notice Get address of fee token.
     /// @return feeToken Address of fee token.
@@ -54,12 +57,16 @@ interface IAssetRegistry {
     /// @param targetWeights Target weights of assets.
     /// @param duration Weight change duration.
     /// @return valid True if weights are valid.
-    function checkWeights(AssetWeight[] memory currentWeights, AssetWeight[] memory targetWeights, uint256 duration)
-        external
-        view
-        returns (bool valid);
+    function checkWeights(
+        AssetWeight[] memory currentWeights,
+        AssetWeight[] memory targetWeights,
+        uint256 duration
+    ) external view returns (bool valid);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets.
-    function spotPrices() external view returns (AssetPriceReading[] memory spotPrices);
+    function spotPrices()
+        external
+        view
+        returns (AssetPriceReading[] memory spotPrices);
 }
