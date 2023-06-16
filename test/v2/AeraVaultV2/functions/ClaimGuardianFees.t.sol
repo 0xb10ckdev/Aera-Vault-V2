@@ -4,11 +4,12 @@ pragma solidity 0.8.19;
 import "../TestBaseAeraVaultV2.sol";
 
 contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
-    function test_claimGuardianFees_fail_whenNoAvailableFeeForCaller() public {
+    function test_claimGuardianFees_fail_whenNoAvailableFeeForCaller()
+        public
+    {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__NoAvailableFeeForCaller.selector,
-                _USER
+                ICustody.Aera__NoAvailableFeeForCaller.selector, _USER
             )
         );
 
@@ -51,8 +52,7 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
                 );
             } else {
                 assertEq(
-                    balances[i],
-                    holdings[i].asset.balanceOf(_FEE_RECIPIENT)
+                    balances[i], holdings[i].asset.balanceOf(_FEE_RECIPIENT)
                 );
             }
         }

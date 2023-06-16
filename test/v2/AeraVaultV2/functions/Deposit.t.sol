@@ -14,8 +14,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         for (uint256 i = 0; i < erc20Assets.length; i++) {
             depositAmounts.push(
                 ICustody.AssetValue(
-                    erc20Assets[i],
-                    5 * _getScaler(erc20Assets[i])
+                    erc20Assets[i], 5 * _getScaler(erc20Assets[i])
                 )
             );
         }
@@ -37,15 +36,13 @@ contract DepositTest is TestBaseAeraVaultV2 {
     }
 
     function test_deposit_fail_whenAssetIsNotRegistered() public {
-        IERC20 erc20 = IERC20(
-            address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
-        );
+        IERC20 erc20 =
+            IERC20(address(new ERC20Mock("Token", "TOKEN", 18, 1e30)));
         depositAmounts[0].asset = erc20;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsNotRegistered.selector,
-                erc20
+                ICustody.Aera__AssetIsNotRegistered.selector, erc20
             )
         );
 

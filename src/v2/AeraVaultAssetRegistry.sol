@@ -94,8 +94,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
             } else if (
-                !assets_[i].isERC4626 &&
-                address(assets_[i].oracle) == address(0)
+                !assets_[i].isERC4626
+                    && address(assets_[i].oracle) == address(0)
             ) {
                 revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
             }
@@ -108,9 +108,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     }
 
     /// @inheritdoc IAssetRegistry
-    function addAsset(
-        AssetInformation calldata asset
-    ) external override onlyOwner {
+    function addAsset(AssetInformation calldata asset)
+        external
+        override
+        onlyOwner
+    {
         if (address(asset.oracle) == address(0)) {
             revert Aera__OracleIsZeroAddress(address(asset.asset));
         }
@@ -144,8 +146,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         uint256 oldAssetIndex = 0;
         for (
             ;
-            oldAssetIndex < numAssets &&
-                address(_assets[oldAssetIndex].asset) != asset;
+            oldAssetIndex < numAssets
+                && address(_assets[oldAssetIndex].asset) != asset;
             oldAssetIndex++
         ) {}
 
@@ -187,8 +189,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         uint256 numAssets = _assets.length;
 
         if (
-            numAssets != currentWeights.length ||
-            numAssets != targetWeights.length
+            numAssets != currentWeights.length
+                || numAssets != targetWeights.length
         ) {
             return false;
         }
@@ -198,8 +200,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         uint256 weightSum = 0;
         for (uint256 i = 0; i < numAssets; i++) {
             uint256 changeRatio = _getWeightChangeRatio(
-                currentWeights[i].weight,
-                targetWeights[i].weight
+                currentWeights[i].weight, targetWeights[i].weight
             );
 
             if (changeRatio > maximumRatio) {
@@ -238,9 +239,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
             numAssets - numYieldAssets
         );
 
-        uint256 numeraireDecimals = IERC20Metadata(
-            address(_assets[numeraire].asset)
-        ).decimals();
+        uint256 numeraireDecimals =
+            IERC20Metadata(address(_assets[numeraire].asset)).decimals();
 
         uint256 oracleDecimals;
         uint256 price;
@@ -257,7 +257,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
                     spotPrice: 10 ** numeraireDecimals
                 });
             } else {
-                (, answer, , , ) = _assets[i].oracle.latestRoundData();
+                (, answer,,,) = _assets[i].oracle.latestRoundData();
 
                 // Check basic validity
                 if (answer <= 0) {
@@ -268,9 +268,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (oracleDecimals != numeraireDecimals) {
-                    price =
-                        (price * 10 ** numeraireDecimals) /
-                        10 ** oracleDecimals;
+                    price = (price * 10 ** numeraireDecimals)
+                        / 10 ** oracleDecimals;
                 }
 
                 prices[index] = AssetPriceReading({
@@ -286,12 +285,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     }
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override returns (bool) {
-        return
-            interfaceId == type(IAssetRegistry).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return interfaceId == type(IAssetRegistry).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
     /// INTERNAL FUNCTIONS ///
@@ -338,9 +339,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         uint256 currentWeight,
         uint256 targetWeight
     ) internal pure returns (uint256 ratio) {
-        return
-            currentWeight > targetWeight
-                ? (ONE * currentWeight) / targetWeight
-                : (ONE * targetWeight) / currentWeight;
+        return currentWeight > targetWeight
+            ? (ONE * currentWeight) / targetWeight
+            : (ONE * targetWeight) / currentWeight;
     }
 }

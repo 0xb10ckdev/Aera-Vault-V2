@@ -16,9 +16,8 @@ abstract contract TestBaseSweepable is TestBase, ISweepableEvents {
     ) public virtual {
         vm.assume(balance < type(uint256).max - amount);
 
-        IERC20 erc20 = IERC20(
-            address(new ERC20Mock("Token", "TOKEN", 18, balance))
-        );
+        IERC20 erc20 =
+            IERC20(address(new ERC20Mock("Token", "TOKEN", 18, balance)));
         deal(address(erc20), _USER, amount);
 
         vm.prank(_USER);

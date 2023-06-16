@@ -18,7 +18,8 @@ interface IBManagedPoolFactory {
         uint256 aumFeeId;
     }
 
-    function create(NewPoolParams memory poolParams, address manager)
-        external
-        returns (address);
+    function create(
+        NewPoolParams memory poolParams,
+        address manager
+    ) external returns (address);
 }

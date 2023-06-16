@@ -20,9 +20,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(ICustody.Aera__CallerIsNotGuardian.selector);
         vault.startRebalance(
-            validRequest,
-            block.timestamp,
-            block.timestamp + 100
+            validRequest, block.timestamp, block.timestamp + 100
         );
     }
 
@@ -33,9 +31,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
         vault.startRebalance(
-            validRequest,
-            block.timestamp,
-            block.timestamp + 100
+            validRequest, block.timestamp, block.timestamp + 100
         );
     }
 
@@ -46,9 +42,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(bytes("Pausable: paused"));
         vault.startRebalance(
-            validRequest,
-            block.timestamp,
-            block.timestamp + 100
+            validRequest, block.timestamp, block.timestamp + 100
         );
     }
 
@@ -63,8 +57,8 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
     }
 
     function test_startRebalance_fail_whenValueLengthIsNotSame() public {
-        ICustody.AssetValue[]
-            memory invalidRequests = new ICustody.AssetValue[](
+        ICustody.AssetValue[] memory invalidRequests =
+        new ICustody.AssetValue[](
                 validRequest.length - 1
             );
 
@@ -83,16 +77,13 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
         );
 
         vault.startRebalance(
-            invalidRequests,
-            block.timestamp,
-            block.timestamp + 100
+            invalidRequests, block.timestamp, block.timestamp + 100
         );
     }
 
     function test_startRebalance_fail_whenAssetIsNotRegistered() public {
-        IERC20 erc20 = IERC20(
-            address(new ERC20Mock("Token", "TOKEN", 18, 1e30))
-        );
+        IERC20 erc20 =
+            IERC20(address(new ERC20Mock("Token", "TOKEN", 18, 1e30)));
 
         ICustody.AssetValue[] memory requests = validRequest;
         requests[0].asset = erc20;
@@ -101,8 +92,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsNotRegistered.selector,
-                erc20
+                ICustody.Aera__AssetIsNotRegistered.selector, erc20
             )
         );
 
@@ -117,8 +107,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsDuplicated.selector,
-                requests[0].asset
+                ICustody.Aera__AssetIsDuplicated.selector, requests[0].asset
             )
         );
 
@@ -142,9 +131,7 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
         );
 
         vault.startRebalance(
-            validRequest,
-            block.timestamp,
-            block.timestamp + 100
+            validRequest, block.timestamp, block.timestamp + 100
         );
     }
 
@@ -168,9 +155,8 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
         }
     }
 
-    function test_startRebalance_success_whenYieldActionAmountIsLessThanThreshold()
-        public
-    {
+    function test_startRebalance_success_whenYieldActionAmountIsLessThanThreshold(
+    ) public {
         ICustody.AssetValue[] memory requests = validRequest;
 
         uint256 numERC4626 = yieldAssets.length;
@@ -243,14 +229,12 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
                     if (index % 2 == 0) {
                         requests[i].value += 0.001e18;
                         IERC4626Mock(address(assets[i])).setMaxDepositAmount(
-                            maxDeposit,
-                            true
+                            maxDeposit, true
                         );
                     } else {
                         requests[i].value -= 0.001e18;
                         IERC4626Mock(address(assets[i])).setMaxWithdrawalAmount(
-                            maxWithdrawal,
-                            true
+                            maxWithdrawal, true
                         );
                     }
                 }
@@ -272,15 +256,11 @@ contract StartRebalanceTest is TestBaseAeraVaultV2 {
                 if ((numERC4626 % 2 == 0 || index < numERC4626 - 1)) {
                     if (index % 2 == 0) {
                         assertApproxEqAbs(
-                            balances[i],
-                            currentBalances[i],
-                            maxDeposit
+                            balances[i], currentBalances[i], maxDeposit
                         );
                     } else {
                         assertApproxEqAbs(
-                            balances[i],
-                            currentBalances[i],
-                            maxWithdrawal
+                            balances[i], currentBalances[i], maxWithdrawal
                         );
                     }
                 }

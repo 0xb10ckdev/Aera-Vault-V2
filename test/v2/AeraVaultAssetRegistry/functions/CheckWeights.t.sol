@@ -5,7 +5,7 @@ import "../TestBaseAssetRegistry.sol";
 
 contract CheckWeightsTest is TestBaseAssetRegistry {
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
-    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10**15;
+    uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10 ** 15;
 
     IAssetRegistry.AssetWeight[] currentWeights;
     IAssetRegistry.AssetWeight[] targetWeights;
@@ -24,7 +24,9 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         duration = _MINIMUM_WEIGHT_CHANGE_DURATION;
     }
 
-    function test_checkWeights_invalid_whenDurationIsLessThanMinimum() public {
+    function test_checkWeights_invalid_whenDurationIsLessThanMinimum()
+        public
+    {
         assertFalse(
             assetRegistry.checkWeights(
                 currentWeights,
@@ -34,9 +36,8 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_checkWeights_invalid_whenNumberOfCurrentWeightsAndAssetsDoesNotMatch()
-        public
-    {
+    function test_checkWeights_invalid_whenNumberOfCurrentWeightsAndAssetsDoesNotMatch(
+    ) public {
         currentWeights.push(currentWeights[0]);
 
         assertFalse(
@@ -44,9 +45,8 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_checkWeights_invalid_whenNumberOfTargetWeightsAndAssetsDoesNotMatch()
-        public
-    {
+    function test_checkWeights_invalid_whenNumberOfTargetWeightsAndAssetsDoesNotMatch(
+    ) public {
         targetWeights.pop();
 
         assertFalse(

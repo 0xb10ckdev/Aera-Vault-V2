@@ -7,4 +7,12 @@ fs_permissions = [
   { access = "read", path = "./" },
 ]
 
+[fmt]
+line_length = 79
+multiline_func_header = "params_first"
+ignore = [
+  "lib/**/*.sol",
+  "**/dependencies/**/*.sol"
+]
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

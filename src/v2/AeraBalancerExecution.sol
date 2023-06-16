@@ -90,9 +90,8 @@ contract AeraBalancerExecution is
             revert Aera__DescriptionIsEmpty();
         }
 
-        IAssetRegistry.AssetInformation[]
-            memory registeredAssets = IAssetRegistry(vaultParams.assetRegistry)
-                .assets();
+        IAssetRegistry.AssetInformation[] memory registeredAssets =
+            IAssetRegistry(vaultParams.assetRegistry).assets();
 
         uint256 numPoolTokens = vaultParams.poolTokens.length;
         uint256 numAssets = registeredAssets.length;
@@ -102,9 +101,9 @@ contract AeraBalancerExecution is
         for (uint256 i = 0; i < numPoolTokens; i++) {
             for (; assetIndex < numAssets; assetIndex++) {
                 if (
-                    vaultParams.poolTokens[i] ==
-                    registeredAssets[assetIndex].asset &&
-                    !registeredAssets[assetIndex].isERC4626
+                    vaultParams.poolTokens[i]
+                        == registeredAssets[assetIndex].asset
+                        && !registeredAssets[assetIndex].isERC4626
                 ) {
                     break;
                 }
@@ -154,9 +153,12 @@ contract AeraBalancerExecution is
     }
 
     /// @inheritdoc IBalancerExecution
-    function initialize(
-        address vault_
-    ) external override nonReentrant onlyOwner {
+    function initialize(address vault_)
+        external
+        override
+        nonReentrant
+        onlyOwner
+    {
         if (vault != address(0)) {
             revert Aera__ModuleIsAlreadyInitialized();
         }
@@ -184,14 +186,14 @@ contract AeraBalancerExecution is
         bytes memory initUserData = abi.encode(IBVault.JoinKind.INIT, balances);
 
         IERC20[] memory tokens;
-        (tokens, , ) = bVault.getPoolTokens(poolId);
+        (tokens,,) = bVault.getPoolTokens(poolId);
         IBVault.JoinPoolRequest memory joinPoolRequest = IBVault
             .JoinPoolRequest({
-                assets: tokens,
-                maxAmountsIn: maxAmountsIn,
-                userData: initUserData,
-                fromInternalBalance: false
-            });
+            assets: tokens,
+            maxAmountsIn: maxAmountsIn,
+            userData: initUserData,
+            fromInternalBalance: false
+        });
 
         bVault.joinPool(poolId, address(this), address(this), joinPoolRequest);
 
@@ -237,24 +239,19 @@ contract AeraBalancerExecution is
                 spotPrice = spotPrices[i].spotPrice;
                 assetUnit = assetUnits[i];
                 adjustableAmount =
-                    (adjustableAssetValue * assetUnit) /
-                    spotPrice;
+                    (adjustableAssetValue * assetUnit) / spotPrice;
                 if (startAmounts[i] != 0) {
                     startAmounts[i] -= adjustableAmount;
-                    startWeights[i] =
-                        (startAmounts[i] * spotPrice * ONE) /
-                        necessaryTotalValue /
-                        assetUnit;
+                    startWeights[i] = (startAmounts[i] * spotPrice * ONE)
+                        / necessaryTotalValue / assetUnit;
                     if (startWeights[i] < _MIN_WEIGHT) {
                         startWeights[i] = _MIN_WEIGHT;
                     }
                 }
                 if (endAmounts[i] != 0) {
                     endAmounts[i] -= adjustableAmount;
-                    endWeights[i] =
-                        (endAmounts[i] * spotPrice * ONE) /
-                        necessaryTotalValue /
-                        assetUnit;
+                    endWeights[i] = (endAmounts[i] * spotPrice * ONE)
+                        / necessaryTotalValue / assetUnit;
                     if (endWeights[i] < _MIN_WEIGHT) {
                         endWeights[i] = _MIN_WEIGHT;
                     }
@@ -263,16 +260,9 @@ contract AeraBalancerExecution is
         }
 
         IERC20[] memory rebalancingAssets;
-        (
-            rebalancingAssets,
-            startAmounts,
-            startWeights,
-            endWeights
-        ) = _getValidRebalanceData(
-            requests,
-            startAmounts,
-            startWeights,
-            endWeights
+        (rebalancingAssets, startAmounts, startWeights, endWeights) =
+        _getValidRebalanceData(
+            requests, startAmounts, startWeights, endWeights
         );
 
         _adjustPool(rebalancingAssets, startAmounts);
@@ -282,10 +272,7 @@ contract AeraBalancerExecution is
         rebalanceEndTime = endTime;
 
         pool.updateWeightsGradually(
-            block.timestamp,
-            block.timestamp,
-            poolTokens,
-            startWeights
+            block.timestamp, block.timestamp, poolTokens, startWeights
         );
 
         pool.updateWeightsGradually(startTime, endTime, poolTokens, endWeights);
@@ -327,7 +314,7 @@ contract AeraBalancerExecution is
         IERC20 token,
         uint256 amount
     ) external override nonReentrant {
-        (IERC20[] memory poolAssets, , ) = bVault.getPoolTokens(poolId);
+        (IERC20[] memory poolAssets,,) = bVault.getPoolTokens(poolId);
         uint256 numPoolAssets = poolAssets.length;
 
         for (uint256 i = 0; i < numPoolAssets; i++) {
@@ -358,38 +345,34 @@ contract AeraBalancerExecution is
         override
         returns (AssetValue[] memory assetHoldings)
     {
-        (
-            IERC20[] memory poolTokens,
-            uint256[] memory poolHoldings
-        ) = _getPoolTokensData();
+        (IERC20[] memory poolTokens, uint256[] memory poolHoldings) =
+            _getPoolTokensData();
         uint256 numPoolTokens = poolTokens.length;
         assetHoldings = new AssetValue[](numPoolTokens);
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
-            assetHoldings[i] = AssetValue({
-                asset: poolTokens[i],
-                value: poolHoldings[i]
-            });
+            assetHoldings[i] =
+                AssetValue({asset: poolTokens[i], value: poolHoldings[i]});
         }
     }
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override returns (bool) {
-        return
-            interfaceId == type(IBalancerExecution).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return interfaceId == type(IBalancerExecution).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Claim all funds from Balancer Pool.
     function _claim() internal {
-        (
-            IERC20[] memory poolTokens,
-            uint256[] memory poolHoldings
-        ) = _getPoolTokensData();
+        (IERC20[] memory poolTokens, uint256[] memory poolHoldings) =
+            _getPoolTokensData();
         uint256 numPoolTokens = poolTokens.length;
 
         for (uint256 i = 0; i < numPoolTokens; i++) {
@@ -430,9 +413,7 @@ contract AeraBalancerExecution is
     /// @param requests Each request specifies amount of asset to rebalance and target weight.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
-    function _getSpotPricesAndUnits(
-        AssetRebalanceRequest[] calldata requests
-    )
+    function _getSpotPricesAndUnits(AssetRebalanceRequest[] calldata requests)
         internal
         view
         returns (
@@ -440,8 +421,8 @@ contract AeraBalancerExecution is
             uint256[] memory assetUnits
         )
     {
-        IAssetRegistry.AssetPriceReading[]
-            memory assetSpotPrices = assetRegistry.spotPrices();
+        IAssetRegistry.AssetPriceReading[] memory assetSpotPrices =
+            assetRegistry.spotPrices();
 
         uint256 numRequests = requests.length;
         uint256 numAssetSpotPrices = assetSpotPrices.length;
@@ -543,7 +524,7 @@ contract AeraBalancerExecution is
         returns (IERC20[] memory poolTokens)
     {
         IERC20[] memory tokens;
-        (tokens, , ) = bVault.getPoolTokens(poolId);
+        (tokens,,) = bVault.getPoolTokens(poolId);
 
         // Exclude the first token(pool share).
         uint256 numPoolTokens = tokens.length - 1;
@@ -563,7 +544,7 @@ contract AeraBalancerExecution is
     {
         IERC20[] memory tokens;
         uint256[] memory poolTokenHoldings;
-        (tokens, poolTokenHoldings, ) = bVault.getPoolTokens(poolId);
+        (tokens, poolTokenHoldings,) = bVault.getPoolTokens(poolId);
 
         uint256 numPoolTokens = poolTokenHoldings.length - 1;
         poolTokens = new IERC20[](numPoolTokens);
@@ -627,8 +608,7 @@ contract AeraBalancerExecution is
 
         for (uint256 i = 0; i < numRequests; i++) {
             values[i] =
-                (requests[i].amount * spotPrices[i].spotPrice) /
-                assetUnits[i];
+                (requests[i].amount * spotPrices[i].spotPrice) / assetUnits[i];
             totalValue += values[i];
         }
 
@@ -644,8 +624,7 @@ contract AeraBalancerExecution is
                 if (values[i] != targetValue) {
                     startAmounts[i] = requests[i].amount;
                     endAmounts[i] =
-                        (targetValue * assetUnits[i]) /
-                        spotPrices[i].spotPrice;
+                        (targetValue * assetUnits[i]) / spotPrices[i].spotPrice;
 
                     necessaryTotalValue += targetValue;
                     adjustableCount++;
@@ -664,14 +643,12 @@ contract AeraBalancerExecution is
         uint256 minValue = (necessaryTotalValue * _MIN_WEIGHT) / ONE;
 
         if (minAssetValue > minValue) {
-            adjustableAssetValue =
-                (((minAssetValue - minValue)) * ONE) /
-                (ONE - _MIN_WEIGHT * adjustableCount);
+            adjustableAssetValue = (((minAssetValue - minValue)) * ONE)
+                / (ONE - _MIN_WEIGHT * adjustableCount);
             necessaryTotalValue -= adjustableAssetValue * adjustableCount;
         } else if (minAssetValue < minValue) {
             revert Aera__WeightIsBelowMin(
-                (minAssetValue * ONE) / necessaryTotalValue,
-                _MIN_WEIGHT
+                (minAssetValue * ONE) / necessaryTotalValue, _MIN_WEIGHT
             );
         }
     }
@@ -733,10 +710,8 @@ contract AeraBalancerExecution is
         }
 
         if (startWeightSum != ONE) {
-            validStartWeights = _normalizeWeights(
-                validStartWeights,
-                startWeightSum
-            );
+            validStartWeights =
+                _normalizeWeights(validStartWeights, startWeightSum);
         }
 
         if (endWeightSum != ONE) {
@@ -783,10 +758,8 @@ contract AeraBalancerExecution is
     ) internal {
         uint256 numAssets = rebalancingAssets.length;
 
-        (
-            IERC20[] memory poolTokens,
-            uint256[] memory poolHoldings
-        ) = _getPoolTokensData();
+        (IERC20[] memory poolTokens, uint256[] memory poolHoldings) =
+            _getPoolTokensData();
 
         uint256 numPoolTokens = poolTokens.length;
 
@@ -801,17 +774,12 @@ contract AeraBalancerExecution is
 
             asset = rebalancingAssets[i];
 
-            (isRegistered, registeredIndex) = _isAssetRegisteredToPool(
-                asset,
-                poolTokens,
-                numPoolTokens
-            );
+            (isRegistered, registeredIndex) =
+                _isAssetRegisteredToPool(asset, poolTokens, numPoolTokens);
 
             if (isRegistered) {
                 _adjustAssetAmountInPoolToNewRequest(
-                    asset,
-                    startAmount,
-                    poolHoldings[registeredIndex]
+                    asset, startAmount, poolHoldings[registeredIndex]
                 );
             } else {
                 asset.safeTransferFrom(vault, address(this), startAmount);
@@ -850,10 +818,7 @@ contract AeraBalancerExecution is
         avgWeights[0] = avgWeights[0] + ONE - avgWeightSum;
 
         pool.updateWeightsGradually(
-            block.timestamp,
-            block.timestamp,
-            poolTokens,
-            avgWeights
+            block.timestamp, block.timestamp, poolTokens, avgWeights
         );
     }
 
@@ -906,9 +871,7 @@ contract AeraBalancerExecution is
     ) internal {
         if (startAmount > poolHolding) {
             asset.safeTransferFrom(
-                vault,
-                address(this),
-                startAmount - poolHolding
+                vault, address(this), startAmount - poolHolding
             );
             _depositTokenToPool(asset, startAmount - poolHolding);
         } else if (startAmount < poolHolding) {

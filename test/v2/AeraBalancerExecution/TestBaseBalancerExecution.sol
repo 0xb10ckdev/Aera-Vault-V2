@@ -77,8 +77,7 @@ contract TestBaseBalancerExecution is
     ) internal {
         for (uint256 i = 0; i < requests.length; i++) {
             requests[i].asset.approve(
-                address(balancerExecution),
-                type(uint256).max
+                address(balancerExecution), type(uint256).max
             );
         }
 

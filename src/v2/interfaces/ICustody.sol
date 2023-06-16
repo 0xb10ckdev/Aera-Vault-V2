@@ -33,9 +33,7 @@ interface ICustody is ICustodyEvents, ISweepable {
     error Aera__CallerIsNotOwnerOrGuardian();
     error Aera__AssetIsNotRegistered(IERC20 asset);
     error Aera__AmountExceedsAvailable(
-        IERC20 asset,
-        uint256 amount,
-        uint256 available
+        IERC20 asset, uint256 amount, uint256 available
     );
     error Aera__VaultIsFinalized();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);

@@ -13,9 +13,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenFeeTokenIsNotRegistered()
         public
     {
-        feeToken = IERC20(
-            address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30))
-        );
+        feeToken =
+            IERC20(address(new ERC20Mock("Fee Token", "FEE_TOKEN", 18, 1e30)));
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -50,16 +49,14 @@ contract DeploymentTest is TestBaseAssetRegistry {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector,
-                1
+                AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector, 1
             )
         );
         new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
-    function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress()
-        public
-    {
+    function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress(
+    ) public {
         assets[numeraire].oracle = AggregatorV2V3Interface(address(1));
 
         vm.expectRevert(
@@ -70,9 +67,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
         new AeraVaultAssetRegistry(assets, numeraire, feeToken);
     }
 
-    function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress()
-        public
-    {
+    function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress(
+    ) public {
         assets[nonNumeraire].oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(

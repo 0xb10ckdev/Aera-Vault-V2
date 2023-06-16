@@ -44,8 +44,7 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
     function test_setAssetRegistry_fail_whenAssetRegistryIsNotValid() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetRegistryIsNotValid.selector,
-                address(1)
+                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
 

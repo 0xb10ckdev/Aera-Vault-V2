@@ -16,7 +16,9 @@ contract StartRebalanceTest is
         _startRebalance(_generateRequestWith3Assets());
     }
 
-    function test_startRebalance_success_with_3_assets_after_2_assets() public {
+    function test_startRebalance_success_with_3_assets_after_2_assets()
+        public
+    {
         _startRebalance(_generateRequestWith2Assets());
         balancerExecution.claimNow();
         _startRebalance(_generateRequestWith3Assets());

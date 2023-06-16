@@ -4,7 +4,10 @@ pragma solidity 0.8.19;
 import "../TestBaseBalancerExecution.sol";
 import "test/v2/utils/TestBaseExecution/functions/EndRebalance.sol";
 
-contract EndRebalanceTest is BaseEndRebalanceTest, TestBaseBalancerExecution {
+contract EndRebalanceTest is
+    BaseEndRebalanceTest,
+    TestBaseBalancerExecution
+{
     function test_endRebalance_success() public {
         _startRebalance(_generateRequestWith3Assets());
 

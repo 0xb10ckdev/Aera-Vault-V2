@@ -37,8 +37,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetRegistryIsNotValid.selector,
-                address(1)
+                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
 
@@ -68,11 +67,12 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenExecutionIsNotValid() public {
+    function test_aeraVaultV2Deployment_fail_whenExecutionIsNotValid()
+        public
+    {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__ExecutionIsNotValid.selector,
-                address(1)
+                ICustody.Aera__ExecutionIsNotValid.selector, address(1)
             )
         );
 
@@ -130,7 +130,9 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenFeeRecipientIsOwner() public {
+    function test_aeraVaultV2Deployment_fail_whenFeeRecipientIsOwner()
+        public
+    {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         new AeraVaultV2(
             address(assetRegistry),
@@ -177,9 +179,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenMinYieldActionThresholdIsZero()
-        public
-    {
+    function test_aeraVaultV2Deployment_fail_whenMinYieldActionThresholdIsZero(
+    ) public {
         vm.expectRevert(Aera__MinYieldActionThresholdIsZero.selector);
         new AeraVaultV2(
             address(assetRegistry),

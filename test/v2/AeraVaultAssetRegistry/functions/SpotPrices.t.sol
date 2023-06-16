@@ -36,8 +36,8 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             );
         }
 
-        IAssetRegistry.AssetPriceReading[] memory spotPrices = assetRegistry
-            .spotPrices();
+        IAssetRegistry.AssetPriceReading[] memory spotPrices =
+            assetRegistry.spotPrices();
 
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
@@ -46,14 +46,13 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             }
 
             assertEq(
-                address(spotPrices[index].asset),
-                address(assets[i].asset)
+                address(spotPrices[index].asset), address(assets[i].asset)
             );
 
             if (i == numeraire) {
                 assertEq(spotPrices[index].spotPrice, _ONE);
             } else {
-                uint256 oracleUnit = 10**assets[i].oracle.decimals();
+                uint256 oracleUnit = 10 ** assets[i].oracle.decimals();
                 uint256 price = (testPrice * _ONE) / oracleUnit;
 
                 assertEq(spotPrices[index].spotPrice, price);
