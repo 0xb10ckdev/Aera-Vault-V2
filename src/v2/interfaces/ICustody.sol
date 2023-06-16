@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
 import "./ICustodyEvents.sol";
+import "./IConstraints.sol";
 import "./IExecution.sol";
 import "./ISweepable.sol";
 
@@ -24,6 +25,8 @@ interface ICustody is ICustodyEvents, ISweepable {
     error Aera__AssetRegistryIsNotValid(address assetRegistry);
     error Aera__ExecutionIsZeroAddress();
     error Aera__ExecutionIsNotValid(address execution);
+    error Aera__ConstraintsIsZeroAddress();
+    error Aera__ConstraintsIsNotValid(address constraints);
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
     error Aera__FeeRecipientIsZeroAddress();
@@ -68,6 +71,10 @@ interface ICustody is ICustodyEvents, ISweepable {
     /// @param execution Address of new execution module.
     function setExecution(address execution) external;
 
+    /// @notice Sets current constraints module.
+    /// @param constraints Address of new constraints module.
+    function setConstraints(address constraints) external;
+
     /// @notice Terminate the vault and return all funds to owner.
     function finalize() external;
 
@@ -105,16 +112,20 @@ interface ICustody is ICustodyEvents, ISweepable {
     /// @return feeRecipient Address of fee recipient.
     function feeRecipient() external view returns (address feeRecipient);
 
-    /// @notice Get the current execution module.
-    /// @return execution Address of execution module.
-    function execution() external view returns (IExecution execution);
-
     /// @notice Get the current asset registry.
     /// @return assetRegistry Address of asset registry.
     function assetRegistry()
         external
         view
         returns (IAssetRegistry assetRegistry);
+
+    /// @notice Get the current execution module.
+    /// @return execution Address of execution module.
+    function execution() external view returns (IExecution execution);
+
+    /// @notice Get the current constraints module.
+    /// @return constraints Address of constraints module.
+    function constraints() external view returns (IConstraints constraints);
 
     /// @notice Get current balances of all assets.
     /// @param assetAmounts Amounts of assets.

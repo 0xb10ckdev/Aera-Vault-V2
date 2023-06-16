@@ -28,6 +28,10 @@ interface ICustodyEvents {
     /// @param execution Address of new execution module.
     event SetExecution(address execution);
 
+    /// @notice Emitted when constraints module is set.
+    /// @param constraints Address of new constraints module.
+    event SetConstraints(address constraints);
+
     /// @notice Emitted when vault is finalized.
     event Finalized();
 
