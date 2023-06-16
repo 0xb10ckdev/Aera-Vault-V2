@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/IERC4626.sol";
 import "src/v2/interfaces/IBalancerExecution.sol";
 import "src/v2/AeraBalancerExecution.sol";
+import "src/v2/AeraConstraints.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import {IAsset} from
     "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
@@ -32,6 +33,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 
     AeraBalancerExecution balancerExecution;
+    AeraConstraints constraints;
     AeraVaultAssetRegistry assetRegistry;
     address balancerManagedPoolFactory;
     mapping(IERC20 => bool) isERC4626;
@@ -48,6 +50,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         _init();
 
         _deployAssetRegistry();
+        _deployConstraints();
         _deployBalancerManagedPoolFactory();
         _deployBalancerExecution();
     }
@@ -184,6 +187,12 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
             assetsInformation,
             numeraire,
             feeToken
+        );
+    }
+
+    function _deployConstraints() internal {
+        constraints = new AeraConstraints(
+            address(assetRegistry)
         );
     }
 

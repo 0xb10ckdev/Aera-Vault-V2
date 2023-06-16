@@ -36,6 +36,7 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         vault = new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,

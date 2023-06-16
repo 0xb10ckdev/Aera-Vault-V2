@@ -24,6 +24,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(0),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -44,6 +45,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(1),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -59,6 +61,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(0),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -79,6 +82,44 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(1),
+            address(constraints),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_GUARDIAN_FEE,
+            minThreshold,
+            minYieldActionThreshold
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenConstraintsIsZeroAddress()
+        public
+    {
+        vm.expectRevert(ICustody.Aera__ConstraintsIsZeroAddress.selector);
+        new AeraVaultV2(
+            address(assetRegistry),
+            address(balancerExecution),
+            address(0),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_GUARDIAN_FEE,
+            minThreshold,
+            minYieldActionThreshold
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenConstraintsIsNotValid()
+        public
+    {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__ConstraintsIsNotValid.selector, address(1)
+            )
+        );
+
+        new AeraVaultV2(
+            address(assetRegistry),
+            address(balancerExecution),
+            address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -94,6 +135,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             address(0),
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -107,6 +149,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             address(this),
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -122,6 +165,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             address(0),
             _MAX_GUARDIAN_FEE,
@@ -137,6 +181,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             address(this),
             _MAX_GUARDIAN_FEE,
@@ -158,6 +203,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE + 1,
@@ -171,6 +217,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -185,6 +232,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
@@ -204,6 +252,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vault = new AeraVaultV2(
             address(assetRegistry),
             address(balancerExecution),
+            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_GUARDIAN_FEE,
