@@ -95,11 +95,7 @@ contract AeraConstraints is IConstraints, ERC165, Ownable {
             weightSum += targetWeights[i].weight;
         }
 
-        if (weightSum != ONE) {
-            return false;
-        }
-
-        return true;
+        return weightSum == ONE;
     }
 
     /// @inheritdoc IERC165
