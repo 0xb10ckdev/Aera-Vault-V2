@@ -34,11 +34,7 @@ contract AeraConstraints is IConstraints, ERC165, Ownable {
     ///         asset registry, custody contracts.
     /// @param assetRegistry_ The address of asset registry.
     constructor(address assetRegistry_) {
-        _checkAssetRegistryAddress(assetRegistry_);
-
-        assetRegistry = IAssetRegistry(assetRegistry_);
-
-        emit SetAssetRegistry(assetRegistry_);
+        _setAssetRegistry(assetRegistry_);
     }
 
     /// @inheritdoc IConstraints
@@ -48,11 +44,7 @@ contract AeraConstraints is IConstraints, ERC165, Ownable {
         override
         onlyOwner
     {
-        _checkAssetRegistryAddress(newAssetRegistry);
-
-        assetRegistry = IAssetRegistry(newAssetRegistry);
-
-        emit SetAssetRegistry(newAssetRegistry);
+        _setAssetRegistry(newAssetRegistry);
     }
 
     /// @inheritdoc IConstraints
@@ -122,6 +114,16 @@ contract AeraConstraints is IConstraints, ERC165, Ownable {
     }
 
     /// INTERNAL FUNCTIONS ///
+
+    /// @notice Sets current asset registry.
+    /// @param newAssetRegistry Address of new asset registry.
+    function _setAssetRegistry(address newAssetRegistry) internal {
+        _checkAssetRegistryAddress(newAssetRegistry);
+
+        assetRegistry = IAssetRegistry(newAssetRegistry);
+
+        emit SetAssetRegistry(newAssetRegistry);
+    }
 
     /// @notice Check if the address can be an asset registry.
     /// @param newAssetRegistry Address to check.
