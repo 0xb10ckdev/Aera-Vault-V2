@@ -13,6 +13,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
     /// @param vault Vault address.
     /// @param assetRegistry The address of asset registry.
     /// @param execution The address of execution module.
+    /// @param constraints The address of constraints module.
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param guardianFee Guardian fee per second in 18 decimal fixed point format.
@@ -24,6 +25,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         address vault,
         address assetRegistry,
         address execution,
+        address constraints,
         address guardian,
         address feeRecipient,
         uint256 guardianFee,
@@ -37,6 +39,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
     function create(
         address assetRegistry,
         address execution,
+        address constraints,
         address guardian,
         address feeRecipient,
         uint256 guardianFee,
@@ -46,6 +49,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         AeraVaultV2 vault = new AeraVaultV2(
             assetRegistry,
             execution,
+            constraints,
             guardian,
             feeRecipient,
             guardianFee,
@@ -58,6 +62,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
             address(vault),
             assetRegistry,
             execution,
+            constraints,
             guardian,
             feeRecipient,
             guardianFee,

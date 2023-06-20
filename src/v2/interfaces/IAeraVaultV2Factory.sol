@@ -6,6 +6,7 @@ interface IAeraVaultV2Factory {
     /// @notice Create v2 vault.
     /// @param assetRegistry The address of asset registry.
     /// @param execution The address of execution module.
+    /// @param constraints The address of constraints module.
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param guardianFee Guardian fee per second in 18 decimal fixed point format.
@@ -16,6 +17,7 @@ interface IAeraVaultV2Factory {
     function create(
         address assetRegistry,
         address execution,
+        address constraints,
         address guardian,
         address feeRecipient,
         uint256 guardianFee,

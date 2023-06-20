@@ -177,47 +177,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     }
 
     /// @inheritdoc IAssetRegistry
-    function checkWeights(
-        AssetWeight[] calldata currentWeights,
-        AssetWeight[] calldata targetWeights,
-        uint256 duration
-    ) external view override returns (bool) {
-        if (duration < _MINIMUM_WEIGHT_CHANGE_DURATION) {
-            return false;
-        }
-
-        uint256 numAssets = _assets.length;
-
-        if (
-            numAssets != currentWeights.length
-                || numAssets != targetWeights.length
-        ) {
-            return false;
-        }
-
-        uint256 maximumRatio = _MAX_WEIGHT_CHANGE_RATIO * duration;
-
-        uint256 weightSum = 0;
-        for (uint256 i = 0; i < numAssets; i++) {
-            uint256 changeRatio = _getWeightChangeRatio(
-                currentWeights[i].weight, targetWeights[i].weight
-            );
-
-            if (changeRatio > maximumRatio) {
-                return false;
-            }
-
-            weightSum += targetWeights[i].weight;
-        }
-
-        if (weightSum != ONE) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /// @inheritdoc IAssetRegistry
     function assets()
         external
         view
@@ -329,18 +288,5 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         }
 
         emit AssetAdded(asset);
-    }
-
-    /// @notice Calculate a change ratio for weight upgrade.
-    /// @param currentWeight Current weight.
-    /// @param targetWeight Target weight.
-    /// @return ratio Change ratio(>1) from current weight to target weight.
-    function _getWeightChangeRatio(
-        uint256 currentWeight,
-        uint256 targetWeight
-    ) internal pure returns (uint256 ratio) {
-        return currentWeight > targetWeight
-            ? (ONE * currentWeight) / targetWeight
-            : (ONE * targetWeight) / currentWeight;
     }
 }

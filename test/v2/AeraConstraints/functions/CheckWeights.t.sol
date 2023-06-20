@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "../TestBaseAssetRegistry.sol";
+import "../TestBaseConstraints.sol";
 
-contract CheckWeightsTest is TestBaseAssetRegistry {
+contract CheckWeightsTest is TestBaseConstraints {
     uint256 internal constant _MINIMUM_WEIGHT_CHANGE_DURATION = 4 hours;
     uint256 internal constant _MAX_WEIGHT_CHANGE_RATIO = 10 ** 15;
 
-    IAssetRegistry.AssetWeight[] currentWeights;
-    IAssetRegistry.AssetWeight[] targetWeights;
+    IConstraints.AssetWeight[] currentWeights;
+    IConstraints.AssetWeight[] targetWeights;
     uint256 duration;
 
     function setUp() public override {
-        _deploy();
+        super.setUp();
 
-        IAssetRegistry.AssetWeight[] memory weights = _generateValidWeights();
+        IConstraints.AssetWeight[] memory weights = _generateValidWeights();
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < weights.length; i++) {
             currentWeights.push(weights[i]);
             targetWeights.push(weights[i]);
         }
@@ -28,7 +28,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         public
     {
         assertFalse(
-            assetRegistry.checkWeights(
+            constraints.checkWeights(
                 currentWeights,
                 targetWeights,
                 _MINIMUM_WEIGHT_CHANGE_DURATION - 1
@@ -41,7 +41,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         currentWeights.push(currentWeights[0]);
 
         assertFalse(
-            assetRegistry.checkWeights(currentWeights, targetWeights, duration)
+            constraints.checkWeights(currentWeights, targetWeights, duration)
         );
     }
 
@@ -50,7 +50,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         targetWeights.pop();
 
         assertFalse(
-            assetRegistry.checkWeights(currentWeights, targetWeights, duration)
+            constraints.checkWeights(currentWeights, targetWeights, duration)
         );
     }
 
@@ -66,7 +66,7 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         targetWeights[0].weight = targetWeight0;
 
         assertFalse(
-            assetRegistry.checkWeights(currentWeights, targetWeights, duration)
+            constraints.checkWeights(currentWeights, targetWeights, duration)
         );
     }
 
@@ -76,13 +76,13 @@ contract CheckWeightsTest is TestBaseAssetRegistry {
         targetWeights[0].weight += 1;
 
         assertFalse(
-            assetRegistry.checkWeights(currentWeights, targetWeights, duration)
+            constraints.checkWeights(currentWeights, targetWeights, duration)
         );
     }
 
     function test_checkWeights_valid() public {
         assertTrue(
-            assetRegistry.checkWeights(currentWeights, targetWeights, duration)
+            constraints.checkWeights(currentWeights, targetWeights, duration)
         );
     }
 }

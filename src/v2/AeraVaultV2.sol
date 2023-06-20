@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Math.sol";
@@ -13,7 +14,13 @@ import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault V2 Custody contract.
-contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
+contract AeraVaultV2 is
+    ICustody,
+    ERC165,
+    Ownable,
+    Pausable,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
 
     /// @notice Largest possible guardian fee earned proportion per one second.
@@ -37,6 +44,9 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice The address of execution module.
     IExecution public execution;
+
+    /// @notice The address of constraints module.
+    IConstraints public constraints;
 
     /// @notice The address of guardian.
     address public guardian;
@@ -102,6 +112,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ///         asset registry, execution contracts and other parameters.
     /// @param assetRegistry_ The address of asset registry.
     /// @param execution_ The address of execution module.
+    /// @param constraints_ The address of constraints module.
     /// @param guardian_ The address of guardian.
     /// @param feeRecipient_ The address of fee recipient.
     /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
@@ -112,6 +123,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     constructor(
         address assetRegistry_,
         address execution_,
+        address constraints_,
         address guardian_,
         address feeRecipient_,
         uint256 guardianFee_,
@@ -120,6 +132,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkExecutionAddress(execution_);
+        _checkConstraintsAddress(constraints_);
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
@@ -135,6 +148,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         assetRegistry = IAssetRegistry(assetRegistry_);
         execution = IExecution(execution_);
+        constraints = IConstraints(constraints_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
         guardianFee = guardianFee_;
@@ -144,6 +158,7 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetExecution(execution_);
+        emit SetConstraints(constraints_);
         emit SetGuardian(guardian_, feeRecipient_);
     }
 
@@ -277,6 +292,24 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
         execution = IExecution(newExecution);
 
         emit SetExecution(newExecution);
+    }
+
+    /// @inheritdoc ICustody
+    function setConstraints(address newConstraints)
+        external
+        virtual
+        override
+        onlyOwner
+        whenNotFinalized
+    {
+        _checkConstraintsAddress(newConstraints);
+
+        // Note: we could remove this but leaving it to protect the guardian
+        _lockGuardianFees();
+
+        constraints = IConstraints(newConstraints);
+
+        emit SetConstraints(newConstraints);
     }
 
     /// @inheritdoc ICustody
@@ -493,6 +526,17 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             assetRegistry.assets();
 
         return _getHoldings(assets);
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return interfaceId == type(ICustody).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
     /// INTERNAL FUNCTIONS ///
@@ -1137,6 +1181,21 @@ contract AeraVaultV2 is ICustody, Ownable, Pausable, ReentrancyGuard {
             )
         ) {
             revert Aera__ExecutionIsNotValid(newExecution);
+        }
+    }
+
+    /// @notice Check if the address can be a constraints.
+    /// @param newConstraints Address to check.
+    function _checkConstraintsAddress(address newConstraints) internal view {
+        if (newConstraints == address(0)) {
+            revert Aera__ConstraintsIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(
+                newConstraints, type(IConstraints).interfaceId
+            )
+        ) {
+            revert Aera__ConstraintsIsNotValid(newConstraints);
         }
     }
 
