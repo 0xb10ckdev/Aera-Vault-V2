@@ -13,8 +13,8 @@ import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
-/// @title Aera Value Hooks contract.
-contract AeraValueHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
+/// @title Aera Vault Hooks contract.
+contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     bytes4 internal constant _APPROVE_SELECTOR =
