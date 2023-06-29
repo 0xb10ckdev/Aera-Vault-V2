@@ -166,12 +166,12 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         onlyCustody
     {
         uint256 dailyMultiplier = cumulativeDailyMultiplier;
+        uint256 day = block.timestamp / 1 days;
 
         if (beforeValue > 0) {
-            uint256 value = custody.value();
-            uint256 submitMultiplier = value * ONE / beforeValue;
+            uint256 submitMultiplier = custody.value() * ONE / beforeValue;
 
-            if (currentDay == block.timestamp / 1 days) {
+            if (currentDay == day) {
                 dailyMultiplier *= submitMultiplier;
                 if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
@@ -183,6 +183,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
                 dailyMultiplier = submitMultiplier;
             }
         }
+
+        currentDay = day;
+        cumulativeDailyMultiplier = dailyMultiplier;
 
         IAssetRegistry.AssetInformation[] memory assets =
             custody.assetRegistry().assets();
@@ -204,8 +207,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
                 }
             }
         }
-
-        cumulativeDailyMultiplier = dailyMultiplier;
     }
 
     function beforeFinalize() external override onlyCustody {}
