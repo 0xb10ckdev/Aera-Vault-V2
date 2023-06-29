@@ -86,24 +86,22 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         address target,
         bytes4 sighash
     ) external override onlyOwner {
-        TargetSighash targetSighash =
-            TargetSighashLib.toTargetSighash(target, sighash);
+        targetSighashAllowlist[TargetSighashLib.toTargetSighash(
+            target, sighash
+        )] = true;
 
-        targetSighashAllowlist[targetSighash] = true;
-
-        emit AddTargetSighash(targetSighash);
+        emit AddTargetSighash(target, sighash);
     }
 
     function removeTargetSighash(
         address target,
         bytes4 sighash
     ) external override onlyOwner {
-        TargetSighash targetSighash =
-            TargetSighashLib.toTargetSighash(target, sighash);
+        targetSighashAllowlist[TargetSighashLib.toTargetSighash(
+            target, sighash
+        )] = false;
 
-        targetSighashAllowlist[targetSighash] = false;
-
-        emit RemoveTargetSighash(targetSighash);
+        emit RemoveTargetSighash(target, sighash);
     }
 
     function beforeDeposit(AssetValue[] memory amounts)

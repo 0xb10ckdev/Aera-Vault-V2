@@ -5,7 +5,7 @@ import {TargetSighash} from "../Types.sol";
 
 /// @title Interface for hooks module.
 interface IHooksEvents {
-    event AddTargetSighash(TargetSighash targetSighash);
+    event AddTargetSighash(address target, bytes4 sighash);
 
-    event RemoveTargetSighash(TargetSighash targetSighash);
+    event RemoveTargetSighash(address target, bytes4 sighash);
 }
