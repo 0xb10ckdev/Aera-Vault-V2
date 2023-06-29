@@ -34,7 +34,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
 
     mapping(TargetSighash => bool) public targetSighashAllowlist;
 
-    uint256 public beforeValue;
+    uint256 internal _beforeValue;
 
     /// MODIFIERS ///
 
@@ -135,7 +135,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         override
         onlyCustody
     {
-        beforeValue = custody.value();
+        _beforeValue = custody.value();
 
         uint256 numOperations = operations.length;
         bytes4 selector;
@@ -168,8 +168,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         uint256 dailyMultiplier = cumulativeDailyMultiplier;
         uint256 day = block.timestamp / 1 days;
 
-        if (beforeValue > 0) {
-            uint256 submitMultiplier = custody.value() * ONE / beforeValue;
+        if (_beforeValue > 0) {
+            uint256 submitMultiplier = custody.value() * ONE / _beforeValue;
 
             if (currentDay == day) {
                 dailyMultiplier *= submitMultiplier;
