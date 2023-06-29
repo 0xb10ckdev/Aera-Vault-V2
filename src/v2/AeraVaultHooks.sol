@@ -17,10 +17,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
     using TargetSighashLib for TargetSighash;
 
     bytes4 internal constant _APPROVE_SELECTOR =
-        bytes4(keccak256("approve(address, uint256)"));
+        bytes4(keccak256("approve(address,uint256)"));
 
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
-        bytes4(keccak256("increaseAllowance(address, uint256)"));
+        bytes4(keccak256("increaseAllowance(address,uint256)"));
 
     ICustody public immutable custody;
 
