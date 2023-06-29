@@ -8,11 +8,13 @@ import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
+import "./TargetSighashLib.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Hooks contract.
 contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using TargetSighashLib for TargetSighash;
 
     bytes4 internal constant _APPROVE_SELECTOR =
         bytes4(keccak256("approve(address, uint256)"));
@@ -80,21 +82,25 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         cumulativeDailyMultiplier = ONE;
     }
 
-    function addTargetSighash(TargetSighash targetSighash)
-        external
-        override
-        onlyOwner
-    {
+    function addTargetSighash(
+        address target,
+        bytes4 sighash
+    ) external override onlyOwner {
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, sighash);
+
         targetSighashAllowlist[targetSighash] = true;
 
         emit AddTargetSighash(targetSighash);
     }
 
-    function removeTargetSighash(TargetSighash targetSighash)
-        external
-        override
-        onlyOwner
-    {
+    function removeTargetSighash(
+        address target,
+        bytes4 sighash
+    ) external override onlyOwner {
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, sighash);
+
         targetSighashAllowlist[targetSighash] = false;
 
         emit RemoveTargetSighash(targetSighash);
@@ -147,8 +153,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
                 continue;
             }
 
-            TargetSighash sigHash = TargetSighash.wrap(
-                uint160(operations[i].target) << 32 | uint32(selector)
+            TargetSighash sigHash = TargetSighashLib.toTargetSighash(
+                operations[i].target, selector
             );
 
             if (!targetSighashAllowlist[sigHash]) {

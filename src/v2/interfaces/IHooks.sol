@@ -17,9 +17,9 @@ interface IHooks is IHooksEvents {
 
     /// FUNCTIONS ///
 
-    function addTargetSighash(TargetSighash targetSighash) external;
+    function addTargetSighash(address target, bytes4 sighash) external;
 
-    function removeTargetSighash(TargetSighash targetSighash) external;
+    function removeTargetSighash(address target, bytes4 sighash) external;
 
     function beforeDeposit(AssetValue[] memory amounts) external;
 
