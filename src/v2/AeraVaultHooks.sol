@@ -146,10 +146,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
             }
 
             selector = bytes4(operations[i].data[0:4]);
-            if (
-                selector == _APPROVE_SELECTOR
-                    || selector == _INCREASE_ALLOWANCE_SELECTOR
-            ) {
+            if (_isAllowanceSelector(selector)) {
                 continue;
             }
 
@@ -197,10 +194,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < numOperations; i++) {
             selector = bytes4(operations[i].data[0:4]);
-            if (
-                selector == _APPROVE_SELECTOR
-                    || selector == _INCREASE_ALLOWANCE_SELECTOR
-            ) {
+            if (_isAllowanceSelector(selector)) {
                 (spender,) =
                     abi.decode(operations[i].data[4:], (address, uint256));
                 asset = IERC20(operations[i].target);
@@ -252,6 +246,18 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
             }
             break;
         }
+    }
+
+    /// @notice Check whether selector is allowance related selector or not.
+    /// @param selector Selector of calldata to check.
+    /// @return isAllowanceSelector True if selector is allowance related selector.
+    function _isAllowanceSelector(bytes4 selector)
+        internal
+        pure
+        returns (bool isAllowanceSelector)
+    {
+        return selector == _APPROVE_SELECTOR
+            || selector == _INCREASE_ALLOWANCE_SELECTOR;
     }
 
     /// @notice Reset allowance of token for a spender.
