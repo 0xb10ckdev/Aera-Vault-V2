@@ -214,6 +214,17 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         maxDailyExecutionLoss = 0;
     }
 
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return interfaceId == type(IHooks).interfaceId
+            || super.supportsInterface(interfaceId);
+    }
+
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Check whether asset is registered to asset registry or not.
