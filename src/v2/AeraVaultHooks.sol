@@ -53,11 +53,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
     /// @param custody_ The address of custody module.
     /// @param maxDailyExecutionLoss_  The fraction of value that the vault can
     ///                                lose per day in the course of submissions.
-    /// @param targetSighashAllowlistValues Array of target sighash to allow.
+    /// @param targetSighashAllowlist_ Array of target sighash to allow.
     constructor(
         address custody_,
         uint256 maxDailyExecutionLoss_,
-        TargetSighash[] memory targetSighashAllowlistValues
+        TargetSighash[] memory targetSighashAllowlist_
     ) {
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
@@ -70,10 +70,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
             revert Aera__CustodyIsNotValid(custody_);
         }
 
-        uint256 numTargetSighashValues = targetSighashAllowlistValues.length;
+        uint256 numTargetSighashAllowlist = targetSighashAllowlist_.length;
 
-        for (uint256 i = 0; i < numTargetSighashValues; i++) {
-            targetSighashAllowlist[targetSighashAllowlistValues[i]] = true;
+        for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
+            targetSighashAllowlist[targetSighashAllowlist_[i]] = true;
         }
 
         custody = ICustody(custody_);
