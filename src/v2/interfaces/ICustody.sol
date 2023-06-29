@@ -18,7 +18,7 @@ interface ICustody is ICustodyEvents {
     error Aera__GuardianIsOwner();
     error Aera__FeeRecipientIsZeroAddress();
     error Aera__FeeRecipientIsOwner();
-    error Aera__GuardianFeeIsAboveMax(uint256 actual, uint256 max);
+    error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotGuardian();
     error Aera__CallerIsNotOwnerOrGuardian();
     error Aera__AssetIsNotRegistered(IERC20 asset);
@@ -57,6 +57,8 @@ interface ICustody is ICustodyEvents {
     /// @param hooks Address of new hooks module.
     function setHooks(address hooks) external;
 
+    /// @notice Execute a transaction as the vault.
+    /// @param operation Struct details for target and calldata to execute.
     function execute(Operation memory operation) external;
 
     /// @notice Terminate the vault and return all funds to owner.
@@ -68,6 +70,8 @@ interface ICustody is ICustodyEvents {
     /// @notice Resumes vault operations.
     function resume() external;
 
+    /// @notice Submit a series of transactions.
+    /// @param operations Array of struct details for targets and calldatas to submit.
     function submit(Operation[] memory operations) external;
 
     /// @notice Claim fees on behalf of guardian.
@@ -88,20 +92,24 @@ interface ICustody is ICustodyEvents {
         view
         returns (IAssetRegistry assetRegistry);
 
+    /// @notice Get the current hooks module.
+    /// @return hooks Address of hooks module.
     function hooks() external view returns (IHooks hooks);
 
     /// @notice Get guardian fee per second.
-    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @return fee Guardian fee per second in 18 decimal fixed point format.
     function fee() external view returns (uint256 fee);
 
     /// @notice Get current balances of all assets.
-    /// @param assetAmounts Amounts of assets.
+    /// @return assetAmounts Amounts of assets.
     function holdings()
         external
         view
         returns (AssetValue[] memory assetAmounts);
 
-    function value() external view returns (uint256);
+    /// @notice Get current total value of assets in vault.
+    /// @return value Current total value.
+    function value() external view returns (uint256 value);
 
     /// @notice Timestamp at when rebalancing ends.
     function rebalanceEndTime()

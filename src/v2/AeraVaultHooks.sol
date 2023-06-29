@@ -22,18 +22,27 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
         bytes4(keccak256("increaseAllowance(address,uint256)"));
 
+    /// @notice The address of custody module.
     ICustody public immutable custody;
 
     /// STORAGE ///
 
+    /// @notice The maximum fraction of value that the vault can lose per day
+    ///         in the course of submissions.
+    ///         e.g. 0.1 (in 18-decimal form) allows the vault to lose up to
+    ///         10% in value across consecutive submissions.
     uint256 public maxDailyExecutionLoss;
 
+    /// @notice Current day (UTC).
     uint256 public currentDay;
 
+    /// @notice Cumulative daily multiplier.
     uint256 public cumulativeDailyMultiplier;
 
+    /// @notice Allowlist of target and sighash.
     mapping(TargetSighash => bool) public targetSighashAllowlist;
 
+    /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
 
     /// MODIFIERS ///
@@ -82,52 +91,59 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         cumulativeDailyMultiplier = ONE;
     }
 
+    /// @inheritdoc IHooks
     function addTargetSighash(
         address target,
-        bytes4 sighash
+        bytes4 selector
     ) external override onlyOwner {
         targetSighashAllowlist[TargetSighashLib.toTargetSighash(
-            target, sighash
+            target, selector
         )] = true;
 
-        emit AddTargetSighash(target, sighash);
+        emit AddTargetSighash(target, selector);
     }
 
+    /// @inheritdoc IHooks
     function removeTargetSighash(
         address target,
-        bytes4 sighash
+        bytes4 selector
     ) external override onlyOwner {
         targetSighashAllowlist[TargetSighashLib.toTargetSighash(
-            target, sighash
+            target, selector
         )] = false;
 
-        emit RemoveTargetSighash(target, sighash);
+        emit RemoveTargetSighash(target, selector);
     }
 
+    /// @inheritdoc IHooks
     function beforeDeposit(AssetValue[] memory amounts)
         external
         override
         onlyCustody
     {}
 
+    /// @inheritdoc IHooks
     function afterDeposit(AssetValue[] memory amounts)
         external
         override
         onlyCustody
     {}
 
+    /// @inheritdoc IHooks
     function beforeWithdraw(AssetValue[] memory amounts)
         external
         override
         onlyCustody
     {}
 
+    /// @inheritdoc IHooks
     function afterWithdraw(AssetValue[] memory amounts)
         external
         override
         onlyCustody
     {}
 
+    /// @inheritdoc IHooks
     function beforeSubmit(Operation[] calldata operations)
         external
         override
@@ -158,6 +174,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IHooks
     function afterSubmit(Operation[] calldata operations)
         external
         override
@@ -207,8 +224,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IHooks
     function beforeFinalize() external override onlyCustody {}
 
+    /// @inheritdoc IHooks
     function afterFinalize() external override onlyCustody {
         maxDailyExecutionLoss = 0;
     }

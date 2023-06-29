@@ -12,6 +12,9 @@ struct AssetValue {
     uint256 value;
 }
 
+/// @param target Address of target.
+/// @param value Amount of native token.
+/// @param data Calldata of operation.
 struct Operation {
     address target;
     uint256 value;

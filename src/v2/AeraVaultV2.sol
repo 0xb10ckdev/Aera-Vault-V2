@@ -66,11 +66,6 @@ contract AeraVaultV2 is
     /// @notice Last timestamp where guardian fee index was locked.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
-    /// ERRORS ///
-
-    error Aera__MinThresholdIsZero();
-    error Aera__MinYieldActionThresholdIsZero();
-
     /// MODIFIERS ///
 
     /// @dev Throws if called by any account other than the guardian.
@@ -116,7 +111,7 @@ contract AeraVaultV2 is
         _checkFeeRecipientAddress(feeRecipient_);
 
         if (fee_ > _MAX_FEE) {
-            revert Aera__GuardianFeeIsAboveMax(fee_, _MAX_FEE);
+            revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
@@ -255,6 +250,7 @@ contract AeraVaultV2 is
         emit SetHooks(newHooks);
     }
 
+    /// @inheritdoc ICustody
     function execute(Operation calldata operation)
         external
         override
@@ -324,6 +320,7 @@ contract AeraVaultV2 is
         _unpause();
     }
 
+    /// @inheritdoc ICustody
     function submit(Operation[] calldata operations)
         external
         override
@@ -387,6 +384,7 @@ contract AeraVaultV2 is
         return _getHoldings(assets);
     }
 
+    /// @inheritdoc ICustody
     function value() external view override returns (uint256 vaultValue) {
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices =
             assetRegistry.spotPrices();
@@ -449,6 +447,11 @@ contract AeraVaultV2 is
         feeTotal += newFee;
     }
 
+    /// @notice Get current total value of assets in vault.
+    /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
+    /// @param feeToken Address of fee token.
+    /// @return vaultValue Current total value.
+    /// @return feeTokenPrice Price of fee token.
     function _value(
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices,
         IERC20 feeToken

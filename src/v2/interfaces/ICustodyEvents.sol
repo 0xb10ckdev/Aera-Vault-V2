@@ -27,11 +27,15 @@ interface ICustodyEvents {
     /// @param hooks Address of new hooks.
     event SetHooks(address hooks);
 
+    /// @notice Emitted when execute is called.
+    /// @param operation Struct details for target and calldata.
     event Execute(Operation operation);
 
     /// @notice Emitted when vault is finalized.
     event Finalized();
 
+    /// @notice Emitted when submit is called.
+    /// @param operations Array of struct details for targets and calldatas.
     event Submit(Operation[] operations);
 
     /// @notice Emitted when guardian fees are claimed.
