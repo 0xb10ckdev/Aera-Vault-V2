@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/IERC20.sol";
 
+type TargetSighash is uint256;
+
 /// @param asset Address of asset.
 /// @param value Value of asset.
 struct AssetValue {
