@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable.sol";
-import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
@@ -12,7 +11,7 @@ import "./TargetSighashLib.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Hooks contract.
-contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
+contract AeraVaultHooks is IHooks, ERC165, Ownable {
     using SafeERC20 for IERC20;
     using TargetSighashLib for TargetSighash;
 
@@ -187,7 +186,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
             uint256 submitMultiplier = custody.value() * ONE / _beforeValue;
 
             if (currentDay == day) {
-                dailyMultiplier *= submitMultiplier;
+                dailyMultiplier = dailyMultiplier * submitMultiplier / ONE;
                 if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
                 }
@@ -201,6 +200,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable, ReentrancyGuard {
 
         currentDay = day;
         cumulativeDailyMultiplier = dailyMultiplier;
+        _beforeValue = 0;
 
         IAssetRegistry.AssetInformation[] memory assets =
             custody.assetRegistry().assets();

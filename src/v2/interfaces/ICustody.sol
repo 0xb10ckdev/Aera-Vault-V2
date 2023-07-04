@@ -64,7 +64,7 @@ interface ICustody is ICustodyEvents {
     /// @notice Terminate the vault and return all funds to owner.
     function finalize() external;
 
-    /// @notice Ends rebalancing and stops the guardian from submission.
+    /// @notice Stops the guardian from submission.
     function pause() external;
 
     /// @notice Resumes vault operations.

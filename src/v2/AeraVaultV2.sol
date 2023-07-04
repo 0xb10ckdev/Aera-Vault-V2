@@ -321,6 +321,7 @@ contract AeraVaultV2 is
     function submit(Operation[] calldata operations)
         external
         override
+        nonReentrant
         onlyGuardian
         whenNotFinalized
         whenNotPaused
