@@ -383,7 +383,10 @@ contract AeraVaultV2 is
         IERC20 token,
         address spender
     ) external override onlyHooks {
-        _clearAllowance(token, spender);
+        uint256 allowance = token.allowance(address(this), spender);
+        if (allowance > 0) {
+            token.safeDecreaseAllowance(spender, allowance);
+        }
     }
 
     /// @inheritdoc ICustody
@@ -606,16 +609,6 @@ contract AeraVaultV2 is
             if (asset.asset == feeToken) {
                 assetAmounts[i].value -= feeTotal;
             }
-        }
-    }
-
-    /// @notice Reset allowance of token for a spender.
-    /// @param token Token of address to set allowance.
-    /// @param spender Address to give spend approval to.
-    function _clearAllowance(IERC20 token, address spender) internal {
-        uint256 allowance = token.allowance(address(this), spender);
-        if (allowance > 0) {
-            token.safeDecreaseAllowance(spender, allowance);
         }
     }
 
