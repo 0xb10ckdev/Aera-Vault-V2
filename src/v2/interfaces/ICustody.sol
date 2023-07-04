@@ -64,7 +64,7 @@ interface ICustody is ICustodyEvents {
     /// @notice Terminate the vault and return all funds to owner.
     function finalize() external;
 
-    /// @notice Ends rebalancing and stops the guardian from initiating new rebalances.
+    /// @notice Ends rebalancing and stops the guardian from submission.
     function pause() external;
 
     /// @notice Resumes vault operations.
@@ -110,10 +110,4 @@ interface ICustody is ICustodyEvents {
     /// @notice Get current total value of assets in vault.
     /// @return value Current total value.
     function value() external view returns (uint256 value);
-
-    /// @notice Timestamp at when rebalancing ends.
-    function rebalanceEndTime()
-        external
-        view
-        returns (uint256 rebalanceEndTime);
 }

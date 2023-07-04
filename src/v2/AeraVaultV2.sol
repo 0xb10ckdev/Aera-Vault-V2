@@ -48,9 +48,6 @@ contract AeraVaultV2 is
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
 
-    /// @notice Timestamp at when rebalancing ends.
-    uint256 public rebalanceEndTime;
-
     /// @notice Last total value of assets in vault.
     uint256 public lastValue;
 
