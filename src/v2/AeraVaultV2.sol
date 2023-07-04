@@ -262,6 +262,8 @@ contract AeraVaultV2 is
             revert Aera__ExecutionFailed(result);
         }
 
+        _checkLockedFees();
+
         emit Execute(operation);
     }
 
@@ -346,6 +348,8 @@ contract AeraVaultV2 is
                 revert Aera__SubmissionFailed(i, result);
             }
         }
+
+        _checkLockedFees();
 
         hooks.afterSubmit(operations);
 
@@ -626,6 +630,14 @@ contract AeraVaultV2 is
     ) internal {
         _clearAllowance(token, spender);
         token.safeIncreaseAllowance(spender, amount);
+    }
+
+    function _checkLockedFees() internal view {
+        IERC20 feeToken = assetRegistry.feeToken();
+
+        if (feeToken.balanceOf(address(this)) < feeTotal) {
+            revert Aera__CanNotUseLockedFees();
+        }
     }
 
     /// @notice Check if the address can be a guardian.

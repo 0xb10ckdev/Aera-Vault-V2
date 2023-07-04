@@ -28,6 +28,7 @@ interface ICustody is ICustodyEvents {
     error Aera__ExecutionFailed(bytes result);
     error Aera__VaultIsFinalized();
     error Aera__SubmissionFailed(uint256 index, bytes result);
+    error Aera__CanNotUseLockedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoAvailableFeeForCaller(address caller);
 
