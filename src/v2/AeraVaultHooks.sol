@@ -208,13 +208,19 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         uint256 numOperations = operations.length;
         bytes4 selector;
         address spender;
+        uint256 amount;
         IERC20 asset;
 
         for (uint256 i = 0; i < numOperations; i++) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
-                (spender,) =
+                (spender, amount) =
                     abi.decode(operations[i].data[4:], (address, uint256));
+
+                if (amount == 0) {
+                    continue;
+                }
+
                 asset = IERC20(operations[i].target);
 
                 if (_isAssetRegistered(asset, assets)) {
