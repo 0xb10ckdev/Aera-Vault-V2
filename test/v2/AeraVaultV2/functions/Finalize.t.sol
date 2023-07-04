@@ -31,38 +31,19 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
         vault.finalize();
     }
 
-    function test_finalize_success_whenRebalancingIsOnGoing() public virtual {
-        vm.prank(_GUARDIAN);
-        // submit
-
-        AssetValue[] memory holdings = vault.holdings();
-        uint256[] memory balances = new uint256[](holdings.length);
-
-        for (uint256 i = 0; i < holdings.length; i++) {
-            balances[i] = holdings[i].asset.balanceOf(address(this));
-        }
-
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit Finalized();
-
-        vault.finalize();
-
-        for (uint256 i = 0; i < holdings.length; i++) {
-            assertEq(
-                balances[i] + holdings[i].value,
-                holdings[i].asset.balanceOf(address(this))
-            );
-        }
-    }
-
-    function test_finalize_success_whenOraclePriceIsInvalid() public virtual {
-        vm.prank(_GUARDIAN);
-        // submit
+    function test_finalize_success_whenOraclePriceIsInvalid() public {
+        vault.execute(
+            Operation({
+                target: address(erc20Assets[0]),
+                value: 0,
+                data: abi.encodeWithSignature(
+                    "transfer(address,uint256)", address(this), 1
+                    )
+            })
+        );
 
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
-
-        // vm.warp(vault.execution().rebalanceEndTime());
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized();
@@ -71,10 +52,15 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
     }
 
     function test_finalize_success() public virtual {
-        vm.prank(_GUARDIAN);
-        // submit
-
-        // vm.warp(vault.execution().rebalanceEndTime());
+        vault.execute(
+            Operation({
+                target: address(erc20Assets[0]),
+                value: 0,
+                data: abi.encodeWithSignature(
+                    "transfer(address,uint256)", address(this), 1
+                    )
+            })
+        );
 
         uint256 lastFeeCheckpoint =
             ILastFeeCheckpoint(address(vault)).lastFeeCheckpoint();

@@ -3,11 +3,10 @@ pragma solidity 0.8.19;
 
 import "src/v2/interfaces/ICustodyEvents.sol";
 import "src/v2/AeraVaultV2Factory.sol";
-import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
+import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
 
-contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
+contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     AeraVaultV2Factory factory;
-    TargetSighash[] targetSighashAllowlist;
 
     function setUp() public virtual override {
         super.setUp();

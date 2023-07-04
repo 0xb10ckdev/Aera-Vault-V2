@@ -6,7 +6,7 @@ import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
-    AssetValue[] depositAmounts;
+    AssetValue[] public depositAmounts;
 
     function setUp() public override {
         super.setUp();
@@ -72,7 +72,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         vault.deposit(depositAmounts);
     }
 
-    function test_deposit_success() public virtual {
+    function test_deposit_success() public {
         uint256[] memory balances = new uint256[](depositAmounts.length);
         for (uint256 i = 0; i < depositAmounts.length; i++) {
             balances[i] = depositAmounts[i].asset.balanceOf(address(this));

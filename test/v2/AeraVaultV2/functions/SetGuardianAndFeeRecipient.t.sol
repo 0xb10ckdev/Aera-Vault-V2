@@ -55,7 +55,6 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
 
     function test_setGuardianAndFeeRecipient_success_whenOraclePriceIsInvalid()
         public
-        virtual
     {
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
@@ -66,7 +65,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
         vault.setGuardianAndFeeRecipient(_USER, address(1));
     }
 
-    function test_setGuardianAndFeeRecipient_success() public virtual {
+    function test_setGuardianAndFeeRecipient_success() public {
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetGuardianAndFeeRecipient(_USER, address(1));
 

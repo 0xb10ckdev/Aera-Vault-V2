@@ -15,13 +15,18 @@ contract ClaimTest is TestBaseAeraVaultV2 {
         vault.claim();
     }
 
-    function test_claim_success() public virtual {
-        vm.startPrank(_GUARDIAN);
-
+    function test_claim_success() public {
         vm.warp(block.timestamp + 1000);
-        // submit
 
-        vm.stopPrank();
+        vault.execute(
+            Operation({
+                target: address(erc20Assets[0]),
+                value: 0,
+                data: abi.encodeWithSignature(
+                    "transfer(address,uint256)", address(this), 1
+                    )
+            })
+        );
 
         AssetValue[] memory holdings = vault.holdings();
         uint256 fee = vault.fees(_FEE_RECIPIENT);

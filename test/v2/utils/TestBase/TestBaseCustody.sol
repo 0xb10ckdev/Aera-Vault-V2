@@ -3,12 +3,8 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
-import {IAsset} from
-    "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
-import {IManagedPool} from
-    "src/v2/dependencies/balancer-labs/interfaces/contracts/pool-utils/IManagedPool.sol";
-import {IVault} from
-    "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IVault.sol";
+import "src/v2/AeraVaultHooks.sol";
+import "src/v2/AeraVaultV2.sol";
 import {Deployer} from "test/utils/Deployer.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
@@ -16,22 +12,18 @@ import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
+contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
     address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address internal _BVAULT_ADDRESS =
-        0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-    address internal _MERKLE_ORCHARDS =
-        0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal _MAX_FEE = 10 ** 9;
     uint256 internal _MAX_DAILY_EXECUTION_LOSS = 0.1e18;
-    uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 
     AeraVaultAssetRegistry assetRegistry;
-    address balancerManagedPoolFactory;
+    AeraVaultHooks hooks;
+    AeraVaultV2 vault;
     mapping(IERC20 => bool) isERC4626;
     mapping(IERC20 => uint256) underlyingIndex;
     IAssetRegistry.AssetInformation[] assetsInformation;
@@ -39,6 +31,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
     uint256[] oraclePrices;
     uint256 numeraire;
     uint256 nonNumeraire;
+    TargetSighash[] targetSighashAllowlist;
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
@@ -46,7 +39,8 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         _init();
 
         _deployAssetRegistry();
-        _deployBalancerManagedPoolFactory();
+        _deployAeraVaultV2();
+        _deployHooks();
     }
 
     function _init() internal {
@@ -184,31 +178,22 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         );
     }
 
-    function _deployBalancerManagedPoolFactory() internal {
-        address managedPoolAddRemoveTokenLib =
-            deploy("ManagedPoolAddRemoveTokenLib.sol");
-
-        address circuitBreakerLib = deploy("CircuitBreakerLib.sol");
-
-        address protocolFeePercentagesProvider = deploy(
-            "ProtocolFeePercentagesProvider.sol",
-            abi.encode(_BVAULT_ADDRESS, _ONE, _ONE)
+    function _deployHooks() internal {
+        hooks = new AeraVaultHooks(
+            address(vault),
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
 
-        ExternalLibrary[] memory libraries = new ExternalLibrary[](2);
-        libraries[0] = ExternalLibrary({
-            name: "ManagedPoolAddRemoveTokenLib",
-            addr: managedPoolAddRemoveTokenLib
-        });
-        libraries[1] = ExternalLibrary({
-            name: "CircuitBreakerLib",
-            addr: circuitBreakerLib
-        });
+        vault.setHooks(address(hooks));
+    }
 
-        balancerManagedPoolFactory = deploy(
-            "ManagedPoolFactory",
-            libraries,
-            abi.encode(_BVAULT_ADDRESS, protocolFeePercentagesProvider)
+    function _deployAeraVaultV2() internal {
+        vault = new AeraVaultV2(
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE
         );
     }
 

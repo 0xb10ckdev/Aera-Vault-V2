@@ -28,7 +28,7 @@ contract ResumeTest is TestBaseAeraVaultV2 {
         vault.resume();
     }
 
-    function test_resume_success() public virtual {
+    function test_resume_success() public {
         vault.pause();
 
         vm.expectEmit(true, true, true, true, address(vault));

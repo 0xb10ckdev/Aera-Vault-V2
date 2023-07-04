@@ -30,7 +30,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
         vault.pause();
     }
 
-    function test_pause_success_whenOraclePriceIsInvalid() public virtual {
+    function test_pause_success_whenOraclePriceIsInvalid() public {
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
 
@@ -40,7 +40,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
         vault.pause();
     }
 
-    function test_pause_success() public virtual {
+    function test_pause_success() public {
         vm.expectEmit(true, true, true, true, address(vault));
         emit Paused(address(this));
 

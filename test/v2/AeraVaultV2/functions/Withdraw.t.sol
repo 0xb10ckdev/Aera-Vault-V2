@@ -60,31 +60,16 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         vault.withdraw(withdrawAmounts);
     }
 
-    function test_withdraw_fail_withdrawalAmountExceedsHolding() public {
-        AssetValue[] memory holdings = vault.holdings();
-
-        for (uint256 i = 0; i < holdings.length; i++) {
-            if (withdrawAmounts[0].asset == holdings[i].asset) {
-                withdrawAmounts[0].value = holdings[i].value + 1;
-                break;
-            }
-        }
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ICustody.Aera__AmountExceedsAvailable.selector,
-                withdrawAmounts[0].asset,
-                withdrawAmounts[0].value,
-                withdrawAmounts[0].value - 1
-            )
-        );
-
-        vault.withdraw(withdrawAmounts);
-    }
-
     function test_withdraw_fail_withdrawalAmountExceedsAvailable() public {
-        vm.prank(_GUARDIAN);
-        // submit
+        vault.execute(
+            Operation({
+                target: address(erc20Assets[0]),
+                value: 0,
+                data: abi.encodeWithSignature(
+                    "transfer(address,uint256)", address(this), 1
+                    )
+            })
+        );
 
         withdrawAmounts[0].value =
             withdrawAmounts[0].asset.balanceOf(address(vault)) + 1;
@@ -101,7 +86,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         vault.withdraw(withdrawAmounts);
     }
 
-    function test_withdraw_success_whenOraclePriceIsInvalid() public virtual {
+    function test_withdraw_success_whenOraclePriceIsInvalid() public {
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
 
@@ -113,34 +98,10 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         vault.withdraw(withdrawAmounts);
     }
 
-    function test_withdraw_success() public virtual {
+    function test_withdraw_success() public {
         uint256[] memory balances = new uint256[](withdrawAmounts.length);
         for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             balances[i] = withdrawAmounts[i].asset.balanceOf(address(this));
-        }
-
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit Withdraw(withdrawAmounts);
-
-        vault.withdraw(withdrawAmounts);
-
-        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
-            assertEq(
-                withdrawAmounts[i].asset.balanceOf(address(this)) - balances[i],
-                withdrawAmounts[i].value
-            );
-        }
-    }
-
-    function test_withdraw_success_withClaim() public virtual {
-        vm.prank(_GUARDIAN);
-        // submit
-
-        uint256[] memory balances = new uint256[](withdrawAmounts.length);
-        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
-            balances[i] = withdrawAmounts[i].asset.balanceOf(address(this));
-            withdrawAmounts[i].value =
-                withdrawAmounts[0].asset.balanceOf(address(vault)) + 1;
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
