@@ -218,7 +218,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
                 asset = IERC20(operations[i].target);
 
                 if (_isAssetRegistered(asset, assets)) {
-                    _clearAllowance(asset, spender);
+                    custody.clearAllowance(asset, spender);
                 }
             }
         }
