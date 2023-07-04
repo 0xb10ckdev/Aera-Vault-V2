@@ -33,9 +33,9 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
 
     function test_finalize_success_whenRebalancingIsOnGoing() public virtual {
         vm.prank(_GUARDIAN);
-        _startRebalance(validRequest);
+        // submit
 
-        ICustody.AssetValue[] memory holdings = vault.holdings();
+        AssetValue[] memory holdings = vault.holdings();
         uint256[] memory balances = new uint256[](holdings.length);
 
         for (uint256 i = 0; i < holdings.length; i++) {
@@ -57,12 +57,12 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
 
     function test_finalize_success_whenOraclePriceIsInvalid() public virtual {
         vm.prank(_GUARDIAN);
-        _startRebalance(validRequest);
+        // submit
 
         IOracleMock(address(assetsInformation[nonNumeraire].oracle))
             .setLatestAnswer(-1);
 
-        vm.warp(vault.execution().rebalanceEndTime());
+        // vm.warp(vault.execution().rebalanceEndTime());
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized();
@@ -72,14 +72,14 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
 
     function test_finalize_success() public virtual {
         vm.prank(_GUARDIAN);
-        _startRebalance(validRequest);
+        // submit
 
-        vm.warp(vault.execution().rebalanceEndTime());
+        // vm.warp(vault.execution().rebalanceEndTime());
 
         uint256 lastFeeCheckpoint =
             ILastFeeCheckpoint(address(vault)).lastFeeCheckpoint();
 
-        ICustody.AssetValue[] memory holdings = vault.holdings();
+        AssetValue[] memory holdings = vault.holdings();
         uint256[] memory balances = new uint256[](holdings.length);
 
         for (uint256 i = 0; i < holdings.length; i++) {
@@ -95,7 +95,7 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             assertApproxEqRel(
                 balances[i] + holdings[i].value,
                 holdings[i].asset.balanceOf(address(this)),
-                vault.guardianFee() * (block.timestamp - lastFeeCheckpoint)
+                vault.fee() * (block.timestamp - lastFeeCheckpoint)
             );
         }
     }

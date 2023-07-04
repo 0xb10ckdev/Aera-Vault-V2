@@ -6,16 +6,14 @@ import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
-    ICustody.AssetValue[] depositAmounts;
+    AssetValue[] depositAmounts;
 
     function setUp() public override {
         super.setUp();
 
         for (uint256 i = 0; i < erc20Assets.length; i++) {
             depositAmounts.push(
-                ICustody.AssetValue(
-                    erc20Assets[i], 5 * _getScaler(erc20Assets[i])
-                )
+                AssetValue(erc20Assets[i], 5 * _getScaler(erc20Assets[i]))
             );
         }
     }

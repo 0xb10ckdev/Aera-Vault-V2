@@ -6,18 +6,11 @@ import "src/v2/AeraVaultV2Factory.sol";
 import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
 contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
-    error Aera__MinThresholdIsZero();
-    error Aera__MinYieldActionThresholdIsZero();
-
     AeraVaultV2Factory factory;
-    uint256 minThreshold;
-    uint256 minYieldActionThreshold;
+    TargetSighash[] targetSighashAllowlist;
 
     function setUp() public virtual override {
         super.setUp();
-
-        minThreshold = _getScaler(assets[numeraire]);
-        minYieldActionThreshold = _getScaler(assets[numeraire]);
 
         factory = new AeraVaultV2Factory();
     }
@@ -28,13 +21,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.prank(_USER);
         factory.create(
             address(0),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -45,13 +36,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
 
         factory.create(
             address(0),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -66,81 +55,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
 
         factory.create(
             address(1),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenExecutionIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__ExecutionIsZeroAddress.selector);
-        factory.create(
-            address(assetRegistry),
-            address(0),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenExecutionIsNotValid() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ICustody.Aera__ExecutionIsNotValid.selector, address(1)
-            )
-        );
-
-        factory.create(
-            address(assetRegistry),
-            address(1),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenConstraintsIsZeroAddress()
-        public
-    {
-        vm.expectRevert(ICustody.Aera__ConstraintsIsZeroAddress.selector);
-        factory.create(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenConstraintsIsNotValid() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ICustody.Aera__ConstraintsIsNotValid.selector, address(1)
-            )
-        );
-
-        factory.create(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(1),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -148,13 +67,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             address(0),
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -162,13 +79,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             address(factory),
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -178,13 +93,11 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             address(0),
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -192,63 +105,27 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             address(factory),
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
-    function test_createAeraVaultV2_fail_whenGuardianFeeIsAboveMax() public {
+    function test_createAeraVaultV2_fail_whenFeeIsAboveMax() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__GuardianFeeIsAboveMax.selector,
-                _MAX_GUARDIAN_FEE + 1,
-                _MAX_GUARDIAN_FEE
+                ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE + 1,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenMinThresholdIsZero() public {
-        vm.expectRevert(Aera__MinThresholdIsZero.selector);
-        factory.create(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            0,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_createAeraVaultV2_fail_whenMinYieldActionThresholdIsZero()
-        public
-    {
-        vm.expectRevert(Aera__MinYieldActionThresholdIsZero.selector);
-        factory.create(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            0
+            _MAX_FEE + 1,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 
@@ -256,19 +133,15 @@ contract AeraVaultV2FactoryTest is TestBaseBalancer, ICustodyEvents {
         vm.expectEmit(true, true, true, true);
         emit SetAssetRegistry(address(assetRegistry));
         vm.expectEmit(true, true, true, true);
-        emit SetExecution(address(balancerExecution));
-        vm.expectEmit(true, true, true, true);
-        emit SetGuardian(_GUARDIAN, _FEE_RECIPIENT);
+        emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
         factory.create(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE,
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
         );
     }
 }

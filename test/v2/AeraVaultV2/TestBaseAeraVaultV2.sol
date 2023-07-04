@@ -7,23 +7,18 @@ import {TestBaseBalancer} from "test/v2/utils/TestBase/TestBaseBalancer.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
     AeraVaultV2 vault;
-    ICustody.AssetValue[] validRequest;
+    AssetValue[] validRequest;
 
     function setUp() public virtual override {
         super.setUp();
 
         _deployAeraVaultV2();
 
-        for (uint256 i = 0; i < erc20Assets.length; i++) {
-            erc20Assets[i].approve(address(balancerExecution), 1);
-        }
         for (uint256 i = 0; i < assets.length; i++) {
             assets[i].approve(
                 address(vault), 1_000_000 * _getScaler(assets[i])
             );
         }
-
-        balancerExecution.initialize(address(vault));
 
         vm.warp(block.timestamp + 1000);
 
@@ -35,13 +30,9 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
     function _deployAeraVaultV2() internal {
         vault = new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            _getScaler(assets[numeraire]),
-            _getScaler(assets[numeraire])
+            _MAX_FEE
         );
     }
 
@@ -65,7 +56,7 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
             }
 
             validRequest.push(
-                ICustody.AssetValue({asset: assets[i], value: weights[i]})
+                AssetValue({asset: assets[i], value: weights[i]})
             );
         }
     }
@@ -78,7 +69,7 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
         uint256 numAssets = assets.length;
         uint256[] memory values = new uint256[](numAssets);
         weights = new uint256[](numAssets);
-        ICustody.AssetValue[] memory holdings = vault.holdings();
+        AssetValue[] memory holdings = vault.holdings();
 
         uint256 totalValue;
         uint256 balance;
@@ -109,28 +100,16 @@ contract TestBaseAeraVaultV2 is TestBaseBalancer, ICustodyEvents {
     }
 
     function _deposit() internal {
-        ICustody.AssetValue[] memory amounts = new ICustody.AssetValue[](
-            assets.length
-        );
+        AssetValue[] memory amounts = new AssetValue[](assets.length);
 
         for (uint256 i = 0; i < assets.length; i++) {
-            amounts[i] = ICustody.AssetValue({
+            amounts[i] = AssetValue({
                 asset: assets[i],
                 value: (1_000_00e6 / oraclePrices[i]) * _getScaler(assets[i])
             });
         }
 
         vault.deposit(amounts);
-    }
-
-    function _startRebalance(ICustody.AssetValue[] memory requests) internal {
-        uint256 startTime = block.timestamp + 10;
-        uint256 endTime = startTime + 10000;
-
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit StartRebalance(requests, startTime, endTime);
-
-        vault.startRebalance(requests, startTime, endTime);
     }
 
     function _normalizeWeights(uint256[] memory weights)

@@ -3,37 +3,37 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 
-contract UnpauseVaultTest is TestBaseAeraVaultV2 {
+contract ResumeTest is TestBaseAeraVaultV2 {
     event Unpaused(address);
 
-    function test_unpauseVault_fail_whenCallerIsNotOwner() public {
+    function test_resume_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
-        vault.unpauseVault();
+        vault.resume();
     }
 
-    function test_unpauseVault_fail_whenFinalized() public {
-        vault.pauseVault();
+    function test_resume_fail_whenFinalized() public {
+        vault.pause();
         vault.finalize();
 
         vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
 
-        vault.unpauseVault();
+        vault.resume();
     }
 
-    function test_unpauseVault_fail_whenVaultIsNotPaused() public {
+    function test_resume_fail_whenVaultIsNotPaused() public {
         vm.expectRevert(bytes("Pausable: not paused"));
 
-        vault.unpauseVault();
+        vault.resume();
     }
 
-    function test_unpauseVault_success() public virtual {
-        vault.pauseVault();
+    function test_resume_success() public virtual {
+        vault.pause();
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Unpaused(address(this));
 
-        vault.unpauseVault();
+        vault.resume();
     }
 }

@@ -2,9 +2,6 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/IERC4626.sol";
-import "src/v2/interfaces/IBalancerExecution.sol";
-import "src/v2/AeraBalancerExecution.sol";
-import "src/v2/AeraConstraints.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import {IAsset} from
     "src/v2/dependencies/balancer-labs/interfaces/contracts/vault/IAsset.sol";
@@ -29,11 +26,10 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         0xdAE7e32ADc5d490a43cCba1f0c736033F2b4eFca;
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
-    uint256 internal _MAX_GUARDIAN_FEE = 10 ** 9;
+    uint256 internal _MAX_FEE = 10 ** 9;
+    uint256 internal _MAX_DAILY_EXECUTION_LOSS = 0.1e18;
     uint256 internal _MAX_SWAP_RATIO = 0.3e18;
 
-    AeraBalancerExecution balancerExecution;
-    AeraConstraints constraints;
     AeraVaultAssetRegistry assetRegistry;
     address balancerManagedPoolFactory;
     mapping(IERC20 => bool) isERC4626;
@@ -50,9 +46,7 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         _init();
 
         _deployAssetRegistry();
-        _deployConstraints();
         _deployBalancerManagedPoolFactory();
-        _deployBalancerExecution();
     }
 
     function _init() internal {
@@ -190,12 +184,6 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
         );
     }
 
-    function _deployConstraints() internal {
-        constraints = new AeraConstraints(
-            address(assetRegistry)
-        );
-    }
-
     function _deployBalancerManagedPoolFactory() internal {
         address managedPoolAddRemoveTokenLib =
             deploy("ManagedPoolAddRemoveTokenLib.sol");
@@ -222,151 +210,6 @@ contract TestBaseBalancer is TestBase, TestBaseVariables, Deployer {
             libraries,
             abi.encode(_BVAULT_ADDRESS, protocolFeePercentagesProvider)
         );
-    }
-
-    function _deployBalancerExecution() internal {
-        balancerExecution = new AeraBalancerExecution(_generateVaultParams());
-    }
-
-    function _generateVaultParams()
-        internal
-        view
-        returns (
-            IBalancerExecution.NewBalancerExecutionParams memory vaultParams
-        )
-    {
-        uint256[] memory weights = new uint256[](3);
-        uint256 weightSum;
-        for (uint256 i = 0; i < weights.length; i++) {
-            weights[i] = _ONE / 3;
-            weightSum += weights[i];
-        }
-        weights[0] = weights[0] + _ONE - weightSum;
-
-        vaultParams = IBalancerExecution.NewBalancerExecutionParams({
-            factory: balancerManagedPoolFactory,
-            name: "Balancer Execution",
-            symbol: "BALANCER EXECUTION",
-            poolTokens: erc20Assets,
-            weights: weights,
-            swapFeePercentage: 1e12,
-            assetRegistry: address(assetRegistry),
-            merkleOrchard: _MERKLE_ORCHARDS,
-            description: "Test Execution"
-        });
-    }
-
-    // Simulate swaps
-    function _swap(uint256[] memory targetAmounts) internal {
-        vm.startPrank(_USER);
-
-        for (uint256 i = 0; i < erc20Assets.length; i++) {
-            erc20Assets[i].approve(_BVAULT_ADDRESS, type(uint256).max);
-        }
-
-        IVault.FundManagement memory fundManagement = IVault.FundManagement({
-            sender: _USER,
-            fromInternalBalance: true,
-            recipient: payable(_USER),
-            toInternalBalance: true
-        });
-
-        IExecution.AssetValue[] memory holdings;
-
-        for (uint256 i = 0; i < targetAmounts.length - 1; i++) {
-            targetAmounts[i] = (targetAmounts[i] * (_ONE - 1e12)) / _ONE;
-            while (true) {
-                holdings = balancerExecution.holdings();
-
-                if (holdings[i].value < targetAmounts[i]) {
-                    uint256 necessaryAmount =
-                        targetAmounts[i] - holdings[i].value;
-                    IVault(_BVAULT_ADDRESS).swap(
-                        IVault.SingleSwap({
-                            poolId: balancerExecution.poolId(),
-                            kind: IVault.SwapKind.GIVEN_IN,
-                            assetIn: IAsset(address(erc20Assets[i])),
-                            assetOut: IAsset(address(erc20Assets[i + 1])),
-                            amount: necessaryAmount
-                                < (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
-                                ? necessaryAmount
-                                : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
-                            userData: "0x"
-                        }),
-                        fundManagement,
-                        0,
-                        block.timestamp + 100
-                    );
-                } else if (holdings[i].value > targetAmounts[i]) {
-                    uint256 necessaryAmount =
-                        holdings[i].value - targetAmounts[i];
-                    IVault(_BVAULT_ADDRESS).swap(
-                        IVault.SingleSwap({
-                            poolId: balancerExecution.poolId(),
-                            kind: IVault.SwapKind.GIVEN_OUT,
-                            assetIn: IAsset(address(erc20Assets[i + 1])),
-                            assetOut: IAsset(address(erc20Assets[i])),
-                            amount: necessaryAmount
-                                < (holdings[i].value * _MAX_SWAP_RATIO) / _ONE
-                                ? necessaryAmount
-                                : (holdings[i].value * _MAX_SWAP_RATIO) / _ONE,
-                            userData: "0x"
-                        }),
-                        fundManagement,
-                        type(uint256).max,
-                        block.timestamp + 100
-                    );
-                } else {
-                    break;
-                }
-            }
-        }
-
-        vm.stopPrank();
-    }
-
-    function _getTargetAmounts()
-        internal
-        view
-        returns (uint256[] memory targetAmounts)
-    {
-        IERC20[] memory poolTokens = balancerExecution.assets();
-        IExecution.AssetValue[] memory holdings = balancerExecution.holdings();
-        IAssetRegistry.AssetPriceReading[] memory spotPrices =
-            assetRegistry.spotPrices();
-        uint256[] memory values = new uint256[](poolTokens.length);
-        uint256 totalValue;
-
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            for (uint256 j = 0; j < spotPrices.length; j++) {
-                if (poolTokens[i] == spotPrices[j].asset) {
-                    values[i] = (holdings[i].value * spotPrices[j].spotPrice)
-                        / _getScaler(poolTokens[i]);
-                    totalValue += values[i];
-
-                    break;
-                }
-            }
-        }
-
-        uint256[] memory poolWeights = IManagedPool(
-            address(balancerExecution.pool())
-        ).getNormalizedWeights();
-
-        targetAmounts = new uint256[](poolTokens.length);
-
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            for (uint256 j = 0; j < spotPrices.length; j++) {
-                if (poolTokens[i] == spotPrices[j].asset) {
-                    targetAmounts[i] = (
-                        (totalValue * poolWeights[i])
-                            * _getScaler(poolTokens[i])
-                    ) / _ONE / spotPrices[j].spotPrice;
-
-                    break;
-                }
-            }
-        }
     }
 
     function _getScaler(IERC20 token) internal view returns (uint256) {
