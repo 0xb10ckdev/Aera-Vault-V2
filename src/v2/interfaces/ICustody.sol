@@ -20,7 +20,7 @@ interface ICustody is ICustodyEvents {
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotGuardian();
-    error Aera__CallerIsNotOwnerOrGuardian();
+    error Aera__CallerIsNotHooks();
     error Aera__AssetIsNotRegistered(IERC20 asset);
     error Aera__AmountExceedsAvailable(
         IERC20 asset, uint256 amount, uint256 available
@@ -76,6 +76,11 @@ interface ICustody is ICustodyEvents {
 
     /// @notice Claim fees on behalf of guardian.
     function claim() external;
+
+    /// @notice Reset allowance of token for a spender.
+    /// @param token Token of address to set allowance.
+    /// @param spender Address to give spend approval to.
+    function clearAllowance(IERC20 token, address spender) external;
 
     /// @notice Get the current vault guardian.
     /// @return guardian Address of guardian.
