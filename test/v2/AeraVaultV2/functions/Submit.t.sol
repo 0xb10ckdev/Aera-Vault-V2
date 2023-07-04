@@ -62,6 +62,30 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         vault.submit(operations);
     }
 
+    function test_submit_fail_whenUseLockedFees() public {
+        for (uint256 i = 0; i < operations.length; i++) {
+            hooks.addTargetSighash(
+                operations[i].target,
+                bytes4(keccak256("transfer(address,uint256)"))
+            );
+
+            if (operations[i].target == address(feeToken)) {
+                operations[i].data = abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    address(this),
+                    feeToken.balanceOf(address(vault))
+                );
+            }
+        }
+
+        vm.warp(block.timestamp + 1000);
+
+        vm.expectRevert(ICustody.Aera__CanNotUseLockedFees.selector);
+
+        vm.prank(_GUARDIAN);
+        vault.submit(operations);
+    }
+
     function test_submit_success() public {
         uint256 numERC20Assets = erc20Assets.length;
 
