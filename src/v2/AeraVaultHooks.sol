@@ -218,7 +218,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
                 asset = IERC20(operations[i].target);
 
                 if (_isAssetRegistered(asset, assets)) {
-                    custody.clearAllowance(asset, spender);
+                    if (asset.allowance(address(custody), spender) > 0) {
+                        revert Aera__AllowanceIsNotZero(
+                            address(asset), spender
+                        );
+                    }
                 }
             }
         }
@@ -276,15 +280,5 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     {
         return selector == _APPROVE_SELECTOR
             || selector == _INCREASE_ALLOWANCE_SELECTOR;
-    }
-
-    /// @notice Reset allowance of token for a spender.
-    /// @param token Token of address to set allowance.
-    /// @param spender Address to give spend approval to.
-    function _clearAllowance(IERC20 token, address spender) internal {
-        uint256 allowance = token.allowance(address(this), spender);
-        if (allowance > 0) {
-            token.safeDecreaseAllowance(spender, allowance);
-        }
     }
 }

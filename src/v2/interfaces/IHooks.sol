@@ -14,6 +14,7 @@ interface IHooks is IHooksEvents {
     error Aera__TargetIsHooks();
     error Aera__CallIsNotAllowed(Operation operation);
     error Aera__ExceedsMaxDailyExecutionLoss();
+    error Aera__AllowanceIsNotZero(address asset, address spender);
 
     /// FUNCTIONS ///
 

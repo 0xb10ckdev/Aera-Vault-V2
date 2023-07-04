@@ -73,14 +73,6 @@ contract AeraVaultV2 is
         _;
     }
 
-    /// @dev Throws if called by any account other than the guardian.
-    modifier onlyHooks() {
-        if (msg.sender != address(hooks)) {
-            revert Aera__CallerIsNotHooks();
-        }
-        _;
-    }
-
     /// @dev Throws if called after the vault is finalized.
     modifier whenNotFinalized() {
         if (finalized) {
@@ -376,17 +368,6 @@ contract AeraVaultV2 is
         feeToken.safeTransfer(msg.sender, availableFee);
 
         emit Claim(msg.sender, availableFee);
-    }
-
-    /// @inheritdoc ICustody
-    function clearAllowance(
-        IERC20 token,
-        address spender
-    ) external override onlyHooks {
-        uint256 allowance = token.allowance(address(this), spender);
-        if (allowance > 0) {
-            token.safeDecreaseAllowance(spender, allowance);
-        }
     }
 
     /// @inheritdoc ICustody
