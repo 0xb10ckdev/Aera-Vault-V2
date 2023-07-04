@@ -619,19 +619,6 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Set allowance of token for a spender.
-    /// @param token Token of address to set allowance.
-    /// @param spender Address to give spend approval to.
-    /// @param amount Amount to approve for spending.
-    function _setAllowance(
-        IERC20 token,
-        address spender,
-        uint256 amount
-    ) internal {
-        _clearAllowance(token, spender);
-        token.safeIncreaseAllowance(spender, amount);
-    }
-
     function _checkLockedFees() internal view {
         IERC20 feeToken = assetRegistry.feeToken();
 
