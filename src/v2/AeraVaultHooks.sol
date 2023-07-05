@@ -38,7 +38,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     uint256 public cumulativeDailyMultiplier;
 
     /// @notice Allowed target and sighash combinations.
-    mapping(TargetSighash => bool) public targetSighashAllowlist;
+    mapping(TargetSighash => bool) public targetSighashAllowed;
 
     /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
@@ -60,11 +60,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     /// @param custody_ The address of custody module.
     /// @param maxDailyExecutionLoss_  The fraction of value that the vault can
     ///                                lose per day in the course of submissions.
-    /// @param targetSighashAllowlist_ Array of target sighash to allow.
+    /// @param targetSighashAllowlist Array of target sighash to allow.
     constructor(
         address custody_,
         uint256 maxDailyExecutionLoss_,
-        TargetSighash[] memory targetSighashAllowlist_
+        TargetSighash[] memory targetSighashAllowlist
     ) {
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
@@ -77,10 +77,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
             revert Aera__CustodyIsNotValid(custody_);
         }
 
-        uint256 numTargetSighashAllowlist = targetSighashAllowlist_.length;
+        uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
         for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
-            targetSighashAllowlist[targetSighashAllowlist_[i]] = true;
+            targetSighashAllowed[targetSighashAllowlist[i]] = true;
         }
 
         custody = ICustody(custody_);
@@ -94,9 +94,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         address target,
         bytes4 selector
     ) external override onlyOwner {
-        targetSighashAllowlist[TargetSighashLib.toTargetSighash(
-            target, selector
-        )] = true;
+        targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
+        = true;
 
         emit AddTargetSighash(target, selector);
     }
@@ -106,9 +105,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         address target,
         bytes4 selector
     ) external override onlyOwner {
-        targetSighashAllowlist[TargetSighashLib.toTargetSighash(
-            target, selector
-        )] = false;
+        targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
+        = false;
 
         emit RemoveTargetSighash(target, selector);
     }
@@ -166,7 +164,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
                 operations[i].target, selector
             );
 
-            if (!targetSighashAllowlist[sigHash]) {
+            if (!targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
         }
