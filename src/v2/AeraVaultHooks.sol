@@ -13,7 +13,6 @@ import {ONE} from "./Constants.sol";
 /// @title Aera Vault Hooks contract.
 contract AeraVaultHooks is IHooks, ERC165, Ownable {
     using SafeERC20 for IERC20;
-    using TargetSighashLib for TargetSighash;
 
     bytes4 internal constant _APPROVE_SELECTOR =
         bytes4(keccak256("approve(address,uint256)"));
@@ -179,27 +178,27 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         override
         onlyCustody
     {
-        uint256 dailyMultiplier = cumulativeDailyMultiplier;
         uint256 day = block.timestamp / 1 days;
 
         if (_beforeValue > 0) {
             uint256 submitMultiplier = custody.value() * ONE / _beforeValue;
 
             if (currentDay == day) {
-                dailyMultiplier = dailyMultiplier * submitMultiplier / ONE;
+                uint256 dailyMultiplier =
+                    cumulativeDailyMultiplier * submitMultiplier / ONE;
                 if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
                 }
+                cumulativeDailyMultiplier = dailyMultiplier;
             } else {
                 if (submitMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
                 }
-                dailyMultiplier = submitMultiplier;
+                cumulativeDailyMultiplier = submitMultiplier;
             }
         }
 
         currentDay = day;
-        cumulativeDailyMultiplier = dailyMultiplier;
         _beforeValue = 0;
 
         IAssetRegistry.AssetInformation[] memory assets =
