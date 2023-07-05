@@ -121,9 +121,9 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
-        hooks.beforeDeposit(amounts);
-
         _lockFees();
+
+        hooks.beforeDeposit(amounts);
 
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -164,9 +164,9 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
-        hooks.beforeWithdraw(amounts);
-
         _lockFees();
+
+        hooks.beforeWithdraw(amounts);
 
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -320,11 +320,11 @@ contract AeraVaultV2 is
         whenNotFinalized
         whenNotPaused
     {
+        _lockFees();
+
         uint256 numOperations = operations.length;
 
         hooks.beforeSubmit(operations);
-
-        _lockFees();
 
         Operation memory operation;
         bool success;
