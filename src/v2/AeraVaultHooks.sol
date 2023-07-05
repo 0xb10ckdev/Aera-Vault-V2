@@ -20,13 +20,13 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
         bytes4(keccak256("increaseAllowance(address,uint256)"));
 
-    /// @notice The address of custody module.
+    /// @notice The address of the custody module.
     ICustody public immutable custody;
 
     /// STORAGE ///
 
     /// @notice The maximum fraction of value that the vault can lose per day
-    ///         in the course of submissions.
+    ///         during submit transactions.
     ///         e.g. 0.1 (in 18-decimal form) allows the vault to lose up to
     ///         10% in value across consecutive submissions.
     uint256 public maxDailyExecutionLoss;
@@ -34,10 +34,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     /// @notice Current day (UTC).
     uint256 public currentDay;
 
-    /// @notice Cumulative daily multiplier.
+    /// @notice Accumulated value multiplier during submit transactions.
     uint256 public cumulativeDailyMultiplier;
 
-    /// @notice Allowlist of target and sighash.
+    /// @notice Allowed target and sighash combinations.
     mapping(TargetSighash => bool) public targetSighashAllowlist;
 
     /// @notice Total value of assets in vault before submission.
@@ -45,7 +45,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
 
     /// MODIFIERS ///
 
-    /// @dev Throws if called by any account other than the custody.
+    /// @dev Throws if called by any account other than the custody module.
     modifier onlyCustody() {
         if (msg.sender != address(custody)) {
             revert Aera__CallerIsNotCustody();

@@ -5,14 +5,14 @@ import {TargetSighash} from "./Types.sol";
 
 /// @title Library for TargetSighash type.
 library TargetSighashLib {
-    /// @notice Get sigHash from target and selector.
-    /// @param target Address of target.
+    /// @notice Get sighash from target and selector.
+    /// @param target Address of target contract.
     /// @param selector Selector of function.
-    /// @return sigHash TargetSighash for target and selector.
+    /// @return sighash Packed value of target and selector.
     function toTargetSighash(
         address target,
         bytes4 selector
-    ) internal pure returns (TargetSighash sigHash) {
-        sigHash = TargetSighash.wrap(uint160(target) << 32 | uint32(selector));
+    ) internal pure returns (TargetSighash sighash) {
+        sighash = TargetSighash.wrap(uint160(target) << 32 | uint32(selector));
     }
 }

@@ -23,12 +23,12 @@ contract AeraVaultV2 is
 {
     using SafeERC20 for IERC20;
 
-    /// @notice Largest possible guardian fee earned proportion per one second.
+    /// @notice Largest possible fee earned proportion per one second.
     /// @dev 0.0000001% per second, i.e. 3.1536% per year.
     ///      0.0000001% * (365 * 24 * 60 * 60) = 3.1536%
     uint256 private constant _MAX_FEE = 10 ** 9;
 
-    /// @notice Guardian fee per second in 18 decimal fixed point format.
+    /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
     /// STORAGE ///
@@ -441,7 +441,7 @@ contract AeraVaultV2 is
         feeTotal += newFee;
     }
 
-    /// @notice Get current total value of assets in vault.
+    /// @notice Get current total value of assets in vault and price of fee token.
     /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
     /// @param feeToken Address of fee token.
     /// @return vaultValue Current total value.
@@ -644,7 +644,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Check if the address can be a hooks.
+    /// @notice Check if the address can be a hooks contract.
     /// @param newHooks Address to check.
     function _checkHooksAddress(address newHooks) internal view {
         if (newHooks == address(0)) {

@@ -6,7 +6,7 @@ import "@openzeppelin/IERC20.sol";
 type TargetSighash is uint256;
 
 /// @param asset Address of asset.
-/// @param value Value of asset.
+/// @param value Context-dependent value for this asset.
 struct AssetValue {
     IERC20 asset;
     uint256 value;
