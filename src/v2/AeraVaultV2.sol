@@ -350,6 +350,8 @@ contract AeraVaultV2 is
 
     /// @inheritdoc ICustody
     function claim() external override nonReentrant {
+        _lockFees();
+
         uint256 lockedFee = fees[msg.sender];
 
         if (lockedFee == 0) {
