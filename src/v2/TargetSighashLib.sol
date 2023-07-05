@@ -8,11 +8,12 @@ library TargetSighashLib {
     /// @notice Get sighash from target and selector.
     /// @param target Address of target contract.
     /// @param selector Selector of function.
-    /// @return sighash Packed value of target and selector.
+    /// @return targetSighash Packed value of target and selector.
     function toTargetSighash(
         address target,
         bytes4 selector
-    ) internal pure returns (TargetSighash sighash) {
-        sighash = TargetSighash.wrap(uint160(target) << 32 | uint32(selector));
+    ) internal pure returns (TargetSighash targetSighash) {
+        targetSighash =
+            TargetSighash.wrap(uint160(target) << 32 | uint32(selector));
     }
 }
