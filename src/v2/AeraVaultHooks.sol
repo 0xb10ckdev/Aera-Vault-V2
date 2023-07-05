@@ -201,9 +201,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         currentDay = day;
         _beforeValue = 0;
 
-        IAssetRegistry.AssetInformation[] memory assets =
-            custody.assetRegistry().assets();
-
         uint256 numOperations = operations.length;
         bytes4 selector;
         address spender;
@@ -222,12 +219,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
 
                 asset = IERC20(operations[i].target);
 
-                if (_isAssetRegistered(asset, assets)) {
-                    if (asset.allowance(address(custody), spender) > 0) {
-                        revert Aera__AllowanceIsNotZero(
-                            address(asset), spender
-                        );
-                    }
+                if (asset.allowance(address(custody), spender) > 0) {
+                    revert Aera__AllowanceIsNotZero(address(asset), spender);
                 }
             }
         }
@@ -253,27 +246,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     }
 
     /// INTERNAL FUNCTIONS ///
-
-    /// @notice Check whether asset is registered to asset registry or not.
-    /// @param asset Asset to check.
-    /// @param registeredAssets Array of registered assets.
-    /// @return isRegistered True if asset is registered.
-    function _isAssetRegistered(
-        IERC20 asset,
-        IAssetRegistry.AssetInformation[] memory registeredAssets
-    ) internal pure returns (bool isRegistered) {
-        uint256 numAssets = registeredAssets.length;
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (registeredAssets[i].asset < asset) {
-                continue;
-            }
-            if (registeredAssets[i].asset == asset) {
-                return !registeredAssets[i].isERC4626;
-            }
-            break;
-        }
-    }
 
     /// @notice Check whether selector is allowance related selector or not.
     /// @param selector Selector of calldata to check.
