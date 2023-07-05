@@ -232,6 +232,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
     /// @inheritdoc IHooks
     function afterFinalize() external override onlyCustody {
         maxDailyExecutionLoss = 0;
+        currentDay = 0;
+        cumulativeDailyMultiplier = 0;
     }
 
     /// @inheritdoc IERC165
