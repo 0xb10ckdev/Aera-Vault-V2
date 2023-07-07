@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
-import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_fail_whenCallerIsNotOwner()
@@ -56,8 +55,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_success_whenOraclePriceIsInvalid()
         public
     {
-        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
-            .setLatestAnswer(-1);
+        _setInvalidOracle(nonNumeraire);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetGuardianAndFeeRecipient(_USER, address(1));

@@ -16,6 +16,10 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
     address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal _BTC_USD_ORACLE =
+        0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+    address internal _ETH_USD_ORACLE =
+        0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal _MAX_FEE = 10 ** 9;
@@ -34,7 +38,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
     TargetSighash[] targetSighashAllowlist;
 
     function setUp() public virtual {
-        vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 16826100);
+        vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 17642400);
 
         _init();
 
@@ -97,9 +101,11 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
                     asset: assets[i],
                     isERC4626: isERC4626[assets[i]],
                     oracle: AggregatorV2V3Interface(
-                        i == numeraire || isERC4626[assets[i]]
-                            ? address(0)
-                            : address(new OracleMock(6))
+                        address(assets[i]) == _WBTC_ADDRESS
+                            ? _BTC_USD_ORACLE
+                            : address(assets[i]) == _WETH_ADDRESS
+                                ? _ETH_USD_ORACLE
+                                : address(0)
                         )
                 })
             );
@@ -118,26 +124,22 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
                     IERC4626(address(assetsInformation[i].asset)).asset()
                         == _WBTC_ADDRESS
                 ) {
-                    oraclePrices.push(15_000e6);
+                    oraclePrices.push(_getOraclePrice(_BTC_USD_ORACLE));
                 } else if (
                     IERC4626(address(assetsInformation[i].asset)).asset()
                         == _WETH_ADDRESS
                 ) {
-                    oraclePrices.push(1_000e6);
+                    oraclePrices.push(_getOraclePrice(_ETH_USD_ORACLE));
                 } else {
                     oraclePrices.push(1e6);
                 }
             } else {
                 if (address(assetsInformation[i].asset) == _WBTC_ADDRESS) {
-                    oraclePrices.push(15_000e6);
-                    IOracleMock(address(assetsInformation[i].oracle))
-                        .setLatestAnswer(int256(oraclePrices[i]));
+                    oraclePrices.push(_getOraclePrice(_BTC_USD_ORACLE));
                 } else if (
                     address(assetsInformation[i].asset) == _WETH_ADDRESS
                 ) {
-                    oraclePrices.push(1_000e6);
-                    IOracleMock(address(assetsInformation[i].oracle))
-                        .setLatestAnswer(int256(oraclePrices[i]));
+                    oraclePrices.push(_getOraclePrice(_ETH_USD_ORACLE));
                 } else {
                     oraclePrices.push(1e6);
                 }
@@ -195,6 +197,11 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
             _FEE_RECIPIENT,
             _MAX_FEE
         );
+    }
+
+    function _getOraclePrice(address oracle) internal view returns (uint256) {
+        return uint256(AggregatorV2V3Interface(oracle).latestAnswer()) * 1e6
+            / 10 ** AggregatorV2V3Interface(oracle).decimals();
     }
 
     function _getScaler(IERC20 token) internal view returns (uint256) {

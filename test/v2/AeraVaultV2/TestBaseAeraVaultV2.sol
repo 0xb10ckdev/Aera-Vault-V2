@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/ICustodyEvents.sol";
 import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
+import {OracleMock} from "test/utils/OracleMock.sol";
+import "forge-std/console.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
     function setUp() public virtual override {
@@ -26,10 +28,20 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
         for (uint256 i = 0; i < assets.length; i++) {
             amounts[i] = AssetValue({
                 asset: assets[i],
-                value: (1_000_00e6 / oraclePrices[i]) * _getScaler(assets[i])
+                value: 1_000_00e6 * _getScaler(assets[i]) / oraclePrices[i]
             });
         }
 
         vault.deposit(amounts);
+    }
+
+    function _setInvalidOracle(uint256 index) internal {
+        OracleMock oracle = new OracleMock(6);
+        oracle.setLatestAnswer(-1);
+        assetsInformation[index].oracle =
+            AggregatorV2V3Interface(address(oracle));
+
+        assetRegistry.removeAsset(address(assetsInformation[index].asset));
+        assetRegistry.addAsset(assetsInformation[index]);
     }
 }

@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract WithdrawTest is TestBaseAeraVaultV2 {
     AssetValue[] withdrawAmounts;
@@ -11,9 +10,11 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     function setUp() public override {
         super.setUp();
 
+        AssetValue[] memory holdings = vault.holdings();
+
         for (uint256 i = 0; i < erc20Assets.length; i++) {
             withdrawAmounts.push(
-                AssetValue(erc20Assets[i], 5 * _getScaler(erc20Assets[i]))
+                AssetValue(erc20Assets[i], holdings[i].value / 2)
             );
         }
     }
@@ -87,8 +88,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     }
 
     function test_withdraw_success_whenOraclePriceIsInvalid() public {
-        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
-            .setLatestAnswer(-1);
+        _setInvalidOracle(nonNumeraire);
 
         vm.warp(block.timestamp + 1000);
 

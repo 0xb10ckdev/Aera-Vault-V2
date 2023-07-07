@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
     AssetValue[] public depositAmounts;
@@ -61,8 +60,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
     }
 
     function test_deposit_success_whenOraclePriceIsInvalid() public {
-        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
-            .setLatestAnswer(-1);
+        _setInvalidOracle(nonNumeraire);
 
         vm.warp(block.timestamp + 1000);
 
