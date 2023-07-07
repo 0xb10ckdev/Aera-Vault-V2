@@ -57,10 +57,10 @@ contract AeraVaultV2 is
     /// @notice Fee earned amount for each guardian.
     mapping(address => uint256) public fees;
 
-    /// @notice Total guardian fee earned amount.
+    /// @notice Total fee earned amount.
     uint256 public feeTotal;
 
-    /// @notice Last timestamp where guardian fee index was locked.
+    /// @notice Last timestamp where fee index was reserved.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
     /// MODIFIERS ///
@@ -121,7 +121,7 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
-        _lockFees();
+        _reserveFees();
 
         hooks.beforeDeposit(amounts);
 
@@ -164,7 +164,7 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
-        _lockFees();
+        _reserveFees();
 
         hooks.beforeWithdraw(amounts);
 
@@ -199,7 +199,7 @@ contract AeraVaultV2 is
         _checkGuardianAddress(newGuardian);
         _checkFeeRecipientAddress(newFeeRecipient);
 
-        _lockFees();
+        _reserveFees();
 
         guardian = newGuardian;
         feeRecipient = newFeeRecipient;
@@ -216,7 +216,7 @@ contract AeraVaultV2 is
     {
         _checkAssetRegistryAddress(newAssetRegistry);
 
-        _lockFees();
+        _reserveFees();
 
         assetRegistry = IAssetRegistry(newAssetRegistry);
 
@@ -232,7 +232,7 @@ contract AeraVaultV2 is
     {
         _checkHooksAddress(newHooks);
 
-        _lockFees();
+        _reserveFees();
 
         hooks = IHooks(newHooks);
 
@@ -245,7 +245,7 @@ contract AeraVaultV2 is
         override
         onlyOwner
     {
-        _lockFees();
+        _reserveFees();
 
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
@@ -254,7 +254,7 @@ contract AeraVaultV2 is
             revert Aera__ExecutionFailed(result);
         }
 
-        _checkLockedFees();
+        _checkReservedFees();
 
         emit Execute(operation);
     }
@@ -293,7 +293,7 @@ contract AeraVaultV2 is
         whenNotPaused
         whenNotFinalized
     {
-        _lockFees();
+        _reserveFees();
 
         _pause();
     }
@@ -320,7 +320,7 @@ contract AeraVaultV2 is
         whenNotFinalized
         whenNotPaused
     {
-        _lockFees();
+        _reserveFees();
 
         uint256 numOperations = operations.length;
 
@@ -341,7 +341,7 @@ contract AeraVaultV2 is
             }
         }
 
-        _checkLockedFees();
+        _checkReservedFees();
 
         hooks.afterSubmit(operations);
 
@@ -350,22 +350,22 @@ contract AeraVaultV2 is
 
     /// @inheritdoc ICustody
     function claim() external override nonReentrant {
-        _lockFees();
+        _reserveFees();
 
-        uint256 lockedFee = fees[msg.sender];
+        uint256 reservedFee = fees[msg.sender];
 
-        if (lockedFee == 0) {
+        if (reservedFee == 0) {
             revert Aera__NoAvailableFeeForCaller(msg.sender);
         }
 
         IERC20 feeToken = assetRegistry.feeToken();
 
         uint256 availableFee =
-            Math.min(feeToken.balanceOf(address(this)), lockedFee);
+            Math.min(feeToken.balanceOf(address(this)), reservedFee);
         feeTotal -= availableFee;
-        lockedFee -= availableFee;
+        reservedFee -= availableFee;
 
-        fees[msg.sender] = lockedFee;
+        fees[msg.sender] = reservedFee;
 
         feeToken.safeTransfer(msg.sender, availableFee);
 
@@ -413,7 +413,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Calculate current guardian fees.
-    function _lockFees() internal {
+    function _reserveFees() internal {
         if (fee == 0) {
             return;
         }
@@ -595,11 +595,9 @@ contract AeraVaultV2 is
         }
     }
 
-    function _checkLockedFees() internal view {
-        IERC20 feeToken = assetRegistry.feeToken();
-
-        if (feeToken.balanceOf(address(this)) < feeTotal) {
-            revert Aera__CanNotUseLockedFees();
+    function _checkReservedFees() internal view {
+        if (assetRegistry.feeToken().balanceOf(address(this)) < feeTotal) {
+            revert Aera__CanNotUseReservedFees();
         }
     }
 
