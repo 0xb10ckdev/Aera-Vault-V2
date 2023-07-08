@@ -34,7 +34,14 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function propFeeToken() public {
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
+
         assertEq(address(feeToken), address(assetRegistry.feeToken()));
+        assertEq(
+            address(feeToken),
+            address(registryAssets[assetRegistry.feeTokenId()].asset)
+        );
     }
 
     function propNumYieldAssets() public {

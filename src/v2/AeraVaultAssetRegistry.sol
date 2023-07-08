@@ -31,6 +31,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraire;
 
+    /// @notice The index of the fee token in the assets array.
+    uint256 public feeTokenId;
+
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
 
@@ -104,6 +107,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         }
 
         numeraire = numeraire_;
+        feeTokenId = feeTokenIndex;
         feeToken = feeToken_;
     }
 
@@ -171,6 +175,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         if (oldAssetIndex < numeraire) {
             numeraire--;
+        }
+        if (oldAssetIndex < feeTokenId) {
+            feeTokenId--;
         }
 
         emit AssetRemoved(asset);
@@ -280,6 +287,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
             if (index <= numeraire) {
                 numeraire++;
+            }
+            if (index <= feeTokenId) {
+                feeTokenId++;
             }
         }
 

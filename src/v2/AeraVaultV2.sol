@@ -384,9 +384,8 @@ contract AeraVaultV2 is
     function value() external view override returns (uint256 vaultValue) {
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices =
             assetRegistry.spotPrices();
-        IERC20 feeToken = assetRegistry.feeToken();
 
-        (vaultValue,) = _value(erc20SpotPrices, feeToken);
+        (vaultValue,) = _value(erc20SpotPrices);
     }
 
     /// @inheritdoc IERC165
@@ -426,17 +425,16 @@ contract AeraVaultV2 is
 
         lastFeeCheckpoint = block.timestamp;
 
-        IERC20 feeToken = assetRegistry.feeToken();
-
         try assetRegistry.spotPrices() returns (
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
-            (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
+            (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices);
         } catch {}
 
         uint256 newFee = (
             ((lastValue * feeIndex * fee) / ONE)
-                * 10 ** IERC20Metadata(address(feeToken)).decimals()
+                * 10
+                    ** IERC20Metadata(address(assetRegistry.feeToken())).decimals()
         ) / lastFeeTokenPrice;
 
         fees[feeRecipient] += newFee;
@@ -445,13 +443,13 @@ contract AeraVaultV2 is
 
     /// @notice Get current total value of assets in vault and price of fee token.
     /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
-    /// @param feeToken Address of fee token.
     /// @return vaultValue Current total value.
     /// @return feeTokenPrice Price of fee token.
-    function _value(
-        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices,
-        IERC20 feeToken
-    ) internal view returns (uint256 vaultValue, uint256 feeTokenPrice) {
+    function _value(IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices)
+        internal
+        view
+        returns (uint256 vaultValue, uint256 feeTokenPrice)
+    {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);
@@ -471,12 +469,10 @@ contract AeraVaultV2 is
                 balance = assetAmounts[i].value;
             }
 
-            if (assets[i].asset == feeToken) {
-                feeTokenPrice = spotPrices[i];
-            }
-
             vaultValue += (balance * spotPrices[i]) / assetUnits[i];
         }
+
+        feeTokenPrice = spotPrices[assetRegistry.feeTokenId()];
     }
 
     /// @notice Check request to withdraw.
@@ -578,7 +574,6 @@ contract AeraVaultV2 is
     {
         uint256 numAssets = assets.length;
 
-        IERC20 feeToken = assetRegistry.feeToken();
         assetAmounts = new AssetValue[](numAssets);
         IAssetRegistry.AssetInformation memory asset;
 
@@ -588,11 +583,9 @@ contract AeraVaultV2 is
                 asset: asset.asset,
                 value: asset.asset.balanceOf(address(this))
             });
-
-            if (asset.asset == feeToken) {
-                assetAmounts[i].value -= feeTotal;
-            }
         }
+
+        assetAmounts[assetRegistry.feeTokenId()].value -= feeTotal;
     }
 
     function _checkReservedFees() internal view {

@@ -44,6 +44,10 @@ interface IAssetRegistry {
     /// @return numeraire Index of numeraire asset.
     function numeraire() external view returns (uint256 numeraire);
 
+    /// @notice Get the index of the fee token in the assets array.
+    /// @return feeTokenId Index of fee token.
+    function feeTokenId() external view returns (uint256 feeTokenId);
+
     /// @notice Add a new asset.
     /// @param asset A new asset to add.
     function addAsset(AssetInformation memory asset) external;
