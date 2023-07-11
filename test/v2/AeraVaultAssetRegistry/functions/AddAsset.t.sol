@@ -37,10 +37,10 @@ contract AddAssetTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__AssetIsAlreadyRegistered.selector,
-                nonNumeraire
+                nonNumeraireId
             )
         );
-        assetRegistry.addAsset(assets[nonNumeraire]);
+        assetRegistry.addAsset(assets[nonNumeraireId]);
     }
 
     function test_addAsset_success() public {
@@ -77,8 +77,8 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
         assertEq(numRegistryAssets + 1, updatedAssets.length);
 
-        if (newAsset.asset < assets[numeraire].asset) {
-            numeraire++;
+        if (newAsset.asset < assets[numeraireId].asset) {
+            numeraireId++;
         }
 
         propNumeraire();

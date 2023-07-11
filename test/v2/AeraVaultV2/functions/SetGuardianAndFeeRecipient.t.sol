@@ -55,7 +55,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_success_whenOraclePriceIsInvalid()
         public
     {
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetGuardianAndFeeRecipient(_USER, address(1));

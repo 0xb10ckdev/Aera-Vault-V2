@@ -16,8 +16,8 @@ contract TestBaseAssetRegistry is TestBase {
     IERC20 feeToken;
     address numeraireAsset;
     address nonNumeraireAsset;
-    uint256 numeraire;
-    uint256 nonNumeraire;
+    uint256 numeraireId;
+    uint256 nonNumeraireId;
     uint256 numAssets;
 
     function setUp() public virtual {
@@ -28,9 +28,9 @@ contract TestBaseAssetRegistry is TestBase {
         IAssetRegistry.AssetInformation[] memory registryAssets =
             assetRegistry.assets();
 
-        assertEq(numeraire, assetRegistry.numeraire());
-        assertEq(numeraireAsset, address(registryAssets[numeraire].asset));
-        assertEq(address(registryAssets[numeraire].oracle), address(0));
+        assertEq(numeraireId, assetRegistry.numeraireId());
+        assertEq(numeraireAsset, address(registryAssets[numeraireId].asset));
+        assertEq(address(registryAssets[numeraireId].oracle), address(0));
     }
 
     function propFeeToken() public {
@@ -87,7 +87,8 @@ contract TestBaseAssetRegistry is TestBase {
     function _deploy() internal {
         _createAssets(4, 2);
 
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        assetRegistry =
+            new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
@@ -136,9 +137,9 @@ contract TestBaseAssetRegistry is TestBase {
             }
 
             if (address(assets[i].asset) == numeraireAsset) {
-                numeraire = i;
+                numeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireAsset) {
-                nonNumeraire = i;
+                nonNumeraireId = i;
             }
         }
     }

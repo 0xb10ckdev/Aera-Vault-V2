@@ -10,7 +10,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         hoax(_USER);
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        assetRegistry.removeAsset(address(assets[nonNumeraire].asset));
+        assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
     }
 
     function test_removeAsset_fail_whenRemovalAssetIsNumeraireAsset() public {
@@ -19,10 +19,10 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
                 AeraVaultAssetRegistry
                     .Aera__CannotRemoveNumeraireAsset
                     .selector,
-                assets[numeraire].asset
+                assets[numeraireId].asset
             )
         );
-        assetRegistry.removeAsset(address(assets[numeraire].asset));
+        assetRegistry.removeAsset(address(assets[numeraireId].asset));
     }
 
     function test_removeAsset_fail_whenRemovalAssetIsFeeToken() public {
@@ -48,7 +48,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
     function test_removeAsset_success() public {
         uint256 numRegistryAssets = assetRegistry.assets().length;
-        IERC20 removalAsset = assets[nonNumeraire].asset;
+        IERC20 removalAsset = assets[nonNumeraireId].asset;
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
         emit AssetRemoved(address(removalAsset));
@@ -80,8 +80,8 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
         assertEq(numRegistryAssets - 1, updatedAssets.length);
 
-        if (removalAsset < assets[numeraire].asset) {
-            numeraire++;
+        if (removalAsset < assets[numeraireId].asset) {
+            numeraireId++;
         }
 
         propNumeraire();

@@ -60,7 +60,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
     }
 
     function test_deposit_success_whenOraclePriceIsInvalid() public {
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.warp(block.timestamp + 1000);
 

@@ -7,7 +7,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function setUp() public override {
         _createAssets(4, 2);
 
-        feeToken = assets[numeraire].asset;
+        feeToken = assets[numeraireId].asset;
     }
 
     function test_assetRegistryDeployment_fail_whenFeeTokenIsNotRegistered()
@@ -22,7 +22,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 feeToken
             )
         );
-        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
@@ -52,36 +52,37 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector, 1
             )
         );
-        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress(
     ) public {
-        assets[numeraire].oracle = AggregatorV2V3Interface(address(1));
+        assets[numeraireId].oracle = AggregatorV2V3Interface(address(1));
 
         vm.expectRevert(
             AeraVaultAssetRegistry
                 .Aera__NumeraireOracleIsNotZeroAddress
                 .selector
         );
-        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
     function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress(
     ) public {
-        assets[nonNumeraire].oracle = AggregatorV2V3Interface(address(0));
+        assets[nonNumeraireId].oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OracleIsZeroAddress.selector,
-                assets[nonNumeraire].asset
+                assets[nonNumeraireId].asset
             )
         );
-        new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
     function test_assetRegistryDeployment_success() public {
-        assetRegistry = new AeraVaultAssetRegistry(assets, numeraire, feeToken);
+        assetRegistry =
+            new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
 
         propNumeraire();
         propFeeToken();

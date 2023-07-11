@@ -41,7 +41,7 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             })
         );
 
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized();
