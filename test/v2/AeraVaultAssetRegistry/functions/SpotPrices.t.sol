@@ -6,18 +6,18 @@ import "../TestBaseAssetRegistry.sol";
 contract SpotPricesTest is TestBaseAssetRegistry {
     function test_spotPrices_fail_whenOraclePriceIsInvalid() public {
         for (uint256 i = 0; i < numAssets; i++) {
-            if (i != numeraire && !assets[i].isERC4626) {
-                nonNumeraire = i;
+            if (i != numeraireId && !assets[i].isERC4626) {
+                nonNumeraireId = i;
                 break;
             }
         }
 
-        IOracleMock(address(assets[nonNumeraire].oracle)).setLatestAnswer(0);
+        IOracleMock(address(assets[nonNumeraireId].oracle)).setLatestAnswer(0);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
-                nonNumeraire,
+                nonNumeraireId,
                 0
             )
         );
@@ -28,7 +28,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         uint256 testPrice = _ONE * 5;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (i == numeraire || assets[i].isERC4626) {
+            if (i == numeraireId || assets[i].isERC4626) {
                 continue;
             }
             IOracleMock(address(assets[i].oracle)).setLatestAnswer(
@@ -49,7 +49,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
                 address(spotPrices[index].asset), address(assets[i].asset)
             );
 
-            if (i == numeraire) {
+            if (i == numeraireId) {
                 assertEq(spotPrices[index].spotPrice, _ONE);
             } else {
                 uint256 oracleUnit = 10 ** assets[i].oracle.decimals();

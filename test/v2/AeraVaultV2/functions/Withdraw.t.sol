@@ -88,7 +88,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     }
 
     function test_withdraw_success_whenOraclePriceIsInvalid() public {
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.warp(block.timestamp + 1000);
 

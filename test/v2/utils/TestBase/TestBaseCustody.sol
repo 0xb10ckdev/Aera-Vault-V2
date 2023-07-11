@@ -33,8 +33,8 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
     IAssetRegistry.AssetInformation[] assetsInformation;
     IERC20 feeToken;
     uint256[] oraclePrices;
-    uint256 numeraire;
-    uint256 nonNumeraire;
+    uint256 numeraireId;
+    uint256 nonNumeraireId;
     TargetSighash[] targetSighashAllowlist;
 
     function setUp() public virtual {
@@ -70,9 +70,9 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
             ) {
                 assets.push(erc20Assets[erc20Index]);
                 if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
-                    numeraire = i;
+                    numeraireId = i;
                 } else if (address(erc20Assets[erc20Index]) == _WETH_ADDRESS) {
-                    nonNumeraire = i;
+                    nonNumeraireId = i;
                 }
                 erc20Index++;
             } else {
@@ -175,7 +175,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
     function _deployAssetRegistry() internal {
         assetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
-            numeraire,
+            numeraireId,
             feeToken
         );
     }

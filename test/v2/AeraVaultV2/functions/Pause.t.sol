@@ -30,7 +30,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     }
 
     function test_pause_success_whenOraclePriceIsInvalid() public {
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Paused(address(this));

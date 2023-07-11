@@ -12,7 +12,7 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
 
         newAssetRegistry = new AeraVaultAssetRegistry(
             assetsInformation,
-            numeraire,
+            numeraireId,
             feeToken
         );
     }
@@ -51,7 +51,7 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
     }
 
     function test_setAssetRegistry_success_whenOraclePriceIsInvalid() public {
-        _setInvalidOracle(nonNumeraire);
+        _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetAssetRegistry(address(newAssetRegistry));
