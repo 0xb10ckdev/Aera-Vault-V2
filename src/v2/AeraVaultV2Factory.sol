@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
+import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
 
 /// @title Aera Vault V2 Factory contract.
@@ -11,26 +12,23 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
 
     /// @notice Emitted when the vault is created.
     /// @param vault Vault address.
+    /// @param hooks Hooks address.
     /// @param assetRegistry The address of asset registry.
-    /// @param execution The address of execution module.
-    /// @param constraints The address of constraints module.
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
-    /// @param guardianFee Guardian fee per second in 18 decimal fixed point format.
-    /// @param minThreshold Minimum action threshold for erc20 assets measured
-    ///                     in base token terms.
-    /// @param minYieldActionThreshold Minimum action threshold for yield bearing assets
-    ///                                measured in base token terms.
+    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param maxDailyExecutionLoss  The fraction of value that the vault can
+    ///                                lose per day in the course of submissions.
+    /// @param targetSighashAllowlist Array of target sighash to allow.
     event VaultCreated(
         address vault,
+        address hooks,
         address assetRegistry,
-        address execution,
-        address constraints,
         address guardian,
         address feeRecipient,
-        uint256 guardianFee,
-        uint256 minThreshold,
-        uint256 minYieldActionThreshold
+        uint256 fee,
+        uint256 maxDailyExecutionLoss,
+        TargetSighash[] targetSighashAllowlist
     );
 
     /// FUNCTIONS ///
@@ -38,36 +36,36 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
     /// @inheritdoc IAeraVaultV2Factory
     function create(
         address assetRegistry,
-        address execution,
-        address constraints,
         address guardian,
         address feeRecipient,
-        uint256 guardianFee,
-        uint256 minThreshold,
-        uint256 minYieldActionThreshold
+        uint256 fee,
+        uint256 maxDailyExecutionLoss,
+        TargetSighash[] memory targetSighashAllowlist
     ) external override onlyOwner {
         AeraVaultV2 vault = new AeraVaultV2(
             assetRegistry,
-            execution,
-            constraints,
             guardian,
             feeRecipient,
-            guardianFee,
-            minThreshold,
-            minYieldActionThreshold
+            fee
         );
+
+        AeraVaultHooks hooks =
+        new AeraVaultHooks(address(vault), maxDailyExecutionLoss, targetSighashAllowlist);
+
+        vault.setHooks(address(hooks));
+
         vault.transferOwnership(msg.sender);
+        hooks.transferOwnership(msg.sender);
 
         emit VaultCreated(
             address(vault),
+            address(hooks),
             assetRegistry,
-            execution,
-            constraints,
             guardian,
             feeRecipient,
-            guardianFee,
-            minThreshold,
-            minYieldActionThreshold
+            fee,
+            maxDailyExecutionLoss,
+            targetSighashAllowlist
         );
     }
 }

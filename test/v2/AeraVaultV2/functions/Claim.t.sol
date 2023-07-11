@@ -3,10 +3,8 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 
-contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
-    function test_claimGuardianFees_fail_whenNoAvailableFeeForCaller()
-        public
-    {
+contract ClaimTest is TestBaseAeraVaultV2 {
+    function test_claim_fail_whenNoAvailableFeeForCaller() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ICustody.Aera__NoAvailableFeeForCaller.selector, _USER
@@ -14,20 +12,25 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
         );
 
         vm.prank(_USER);
-        vault.claimGuardianFees();
+        vault.claim();
     }
 
-    function test_claimGuardianFees_success() public virtual {
-        vm.startPrank(_GUARDIAN);
-
+    function test_claim_success() public {
         vm.warp(block.timestamp + 1000);
-        _startRebalance(validRequest);
 
-        vm.stopPrank();
+        vault.execute(
+            Operation({
+                target: address(erc20Assets[0]),
+                value: 0,
+                data: abi.encodeWithSignature(
+                    "transfer(address,uint256)", address(this), 1
+                    )
+            })
+        );
 
-        ICustody.AssetValue[] memory holdings = vault.holdings();
-        uint256 fee = vault.guardiansFee(_FEE_RECIPIENT);
-        uint256 feeTotal = vault.guardiansFeeTotal();
+        AssetValue[] memory holdings = vault.holdings();
+        uint256 fee = vault.fees(_FEE_RECIPIENT);
+        uint256 feeTotal = vault.feeTotal();
 
         uint256[] memory balances = new uint256[](holdings.length);
 
@@ -38,11 +41,11 @@ contract ClaimGuardianFeesTest is TestBaseAeraVaultV2 {
         vm.startPrank(_FEE_RECIPIENT);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit ClaimGuardianFees(_FEE_RECIPIENT, fee);
+        emit Claim(_FEE_RECIPIENT, fee);
 
-        vault.claimGuardianFees();
+        vault.claim();
 
-        assertEq(feeTotal - fee, vault.guardiansFeeTotal());
+        assertEq(feeTotal - fee, vault.feeTotal());
 
         for (uint256 i = 0; i < holdings.length; i++) {
             if (holdings[i].asset == feeToken) {

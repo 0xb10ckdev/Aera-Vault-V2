@@ -3,19 +3,16 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
-    ICustody.AssetValue[] depositAmounts;
+    AssetValue[] public depositAmounts;
 
     function setUp() public override {
         super.setUp();
 
         for (uint256 i = 0; i < erc20Assets.length; i++) {
             depositAmounts.push(
-                ICustody.AssetValue(
-                    erc20Assets[i], 5 * _getScaler(erc20Assets[i])
-                )
+                AssetValue(erc20Assets[i], 5 * _getScaler(erc20Assets[i]))
             );
         }
     }
@@ -63,8 +60,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
     }
 
     function test_deposit_success_whenOraclePriceIsInvalid() public {
-        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
-            .setLatestAnswer(-1);
+        _setInvalidOracle(nonNumeraire);
 
         vm.warp(block.timestamp + 1000);
 
@@ -74,7 +70,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         vault.deposit(depositAmounts);
     }
 
-    function test_deposit_success() public virtual {
+    function test_deposit_success() public {
         uint256[] memory balances = new uint256[](depositAmounts.length);
         for (uint256 i = 0; i < depositAmounts.length; i++) {
             balances[i] = depositAmounts[i].asset.balanceOf(address(this));

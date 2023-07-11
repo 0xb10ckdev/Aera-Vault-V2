@@ -3,10 +3,9 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
-import {IOracleMock} from "test/utils/OracleMock.sol";
 
 contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
-    AeraVaultAssetRegistry newAssetRegistry;
+    AeraVaultAssetRegistry public newAssetRegistry;
 
     function setUp() public override {
         super.setUp();
@@ -51,12 +50,8 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
         vault.setAssetRegistry(address(1));
     }
 
-    function test_setAssetRegistry_success_whenOraclePriceIsInvalid()
-        public
-        virtual
-    {
-        IOracleMock(address(assetsInformation[nonNumeraire].oracle))
-            .setLatestAnswer(-1);
+    function test_setAssetRegistry_success_whenOraclePriceIsInvalid() public {
+        _setInvalidOracle(nonNumeraire);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetAssetRegistry(address(newAssetRegistry));
@@ -64,7 +59,7 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
         vault.setAssetRegistry(address(newAssetRegistry));
     }
 
-    function test_setAssetRegistry_success() public virtual {
+    function test_setAssetRegistry_success() public {
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetAssetRegistry(address(newAssetRegistry));
 

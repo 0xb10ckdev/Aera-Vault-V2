@@ -9,7 +9,7 @@ import "@openzeppelin/Ownable.sol";
 import "@openzeppelin/Pausable.sol";
 import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
-import "./interfaces/IBalancerExecution.sol";
+import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
@@ -23,30 +23,21 @@ contract AeraVaultV2 is
 {
     using SafeERC20 for IERC20;
 
-    /// @notice Largest possible guardian fee earned proportion per one second.
+    /// @notice Largest possible fee earned proportion per one second.
     /// @dev 0.0000001% per second, i.e. 3.1536% per year.
     ///      0.0000001% * (365 * 24 * 60 * 60) = 3.1536%
-    uint256 private constant _MAX_GUARDIAN_FEE = 10 ** 9;
+    uint256 private constant _MAX_FEE = 10 ** 9;
 
-    /// @notice Guardian fee per second in 18 decimal fixed point format.
-    uint256 public immutable guardianFee;
-
-    /// @notice Minimum action threshold for erc20 assets measured in base token terms.
-    uint256 public immutable minThreshold;
-
-    /// @notice Minimum action threshold for yield bearing assets measured in base token terms.
-    uint256 public immutable minYieldActionThreshold;
+    /// @notice Fee per second in 18 decimal fixed point format.
+    uint256 public immutable fee;
 
     /// STORAGE ///
 
     /// @notice The address of asset registry.
     IAssetRegistry public assetRegistry;
 
-    /// @notice The address of execution module.
-    IExecution public execution;
-
-    /// @notice The address of constraints module.
-    IConstraints public constraints;
+    /// @notice The address of hooks module.
+    IHooks public hooks;
 
     /// @notice The address of guardian.
     address public guardian;
@@ -57,28 +48,20 @@ contract AeraVaultV2 is
     /// @notice Indicates that the Vault has been finalized.
     bool public finalized;
 
-    /// @notice Timestamp at when rebalancing ends.
-    uint256 public rebalanceEndTime;
-
     /// @notice Last total value of assets in vault.
-    uint256 public lastVaultValue;
+    uint256 public lastValue;
 
     /// @notice Last spot price of fee token.
     uint256 public lastFeeTokenPrice;
 
     /// @notice Fee earned amount for each guardian.
-    mapping(address => uint256) public guardiansFee;
+    mapping(address => uint256) public fees;
 
-    /// @notice Total guardian fee earned amount.
-    uint256 public guardiansFeeTotal;
+    /// @notice Total fee earned amount.
+    uint256 public feeTotal;
 
-    /// @notice Last timestamp where guardian fee index was locked.
+    /// @notice Last timestamp where fee index was reserved.
     uint256 public lastFeeCheckpoint = type(uint256).max;
-
-    /// ERRORS ///
-
-    error Aera__MinThresholdIsZero();
-    error Aera__MinYieldActionThresholdIsZero();
 
     /// MODIFIERS ///
 
@@ -86,14 +69,6 @@ contract AeraVaultV2 is
     modifier onlyGuardian() {
         if (msg.sender != guardian) {
             revert Aera__CallerIsNotGuardian();
-        }
-        _;
-    }
-
-    /// @dev Throws if called by any account other than the owner or guardian.
-    modifier onlyOwnerOrGuardian() {
-        if (msg.sender != owner() && msg.sender != guardian) {
-            revert Aera__CallerIsNotOwnerOrGuardian();
         }
         _;
     }
@@ -109,57 +84,33 @@ contract AeraVaultV2 is
     /// FUNCTIONS ///
 
     /// @notice Initialize the custody contract by providing references to
-    ///         asset registry, execution contracts and other parameters.
+    ///         asset registry, guardian and other parameters.
     /// @param assetRegistry_ The address of asset registry.
-    /// @param execution_ The address of execution module.
-    /// @param constraints_ The address of constraints module.
     /// @param guardian_ The address of guardian.
     /// @param feeRecipient_ The address of fee recipient.
-    /// @param guardianFee_ Guardian fee per second in 18 decimal fixed point format.
-    /// @param minThreshold_ Minimum action threshold for erc20 assets measured
-    ///                      in base token terms.
-    /// @param minYieldActionThreshold_ Minimum action threshold for yield bearing assets
-    ///                                 measured in base token terms.
+    /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
     constructor(
         address assetRegistry_,
-        address execution_,
-        address constraints_,
         address guardian_,
         address feeRecipient_,
-        uint256 guardianFee_,
-        uint256 minThreshold_,
-        uint256 minYieldActionThreshold_
+        uint256 fee_
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
-        _checkExecutionAddress(execution_);
-        _checkConstraintsAddress(constraints_);
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
-        if (guardianFee_ > _MAX_GUARDIAN_FEE) {
-            revert Aera__GuardianFeeIsAboveMax(guardianFee_, _MAX_GUARDIAN_FEE);
-        }
-        if (minThreshold_ == 0) {
-            revert Aera__MinThresholdIsZero();
-        }
-        if (minYieldActionThreshold_ == 0) {
-            revert Aera__MinYieldActionThresholdIsZero();
+        if (fee_ > _MAX_FEE) {
+            revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
-        execution = IExecution(execution_);
-        constraints = IConstraints(constraints_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
-        guardianFee = guardianFee_;
-        minThreshold = minThreshold_;
-        minYieldActionThreshold = minYieldActionThreshold_;
+        fee = fee_;
         lastFeeCheckpoint = block.timestamp;
 
         emit SetAssetRegistry(assetRegistry_);
-        emit SetExecution(execution_);
-        emit SetConstraints(constraints_);
-        emit SetGuardian(guardian_, feeRecipient_);
+        emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
     }
 
     /// @inheritdoc ICustody
@@ -170,10 +121,13 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
-        _lockGuardianFees();
+        _reserveFees();
+
+        hooks.beforeDeposit(amounts);
 
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
+
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
         bool isRegistered;
@@ -197,15 +151,22 @@ contract AeraVaultV2 is
             );
         }
 
+        hooks.afterDeposit(amounts);
+
         emit Deposit(amounts);
     }
 
     /// @inheritdoc ICustody
-    function withdraw(
-        AssetValue[] calldata amounts,
-        bool force
-    ) external override nonReentrant onlyOwner whenNotFinalized {
-        _lockGuardianFees();
+    function withdraw(AssetValue[] calldata amounts)
+        external
+        override
+        nonReentrant
+        onlyOwner
+        whenNotFinalized
+    {
+        _reserveFees();
+
+        hooks.beforeWithdraw(amounts);
 
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -218,23 +179,6 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAmounts; i++) {
             assetValue = amounts[i];
 
-            if (assetValue.asset.balanceOf(address(this)) < assetValue.value) {
-                if (!force) {
-                    revert Aera__AmountExceedsAvailable(
-                        assetValue.asset,
-                        assetValue.value,
-                        assetValue.asset.balanceOf(address(this))
-                    );
-                }
-
-                execution.claimNow();
-                break;
-            }
-        }
-
-        for (uint256 i = 0; i < numAmounts; i++) {
-            assetValue = amounts[i];
-
             if (assetValue.value == 0) {
                 continue;
             }
@@ -242,34 +186,37 @@ contract AeraVaultV2 is
             assetValue.asset.safeTransfer(owner(), assetValue.value);
         }
 
-        emit Withdraw(amounts, force);
+        hooks.afterWithdraw(amounts);
+
+        emit Withdraw(amounts);
     }
 
     /// @inheritdoc ICustody
-    function setGuardian(
+    function setGuardianAndFeeRecipient(
         address newGuardian,
         address newFeeRecipient
-    ) external virtual override onlyOwner whenNotFinalized {
+    ) external override onlyOwner whenNotFinalized {
         _checkGuardianAddress(newGuardian);
         _checkFeeRecipientAddress(newFeeRecipient);
-        _lockGuardianFees();
+
+        _reserveFees();
 
         guardian = newGuardian;
         feeRecipient = newFeeRecipient;
 
-        emit SetGuardian(newGuardian, newFeeRecipient);
+        emit SetGuardianAndFeeRecipient(newGuardian, newFeeRecipient);
     }
 
     /// @inheritdoc ICustody
     function setAssetRegistry(address newAssetRegistry)
         external
-        virtual
         override
         onlyOwner
         whenNotFinalized
     {
         _checkAssetRegistryAddress(newAssetRegistry);
-        _lockGuardianFees();
+
+        _reserveFees();
 
         assetRegistry = IAssetRegistry(newAssetRegistry);
 
@@ -277,53 +224,52 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc ICustody
-    function setExecution(address newExecution)
+    function setHooks(address newHooks)
         external
-        virtual
         override
         onlyOwner
         whenNotFinalized
     {
-        _checkExecutionAddress(newExecution);
+        _checkHooksAddress(newHooks);
 
-        // Note: we could remove this but leaving it to protect the guardian
-        _lockGuardianFees();
+        _reserveFees();
 
-        execution = IExecution(newExecution);
+        hooks = IHooks(newHooks);
 
-        emit SetExecution(newExecution);
+        emit SetHooks(newHooks);
     }
 
     /// @inheritdoc ICustody
-    function setConstraints(address newConstraints)
+    function execute(Operation calldata operation)
         external
-        virtual
         override
         onlyOwner
-        whenNotFinalized
     {
-        _checkConstraintsAddress(newConstraints);
+        _reserveFees();
 
-        // Note: we could remove this but leaving it to protect the guardian
-        _lockGuardianFees();
+        (bool success, bytes memory result) =
+            operation.target.call{value: operation.value}(operation.data);
 
-        constraints = IConstraints(newConstraints);
+        if (!success) {
+            revert Aera__ExecutionFailed(result);
+        }
 
-        emit SetConstraints(newConstraints);
+        _checkReservedFees();
+
+        emit Execute(operation);
     }
 
     /// @inheritdoc ICustody
     function finalize()
         external
-        virtual
         override
         nonReentrant
         onlyOwner
         whenNotFinalized
     {
-        finalized = true;
+        hooks.beforeFinalize();
 
-        execution.claimNow();
+        finalized = true;
 
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -334,48 +280,27 @@ contract AeraVaultV2 is
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
         }
 
+        hooks.afterFinalize();
+
         emit Finalized();
     }
 
-    /// @inheritdoc ISweepable
-    function sweep(
-        IERC20 token,
-        uint256 amount
-    ) external virtual override nonReentrant {
-        IAssetRegistry.AssetInformation[] memory assets =
-            assetRegistry.assets();
-
-        (bool isRegistered,) = _isAssetRegistered(token, assets);
-
-        if (isRegistered) {
-            revert Aera__CannotSweepRegisteredAsset();
-        }
-
-        token.safeTransfer(owner(), amount);
-
-        emit Sweep(token, amount);
-    }
-
     /// @inheritdoc ICustody
-    function pauseVault()
+    function pause()
         external
-        virtual
         override
         onlyOwner
         whenNotPaused
         whenNotFinalized
     {
-        _lockGuardianFees();
-
-        execution.claimNow();
+        _reserveFees();
 
         _pause();
     }
 
     /// @inheritdoc ICustody
-    function unpauseVault()
+    function resume()
         external
-        virtual
         override
         onlyOwner
         whenPaused
@@ -387,145 +312,81 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc ICustody
-    function startRebalance(
-        AssetValue[] calldata assetWeights,
-        uint256 startTime,
-        uint256 endTime
-    )
+    function submit(Operation[] calldata operations)
         external
         override
         nonReentrant
         onlyGuardian
-        whenNotPaused
         whenNotFinalized
+        whenNotPaused
     {
-        _lockGuardianFees();
+        _reserveFees();
 
-        IAssetRegistry.AssetInformation[] memory assets =
-            assetRegistry.assets();
-        uint256 numAssets = assets.length;
+        uint256 numOperations = operations.length;
 
-        uint256[] memory targetWeights =
-            _getTargetWeights(assets, assetWeights);
-        uint256[] memory underlyingTargetWeights =
-            _adjustYieldAssets(assets, targetWeights);
-        underlyingTargetWeights = _normalizeWeights(underlyingTargetWeights);
+        hooks.beforeSubmit(operations);
 
-        uint256 numValidAssets;
+        Operation memory operation;
+        bool success;
+        bytes memory result;
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626 && underlyingTargetWeights[i] > 0) {
-                numValidAssets++;
+        for (uint256 i = 0; i < numOperations; i++) {
+            operation = operations[i];
+
+            (success, result) =
+                operation.target.call{value: operation.value}(operation.data);
+
+            if (!success) {
+                revert Aera__SubmissionFailed(i, result);
             }
         }
 
-        if (numValidAssets > 0) {
-            IExecution.AssetRebalanceRequest[] memory requests =
-            new IExecution.AssetRebalanceRequest[](
-                    numValidAssets
-                );
+        _checkReservedFees();
 
-            AssetValue[] memory assetAmounts = _getHoldings(assets);
+        hooks.afterSubmit(operations);
 
-            IAssetRegistry.AssetInformation memory asset;
-            uint256 newIndex;
-            for (uint256 i = 0; i < numAssets; i++) {
-                asset = assets[i];
-                if (!asset.isERC4626 && underlyingTargetWeights[i] > 0) {
-                    requests[newIndex] = IExecution.AssetRebalanceRequest(
-                        asset.asset,
-                        assetAmounts[i].value,
-                        underlyingTargetWeights[i]
-                    );
-                    _setAllowance(
-                        asset.asset, address(execution), assetAmounts[i].value
-                    );
-                    newIndex++;
-                }
-            }
-
-            execution.startRebalance(requests, startTime, endTime);
-        }
-
-        rebalanceEndTime = endTime;
-
-        emit StartRebalance(assetWeights, startTime, endTime);
+        emit Submit(operations);
     }
 
     /// @inheritdoc ICustody
-    function endRebalance()
-        external
-        virtual
-        override
-        nonReentrant
-        onlyOwnerOrGuardian
-        whenNotPaused
-        whenNotFinalized
-    {
-        if (rebalanceEndTime == 0) {
-            revert Aera__RebalancingHasNotStarted();
-        }
-        if (block.timestamp < rebalanceEndTime) {
-            revert Aera__RebalancingIsOnGoing(rebalanceEndTime);
-        }
+    function claim() external override nonReentrant {
+        _reserveFees();
 
-        _lockGuardianFees();
+        uint256 reservedFee = fees[msg.sender];
 
-        execution.endRebalance();
-
-        emit EndRebalance();
-    }
-
-    /// @inheritdoc ICustody
-    function endRebalanceEarly()
-        external
-        virtual
-        override
-        nonReentrant
-        onlyOwnerOrGuardian
-        whenNotPaused
-        whenNotFinalized
-    {
-        _lockGuardianFees();
-
-        execution.claimNow();
-
-        emit EndRebalanceEarly();
-    }
-
-    /// @inheritdoc ICustody
-    function claimGuardianFees() external override nonReentrant {
-        uint256 fee = guardiansFee[msg.sender];
-
-        if (fee == 0) {
+        if (reservedFee == 0) {
             revert Aera__NoAvailableFeeForCaller(msg.sender);
         }
 
         IERC20 feeToken = assetRegistry.feeToken();
 
-        uint256 availableFee = Math.min(feeToken.balanceOf(address(this)), fee);
-        guardiansFeeTotal -= availableFee;
-        fee -= availableFee;
+        uint256 availableFee =
+            Math.min(feeToken.balanceOf(address(this)), reservedFee);
+        feeTotal -= availableFee;
+        reservedFee -= availableFee;
 
-        guardiansFee[msg.sender] = fee;
+        fees[msg.sender] = reservedFee;
 
         feeToken.safeTransfer(msg.sender, availableFee);
 
-        emit ClaimGuardianFees(msg.sender, availableFee);
+        emit Claim(msg.sender, availableFee);
     }
 
     /// @inheritdoc ICustody
-    function holdings()
-        public
-        view
-        virtual
-        override
-        returns (AssetValue[] memory)
-    {
+    function holdings() public view override returns (AssetValue[] memory) {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
         return _getHoldings(assets);
+    }
+
+    /// @inheritdoc ICustody
+    function value() external view override returns (uint256 vaultValue) {
+        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices =
+            assetRegistry.spotPrices();
+        IERC20 feeToken = assetRegistry.feeToken();
+
+        (vaultValue,) = _value(erc20SpotPrices, feeToken);
     }
 
     /// @inheritdoc IERC165
@@ -552,8 +413,8 @@ contract AeraVaultV2 is
     }
 
     /// @notice Calculate current guardian fees.
-    function _lockGuardianFees() internal {
-        if (guardianFee == 0) {
+    function _reserveFees() internal {
+        if (fee == 0) {
             return;
         }
 
@@ -565,46 +426,57 @@ contract AeraVaultV2 is
 
         lastFeeCheckpoint = block.timestamp;
 
-        IAssetRegistry.AssetInformation[] memory assets =
-            assetRegistry.assets();
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
         IERC20 feeToken = assetRegistry.feeToken();
 
         try assetRegistry.spotPrices() returns (
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
-            (uint256[] memory spotPrices, uint256[] memory assetUnits) =
-                _getSpotPricesAndUnits(assets, erc20SpotPrices);
-
-            uint256 numAssets = assets.length;
-            uint256 totalValue;
-            uint256 balance;
-
-            for (uint256 i = 0; i < numAssets; i++) {
-                if (assets[i].isERC4626) {
-                    balance = IERC4626(address(assets[i].asset))
-                        .convertToAssets(assetAmounts[i].value);
-                } else {
-                    balance = assetAmounts[i].value;
-                }
-
-                if (assets[i].asset == feeToken) {
-                    lastFeeTokenPrice = spotPrices[i];
-                }
-
-                totalValue += (balance * spotPrices[i]) / assetUnits[i];
-            }
-
-            lastVaultValue = totalValue;
+            (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
         } catch {}
 
         uint256 newFee = (
-            ((lastVaultValue * feeIndex * guardianFee) / ONE)
+            ((lastValue * feeIndex * fee) / ONE)
                 * 10 ** IERC20Metadata(address(feeToken)).decimals()
         ) / lastFeeTokenPrice;
 
-        guardiansFee[feeRecipient] += newFee;
-        guardiansFeeTotal += newFee;
+        fees[feeRecipient] += newFee;
+        feeTotal += newFee;
+    }
+
+    /// @notice Get current total value of assets in vault and price of fee token.
+    /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
+    /// @param feeToken Address of fee token.
+    /// @return vaultValue Current total value.
+    /// @return feeTokenPrice Price of fee token.
+    function _value(
+        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices,
+        IERC20 feeToken
+    ) internal view returns (uint256 vaultValue, uint256 feeTokenPrice) {
+        IAssetRegistry.AssetInformation[] memory assets =
+            assetRegistry.assets();
+        AssetValue[] memory assetAmounts = _getHoldings(assets);
+
+        (uint256[] memory spotPrices, uint256[] memory assetUnits) =
+            _getSpotPricesAndUnits(assets, erc20SpotPrices);
+
+        uint256 numAssets = assets.length;
+        uint256 balance;
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                balance = IERC4626(address(assets[i].asset)).convertToAssets(
+                    assetAmounts[i].value
+                );
+            } else {
+                balance = assetAmounts[i].value;
+            }
+
+            if (assets[i].asset == feeToken) {
+                feeTokenPrice = spotPrices[i];
+            }
+
+            vaultValue += (balance * spotPrices[i]) / assetUnits[i];
+        }
     }
 
     /// @notice Check request to withdraw.
@@ -643,337 +515,6 @@ contract AeraVaultV2 is
                     assetValue.value,
                     assetAmounts[assetIndex].value
                 );
-            }
-        }
-    }
-
-    /// @notice Adjust the balance of underlying assets in yield assets.
-    /// @param assets Struct details for registered assets in asset registry.
-    /// @param targetWeights Target weights of assets.
-    /// @return underlyingTargetWeights Total target weights of underlying assets.
-    function _adjustYieldAssets(
-        IAssetRegistry.AssetInformation[] memory assets,
-        uint256[] memory targetWeights
-    ) internal returns (uint256[] memory underlyingTargetWeights) {
-        uint256 numAssets = assets.length;
-
-        uint256[] memory underlyingIndexes = _getUnderlyingIndexes(assets);
-        (uint256[] memory spotPrices, uint256[] memory assetUnits) =
-            _getSpotPricesAndUnits(assets, assetRegistry.spotPrices());
-
-        uint256[] memory depositAmounts = new uint256[](numAssets);
-        uint256[] memory withdrawAmounts = new uint256[](numAssets);
-        uint256[] memory currentWeights = new uint256[](numAssets);
-        uint256 totalValue;
-
-        (depositAmounts, withdrawAmounts, currentWeights, totalValue) =
-        _calcAdjustmentAmounts(assets, targetWeights, spotPrices, assetUnits);
-
-        underlyingTargetWeights = new uint256[](numAssets);
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                underlyingTargetWeights[underlyingIndexes[i]] +=
-                    targetWeights[i];
-            } else {
-                underlyingTargetWeights[i] += targetWeights[i];
-            }
-        }
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626 || withdrawAmounts[i] == 0) {
-                continue;
-            }
-
-            if (
-                _withdrawUnderlyingAsset(
-                    assets[i], withdrawAmounts[i], spotPrices[i], assetUnits[i]
-                ) > 0
-            ) {
-                underlyingTargetWeights[underlyingIndexes[i]] -=
-                    targetWeights[i];
-            } else {
-                underlyingTargetWeights[underlyingIndexes[i]] -=
-                    currentWeights[i];
-            }
-        }
-
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626 || depositAmounts[i] == 0) {
-                continue;
-            }
-
-            if (
-                assetAmounts[underlyingIndexes[i]].value > depositAmounts[i]
-                    && _depositUnderlyingAsset(
-                        assets[i], depositAmounts[i], spotPrices[i], assetUnits[i]
-                    ) > 0
-            ) {
-                assetAmounts[underlyingIndexes[i]].value -= depositAmounts[i];
-                underlyingTargetWeights[underlyingIndexes[i]] -=
-                    targetWeights[i];
-            } else {
-                underlyingTargetWeights[underlyingIndexes[i]] -=
-                    currentWeights[i];
-            }
-        }
-
-        uint256 deviation;
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (assets[i].isERC4626) {
-                continue;
-            }
-
-            if (underlyingTargetWeights[i] > currentWeights[i]) {
-                deviation = underlyingTargetWeights[i] - currentWeights[i];
-            } else {
-                deviation = currentWeights[i] - underlyingTargetWeights[i];
-            }
-
-            if ((totalValue * deviation) / ONE < minThreshold) {
-                underlyingTargetWeights[i] = 0;
-            }
-        }
-    }
-
-    /// @notice Calculate the amounts of underlying assets of yield assets to adjust.
-    /// @param assets Struct details for registered assets in asset registry.
-    /// @param targetWeights Reordered target weights.
-    /// @param spotPrices Spot prices of assets.
-    /// @param assetUnits Units of assets.
-    /// @return depositAmounts Amounts of underlying assets to deposit to yield tokens.
-    /// @return withdrawAmounts Amounts of underlying assets to withdraw from yield tokens.
-    /// @return currentWeights Current weights of assets.
-    /// @return totalValue Total value of assets measured in base token terms.
-    function _calcAdjustmentAmounts(
-        IAssetRegistry.AssetInformation[] memory assets,
-        uint256[] memory targetWeights,
-        uint256[] memory spotPrices,
-        uint256[] memory assetUnits
-    )
-        internal
-        view
-        returns (
-            uint256[] memory depositAmounts,
-            uint256[] memory withdrawAmounts,
-            uint256[] memory currentWeights,
-            uint256 totalValue
-        )
-    {
-        uint256 numAssets = assets.length;
-        depositAmounts = new uint256[](numAssets);
-        withdrawAmounts = new uint256[](numAssets);
-        currentWeights = new uint256[](numAssets);
-        uint256[] memory underlyingBalances = new uint256[](numAssets);
-        uint256[] memory values = new uint256[](numAssets);
-        AssetValue[] memory assetAmounts = _getHoldings(assets);
-
-        {
-            uint256 balance;
-            for (uint256 i = 0; i < numAssets; i++) {
-                if (assets[i].isERC4626) {
-                    balance = IERC4626(address(assets[i].asset))
-                        .convertToAssets(assetAmounts[i].value);
-                    underlyingBalances[i] = balance;
-                } else {
-                    balance = assetAmounts[i].value;
-                }
-
-                values[i] = (balance * spotPrices[i]) / assetUnits[i];
-                totalValue += values[i];
-            }
-        }
-
-        uint256 targetBalance;
-        for (uint256 i = 0; i < numAssets; i++) {
-            currentWeights[i] = (values[i] * ONE) / totalValue;
-
-            if (!assets[i].isERC4626) {
-                continue;
-            }
-
-            targetBalance = (totalValue * targetWeights[i] * assetUnits[i])
-                / spotPrices[i] / ONE;
-            if (targetBalance > underlyingBalances[i]) {
-                depositAmounts[i] = targetBalance - underlyingBalances[i];
-            } else {
-                withdrawAmounts[i] = underlyingBalances[i] - targetBalance;
-            }
-        }
-    }
-
-    /// @notice Deposit the amount of underlying asset to yield asset.
-    /// @param asset Struct detail for yield asset.
-    /// @param amount Amount of underlying asset to withdraw from yield asset.
-    /// @param spotPrice Oracle price.
-    /// @param assetUnit Unit of underlying asset.
-    /// @return Exact deposited amount of underlying asset.
-    function _depositUnderlyingAsset(
-        IAssetRegistry.AssetInformation memory asset,
-        uint256 amount,
-        uint256 spotPrice,
-        uint256 assetUnit
-    ) internal returns (uint256) {
-        uint256 value = (amount * spotPrice) / assetUnit;
-        if (value < minYieldActionThreshold) {
-            return 0;
-        }
-
-        IERC4626 yieldAsset = IERC4626(address(asset.asset));
-        IERC20 underlyingAsset = IERC20(yieldAsset.asset());
-
-        try yieldAsset.maxDeposit(address(this)) returns (
-            uint256 maxDepositAmount
-        ) {
-            if (maxDepositAmount == 0) {
-                return 0;
-            }
-
-            uint256 depositAmount = Math.min(amount, maxDepositAmount);
-
-            _setAllowance(underlyingAsset, address(yieldAsset), depositAmount);
-
-            yieldAsset.deposit(depositAmount, address(this));
-
-            _clearAllowance(underlyingAsset, address(yieldAsset));
-
-            return depositAmount;
-        } catch {}
-
-        return 0;
-    }
-
-    /// @notice Withdraw the amount of underlying asset from yield asset.
-    /// @param asset Struct detail for yield asset.
-    /// @param amount Amount of underlying asset to withdraw from yield asset.
-    /// @param spotPrice Oracle price.
-    /// @param assetUnit Unit of underlying asset.
-    /// @return Exact withdrawn amount of underlying asset.
-    function _withdrawUnderlyingAsset(
-        IAssetRegistry.AssetInformation memory asset,
-        uint256 amount,
-        uint256 spotPrice,
-        uint256 assetUnit
-    ) internal returns (uint256) {
-        uint256 value = (amount * spotPrice) / assetUnit;
-        if (value < minYieldActionThreshold) {
-            return 0;
-        }
-
-        IERC4626 yieldAsset = IERC4626(address(asset.asset));
-        IERC20 underlyingAsset = IERC20(yieldAsset.asset());
-
-        try yieldAsset.maxWithdraw(address(this)) returns (
-            uint256 maxWithdrawalAmount
-        ) {
-            if (maxWithdrawalAmount == 0) {
-                return 0;
-            }
-
-            uint256 balance = underlyingAsset.balanceOf(address(this));
-
-            yieldAsset.withdraw(
-                Math.min(amount, maxWithdrawalAmount),
-                address(this),
-                address(this)
-            );
-
-            return underlyingAsset.balanceOf(address(this)) - balance;
-        } catch {}
-
-        return 0;
-    }
-
-    /// @notice Get target weights in registered asset order.
-    /// @param assets Struct details for registered assets in asset registry.
-    /// @param assetWeights Struct details for weights of assets.
-    /// @return targetWeights Reordered target weights.
-    function _getTargetWeights(
-        IAssetRegistry.AssetInformation[] memory assets,
-        AssetValue[] calldata assetWeights
-    ) internal pure returns (uint256[] memory targetWeights) {
-        uint256 numAssets = assets.length;
-        uint256 numAssetWeights = assetWeights.length;
-
-        if (numAssets != numAssetWeights) {
-            revert Aera__ValueLengthIsNotSame(numAssets, numAssetWeights);
-        }
-
-        targetWeights = new uint256[](numAssetWeights);
-
-        AssetValue memory assetWeight;
-        bool isRegistered;
-        uint256 assetIndex;
-        uint256 weightSum = 0;
-
-        for (uint256 i = 0; i < numAssetWeights; i++) {
-            assetWeight = assetWeights[i];
-
-            (isRegistered, assetIndex) =
-                _isAssetRegistered(assetWeight.asset, assets);
-
-            if (!isRegistered) {
-                revert Aera__AssetIsNotRegistered(assetWeight.asset);
-            }
-
-            targetWeights[assetIndex] = assetWeight.value;
-            weightSum += assetWeight.value;
-
-            for (uint256 j = 0; j < numAssetWeights; j++) {
-                if (i != j && assetWeight.asset == assetWeights[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetWeight.asset);
-                }
-            }
-        }
-
-        if (weightSum != ONE) {
-            revert Aera__SumOfWeightsIsNotOne();
-        }
-    }
-
-    /// @notice Normalize weights to make a sum of weights one.
-    /// @param weights Array of weights to be normalized.
-    /// @return newWeights Array of normalized weights.
-    function _normalizeWeights(uint256[] memory weights)
-        internal
-        pure
-        returns (uint256[] memory newWeights)
-    {
-        uint256 numWeights = weights.length;
-        newWeights = new uint256[](numWeights);
-
-        uint256 weightSum;
-        for (uint256 i = 0; i < numWeights; i++) {
-            weightSum += weights[i];
-        }
-
-        if (weightSum == ONE) {
-            return weights;
-        }
-
-        uint256 adjustedSum;
-        for (uint256 i = 0; i < numWeights; i++) {
-            if (weights[i] > 0) {
-                newWeights[i] = (weights[i] * ONE) / weightSum;
-                adjustedSum += newWeights[i];
-            }
-        }
-
-        if (adjustedSum < ONE) {
-            for (uint256 i = 0; i < numWeights; i++) {
-                if (newWeights[i] > 0) {
-                    newWeights[i] = newWeights[i] + ONE - adjustedSum;
-                    break;
-                }
-            }
-        } else if (adjustedSum > ONE) {
-            uint256 deviation = adjustedSum - ONE;
-            for (uint256 i = 0; i < numWeights; i++) {
-                if (newWeights[i] > deviation) {
-                    newWeights[i] -= deviation;
-                    break;
-                }
             }
         }
     }
@@ -1027,32 +568,6 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Returns an array of underlying asset indexes.
-    /// @param assets Struct details for registered assets in asset registry.
-    /// @return underlyingIndexes Array of underlying asset indexes.
-    function _getUnderlyingIndexes(
-        IAssetRegistry.AssetInformation[] memory assets
-    ) internal view returns (uint256[] memory underlyingIndexes) {
-        uint256 numAssets = assets.length;
-        underlyingIndexes = new uint256[](numAssets);
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (!assets[i].isERC4626) {
-                continue;
-            }
-
-            for (uint256 j = 0; j < numAssets; j++) {
-                if (
-                    IERC4626(address(assets[i].asset)).asset()
-                        == address(assets[j].asset)
-                ) {
-                    underlyingIndexes[i] = j;
-                    break;
-                }
-            }
-        }
-    }
-
     /// @notice Get total amount of assets in execution and custody module.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
@@ -1061,11 +576,9 @@ contract AeraVaultV2 is
         view
         returns (AssetValue[] memory assetAmounts)
     {
-        IExecution.AssetValue[] memory executionHoldings = execution.holdings();
-
         uint256 numAssets = assets.length;
-        uint256 numExecutionHoldings = executionHoldings.length;
 
+        IERC20 feeToken = assetRegistry.feeToken();
         assetAmounts = new AssetValue[](numAssets);
         IAssetRegistry.AssetInformation memory asset;
 
@@ -1075,55 +588,17 @@ contract AeraVaultV2 is
                 asset: asset.asset,
                 value: asset.asset.balanceOf(address(this))
             });
-        }
 
-        IExecution.AssetValue memory executionHolding;
-
-        for (uint256 i = 0; i < numExecutionHoldings; i++) {
-            executionHolding = executionHoldings[i];
-
-            for (uint256 j = 0; j < numAssets; j++) {
-                if (assets[j].asset == executionHolding.asset) {
-                    assetAmounts[j].value += executionHolding.value;
-                    break;
-                }
-                if (assets[j].asset > executionHolding.asset) {
-                    break;
-                }
-            }
-        }
-
-        IERC20 feeToken = assetRegistry.feeToken();
-
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (assetAmounts[i].asset == feeToken) {
-                assetAmounts[i].value -= guardiansFeeTotal;
-                break;
+            if (asset.asset == feeToken) {
+                assetAmounts[i].value -= feeTotal;
             }
         }
     }
 
-    /// @notice Reset allowance of token for a spender.
-    /// @param token Token of address to set allowance.
-    /// @param spender Address to give spend approval to.
-    function _clearAllowance(IERC20 token, address spender) internal {
-        uint256 allowance = token.allowance(address(this), spender);
-        if (allowance > 0) {
-            token.safeDecreaseAllowance(spender, allowance);
+    function _checkReservedFees() internal view {
+        if (assetRegistry.feeToken().balanceOf(address(this)) < feeTotal) {
+            revert Aera__CanNotUseReservedFees();
         }
-    }
-
-    /// @notice Set allowance of token for a spender.
-    /// @param token Token of address to set allowance.
-    /// @param spender Address to give spend approval to.
-    /// @param amount Amount to approve for spending.
-    function _setAllowance(
-        IERC20 token,
-        address spender,
-        uint256 amount
-    ) internal {
-        _clearAllowance(token, spender);
-        token.safeIncreaseAllowance(spender, amount);
     }
 
     /// @notice Check if the address can be a guardian.
@@ -1169,33 +644,16 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Check if the address can be an execution.
-    /// @param newExecution Address to check.
-    function _checkExecutionAddress(address newExecution) internal view {
-        if (newExecution == address(0)) {
-            revert Aera__ExecutionIsZeroAddress();
+    /// @notice Check if the address can be a hooks contract.
+    /// @param newHooks Address to check.
+    function _checkHooksAddress(address newHooks) internal view {
+        if (newHooks == address(0)) {
+            revert Aera__HooksIsZeroAddress();
         }
         if (
-            !ERC165Checker.supportsInterface(
-                newExecution, type(IBalancerExecution).interfaceId
-            )
+            !ERC165Checker.supportsInterface(newHooks, type(IHooks).interfaceId)
         ) {
-            revert Aera__ExecutionIsNotValid(newExecution);
-        }
-    }
-
-    /// @notice Check if the address can be a constraints.
-    /// @param newConstraints Address to check.
-    function _checkConstraintsAddress(address newConstraints) internal view {
-        if (newConstraints == address(0)) {
-            revert Aera__ConstraintsIsZeroAddress();
-        }
-        if (
-            !ERC165Checker.supportsInterface(
-                newConstraints, type(IConstraints).interfaceId
-            )
-        ) {
-            revert Aera__ConstraintsIsNotValid(newConstraints);
+            revert Aera__HooksIsNotValid(newHooks);
         }
     }
 

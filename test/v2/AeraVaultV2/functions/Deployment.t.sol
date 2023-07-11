@@ -4,32 +4,15 @@ pragma solidity 0.8.19;
 import "../TestBaseAeraVaultV2.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
-    uint256 minThreshold;
-    uint256 minYieldActionThreshold;
-
-    error Aera__MinThresholdIsZero();
-    error Aera__MinYieldActionThresholdIsZero();
-
-    function setUp() public override {
-        super.setUp();
-
-        minThreshold = _getScaler(assets[numeraire]);
-        minYieldActionThreshold = _getScaler(assets[numeraire]);
-    }
-
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
         vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
         new AeraVaultV2(
             address(0),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
@@ -44,87 +27,9 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
 
         new AeraVaultV2(
             address(1),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenExecutionIsZeroAddress()
-        public
-    {
-        vm.expectRevert(ICustody.Aera__ExecutionIsZeroAddress.selector);
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(0),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenExecutionIsNotValid()
-        public
-    {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ICustody.Aera__ExecutionIsNotValid.selector, address(1)
-            )
-        );
-
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(1),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenConstraintsIsZeroAddress()
-        public
-    {
-        vm.expectRevert(ICustody.Aera__ConstraintsIsZeroAddress.selector);
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenConstraintsIsNotValid()
-        public
-    {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ICustody.Aera__ConstraintsIsNotValid.selector, address(1)
-            )
-        );
-
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(1),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
@@ -134,13 +39,9 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             address(0),
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
@@ -148,13 +49,9 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             address(this),
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
@@ -164,13 +61,9 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
         new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             address(0),
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
@@ -180,64 +73,23 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             address(this),
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenGuardianFeeIsAboveMax()
-        public
-    {
+    function test_aeraVaultV2Deployment_fail_whenFeeIsAboveMax() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__GuardianFeeIsAboveMax.selector,
-                _MAX_GUARDIAN_FEE + 1,
-                _MAX_GUARDIAN_FEE
+                ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
         new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE + 1,
-            minThreshold,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenMinThresholdIsZero() public {
-        vm.expectRevert(Aera__MinThresholdIsZero.selector);
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            0,
-            minYieldActionThreshold
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenMinYieldActionThresholdIsZero(
-    ) public {
-        vm.expectRevert(Aera__MinYieldActionThresholdIsZero.selector);
-        new AeraVaultV2(
-            address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            0
+            _MAX_FEE + 1
         );
     }
 
@@ -245,25 +97,18 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectEmit(true, true, true, true);
         emit SetAssetRegistry(address(assetRegistry));
         vm.expectEmit(true, true, true, true);
-        emit SetExecution(address(balancerExecution));
-        vm.expectEmit(true, true, true, true);
-        emit SetGuardian(_GUARDIAN, _FEE_RECIPIENT);
+        emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
         vault = new AeraVaultV2(
             address(assetRegistry),
-            address(balancerExecution),
-            address(constraints),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_GUARDIAN_FEE,
-            minThreshold,
-            minYieldActionThreshold
+            _MAX_FEE
         );
 
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
-        assertEq(address(vault.execution()), address(balancerExecution));
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
-        assertEq(vault.guardianFee(), _MAX_GUARDIAN_FEE);
+        assertEq(vault.fee(), _MAX_FEE);
     }
 }
