@@ -29,17 +29,17 @@ interface ICustodyEvents {
 
     /// @notice Emitted when execute is called.
     /// @param operation Struct details for target and calldata.
-    event Execute(Operation operation);
+    event Executed(Operation operation);
 
     /// @notice Emitted when vault is finalized.
     event Finalized();
 
     /// @notice Emitted when submit is called.
     /// @param operations Array of struct details for targets and calldatas.
-    event Submit(Operation[] operations);
+    event Submitted(Operation[] operations);
 
     /// @notice Emitted when guardian fees are claimed.
     /// @param guardian Guardian address.
     /// @param claimedFee Claimed amount of fee token.
-    event Claim(address guardian, uint256 claimedFee);
+    event Claimed(address guardian, uint256 claimedFee);
 }

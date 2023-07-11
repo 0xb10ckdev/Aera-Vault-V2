@@ -105,7 +105,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Submit(operations);
+        emit Submitted(operations);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);

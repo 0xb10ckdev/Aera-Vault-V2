@@ -256,7 +256,7 @@ contract AeraVaultV2 is
 
         _checkReservedFees();
 
-        emit Execute(operation);
+        emit Executed(operation);
     }
 
     /// @inheritdoc ICustody
@@ -345,7 +345,7 @@ contract AeraVaultV2 is
 
         hooks.afterSubmit(operations);
 
-        emit Submit(operations);
+        emit Submitted(operations);
     }
 
     /// @inheritdoc ICustody
@@ -369,7 +369,7 @@ contract AeraVaultV2 is
 
         feeToken.safeTransfer(msg.sender, availableFee);
 
-        emit Claim(msg.sender, availableFee);
+        emit Claimed(msg.sender, availableFee);
     }
 
     /// @inheritdoc ICustody

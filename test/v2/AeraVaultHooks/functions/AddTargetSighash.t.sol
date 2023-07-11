@@ -19,7 +19,7 @@ contract AddTargetSighashTest is TestBaseAeraVaultHooks {
         assertFalse(hooks.targetSighashAllowed(targetSighash));
 
         vm.expectEmit(true, true, true, true, address(hooks));
-        emit AddTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
+        emit TargetSighashAdded(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 
         hooks.addTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 
