@@ -97,7 +97,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
-        emit AddTargetSighash(target, selector);
+        emit TargetSighashAdded(target, selector);
     }
 
     /// @inheritdoc IHooks
@@ -108,7 +108,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = false;
 
-        emit RemoveTargetSighash(target, selector);
+        emit TargetSighashRemoved(target, selector);
     }
 
     /// @inheritdoc IHooks

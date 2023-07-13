@@ -8,10 +8,10 @@ interface IHooksEvents {
     /// @notice Emitted when targetSighash is added to allowlist.
     /// @param target Address of target.
     /// @param selector Selector of function.
-    event AddTargetSighash(address target, bytes4 selector);
+    event TargetSighashAdded(address target, bytes4 selector);
 
     /// @notice Emitted when targetSighash is removed from allowlist.
     /// @param target Address of target.
     /// @param selector Selector of function.
-    event RemoveTargetSighash(address target, bytes4 selector);
+    event TargetSighashRemoved(address target, bytes4 selector);
 }

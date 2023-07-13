@@ -21,7 +21,7 @@ contract RemoveTargetSighashTest is TestBaseAeraVaultHooks {
         assertTrue(hooks.targetSighashAllowed(targetSighash));
 
         vm.expectEmit(true, true, true, true, address(hooks));
-        emit RemoveTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
+        emit TargetSighashRemoved(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 
         hooks.removeTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 

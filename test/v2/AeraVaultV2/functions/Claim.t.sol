@@ -41,7 +41,7 @@ contract ClaimTest is TestBaseAeraVaultV2 {
         vm.startPrank(_FEE_RECIPIENT);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Claim(_FEE_RECIPIENT, fee);
+        emit Claimed(_FEE_RECIPIENT, fee);
 
         vault.claim();
 
