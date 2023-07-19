@@ -58,6 +58,8 @@ interface ICustody is ICustodyEvents {
     function setHooks(address hooks) external;
 
     /// @notice Execute a transaction as the vault.
+    /// @dev Execution still should work when vault is finalized.
+    ///      For example, it can be used for sweep functionality.
     /// @param operation Struct details for target and calldata to execute.
     function execute(Operation memory operation) external;
 
