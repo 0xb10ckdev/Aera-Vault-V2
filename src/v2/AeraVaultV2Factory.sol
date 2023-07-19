@@ -3,8 +3,6 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
-import "./AeraVaultHooks.sol";
-import "./AeraVaultV2.sol";
 
 /// @title Aera Vault V2 Factory contract.
 contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
@@ -41,15 +39,20 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         uint256 fee,
         uint256 maxDailyExecutionLoss,
         TargetSighash[] memory targetSighashAllowlist
-    ) external override onlyOwner {
-        AeraVaultV2 vault = new AeraVaultV2(
+    )
+        external
+        override
+        onlyOwner
+        returns (AeraVaultV2 vault, AeraVaultHooks hooks)
+    {
+        vault = new AeraVaultV2(
             assetRegistry,
             guardian,
             feeRecipient,
             fee
         );
 
-        AeraVaultHooks hooks =
+        hooks =
         new AeraVaultHooks(address(vault), maxDailyExecutionLoss, targetSighashAllowlist);
 
         vault.setHooks(address(hooks));

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "../AeraVaultHooks.sol";
+import "../AeraVaultV2.sol";
 import {TargetSighash} from "../Types.sol";
 
 /// @title Interface for v2 vault factory.
@@ -13,6 +15,8 @@ interface IAeraVaultV2Factory {
     /// @param maxDailyExecutionLoss  The fraction of value that the vault can
     ///                                lose per day in the course of submissions.
     /// @param targetSighashAllowlist Array of target sighash to allow.
+    /// @return vault The address of deployed vault.
+    /// @return hooks The address of deployed hooks.
     function create(
         address assetRegistry,
         address guardian,
@@ -20,5 +24,5 @@ interface IAeraVaultV2Factory {
         uint256 fee,
         uint256 maxDailyExecutionLoss,
         TargetSighash[] memory targetSighashAllowlist
-    ) external;
+    ) external returns (AeraVaultV2 vault, AeraVaultHooks hooks);
 }
