@@ -12,17 +12,11 @@ interface IAeraVaultV2Factory {
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
-    /// @param maxDailyExecutionLoss  The fraction of value that the vault can
-    ///                                lose per day in the course of submissions.
-    /// @param targetSighashAllowlist Array of target sighash to allow.
     /// @return vault The address of deployed vault.
-    /// @return hooks The address of deployed hooks.
     function create(
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee,
-        uint256 maxDailyExecutionLoss,
-        TargetSighash[] memory targetSighashAllowlist
-    ) external returns (AeraVaultV2 vault, AeraVaultHooks hooks);
+        uint256 fee
+    ) external returns (AeraVaultV2 vault);
 }

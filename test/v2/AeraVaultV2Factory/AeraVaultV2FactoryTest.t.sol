@@ -18,14 +18,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
-        factory.create(
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
-        );
+        factory.create(address(0), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE);
     }
 
     function test_createAeraVaultV2_fail_whenAssetRegistryIsZeroAddress()
@@ -33,14 +26,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     {
         vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
 
-        factory.create(
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
-        );
+        factory.create(address(0), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE);
     }
 
     function test_createAeraVaultV2_fail_whenAssetRegistryIsNotValid()
@@ -52,37 +38,20 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             )
         );
 
-        factory.create(
-            address(1),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
-        );
+        factory.create(address(1), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE);
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsZeroAddress() public {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         factory.create(
-            address(assetRegistry),
-            address(0),
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            address(assetRegistry), address(0), _FEE_RECIPIENT, _MAX_FEE
         );
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsFactory() public {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         factory.create(
-            address(assetRegistry),
-            address(factory),
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            address(assetRegistry), address(factory), _FEE_RECIPIENT, _MAX_FEE
         );
     }
 
@@ -90,25 +59,13 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         public
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
-        factory.create(
-            address(assetRegistry),
-            _GUARDIAN,
-            address(0),
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
-        );
+        factory.create(address(assetRegistry), _GUARDIAN, address(0), _MAX_FEE);
     }
 
     function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         factory.create(
-            address(assetRegistry),
-            _GUARDIAN,
-            address(factory),
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            address(assetRegistry), _GUARDIAN, address(factory), _MAX_FEE
         );
     }
 
@@ -119,12 +76,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             )
         );
         factory.create(
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE + 1,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            address(assetRegistry), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE + 1
         );
     }
 
@@ -135,12 +87,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
         factory.create(
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            address(assetRegistry), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE
         );
     }
 }
