@@ -1,7 +1,7 @@
 ---
 name: Audit Issue
 about: Report an internal auditing issue
-title: "[High/Medium/Low] Insert vulnerability title"
+title: "[Critical/High/Medium/Low] Insert vulnerability title"
 labels: audit-issue
 assignees: syakunin, sat-naoki
 
