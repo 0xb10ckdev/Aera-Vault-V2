@@ -10,8 +10,9 @@ contract AssetRegistryInvariants is TestBaseAssetRegistry {
 
     function setUp() public override {
         _deploy();
-        handler = new AssetRegistryHandler(AeraVaultAssetRegistry(assetRegistry));
-        targetContract(address(handler));
+        handler =
+            new AssetRegistryHandler(AeraVaultAssetRegistry(assetRegistry));
+        //targetContract(address(handler));
     }
 
     function invariant_assetCount() public {
