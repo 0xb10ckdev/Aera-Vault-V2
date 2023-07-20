@@ -49,17 +49,21 @@ contract DeployTestVault is Script {
     );
 
     TargetSighash[] targetSighashAllowList = [
-        TargetSighashLib.toTargetSighash(address(usdc), _APPROVE_SELECTOR),
-        TargetSighashLib.toTargetSighash(address(usdc), _TRANSFER_SELECTOR),
-        TargetSighashLib.toTargetSighash(address(weth), _APPROVE_SELECTOR),
-        TargetSighashLib.toTargetSighash(address(weth), _TRANSFER_SELECTOR),
-        TargetSighashLib.toTargetSighash(swapRouterAddress, _EXACT_INPUT_SELECTOR),
+        TargetSighashLib.toTargetSighash(address(usdc), IERC20.approve.selector),
+        TargetSighashLib.toTargetSighash(address(usdc), IERC20.transfer.selector),
+        TargetSighashLib.toTargetSighash(address(weth), IERC20.approve.selector),
+        TargetSighashLib.toTargetSighash(address(weth), IERC20.transfer.selector),
         TargetSighashLib.toTargetSighash(
-            swapRouterAddress, _EXACT_INPUT_SINGLE_SELECTOR
+            swapRouterAddress, ISwapRouter.exactInput.selector
         ),
-        TargetSighashLib.toTargetSighash(swapRouterAddress, _EXACT_OUTPUT_SELECTOR),
         TargetSighashLib.toTargetSighash(
-            swapRouterAddress, _EXACT_OUTPUT_SINGLE_SELECTOR
+            swapRouterAddress, ISwapRouter.exactInputSingle.selector
+        ),
+        TargetSighashLib.toTargetSighash(
+            swapRouterAddress, ISwapRouter.exactOutput.selector
+        ),
+        TargetSighashLib.toTargetSighash(
+            swapRouterAddress, ISwapRouter.exactOutputSingle.selector
         )
     ];
 
