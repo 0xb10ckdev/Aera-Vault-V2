@@ -3,6 +3,7 @@ pragma solidity ^0.8.11;
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "src/v2/interfaces/IAeraVaultV2Factory.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
@@ -13,7 +14,6 @@ import "src/v2/dependencies/openzeppelin/IERC20.sol";
 
 contract DeployTestVault is Script {
     using TargetSighashLib for TargetSighash;
-    // TODO add live deployed factory address
 
     address factoryAddressPolygon = 0x94491d7357097Bd55272bEeBF371b8d74125c233;
     address guardianAddress = 0xba1a7CEd3090D6235d454bfe52e53B215AB23421;
@@ -24,29 +24,6 @@ contract DeployTestVault is Script {
     IERC20 usdc = IERC20(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
     IERC20 weth = IERC20(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
     address wethOracleAddress = 0xF9680D99D6C9589e2a93a78A04A279e509205945;
-
-    bytes4 internal constant _APPROVE_SELECTOR =
-        bytes4(keccak256("approve(address,uint256)"));
-    bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
-        bytes4(keccak256("increaseAllowance(address,uint256)"));
-    bytes4 internal constant _TRANSFER_SELECTOR =
-        bytes4(keccak256("transfer(address,uint256)"));
-    bytes4 internal constant _EXACT_INPUT_SELECTOR = bytes4(
-        keccak256("exactInput((bytes,address,uint256,uint256,uint256))")
-    );
-    bytes4 internal constant _EXACT_INPUT_SINGLE_SELECTOR = bytes4(
-        keccak256(
-            "exactInputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"
-        )
-    );
-    bytes4 internal constant _EXACT_OUTPUT_SELECTOR = bytes4(
-        keccak256("exactOutput((bytes,address,uint256,uint256,uint256))")
-    );
-    bytes4 internal constant _EXACT_OUTPUT_SINGLE_SELECTOR = bytes4(
-        keccak256(
-            "exactOutputSingle((address,address,uint24,address,uint256,uint256,uint256,uint160))"
-        )
-    );
 
     TargetSighash[] targetSighashAllowList = [
         TargetSighashLib.toTargetSighash(address(usdc), IERC20.approve.selector),

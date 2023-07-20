@@ -3,3 +3,4 @@ test/=test/
 
 @chainlink/=src/v2/dependencies/chainlink
 @openzeppelin/=src/v2/dependencies/openzeppelin/
+@uniswap/=lib/uniswap
