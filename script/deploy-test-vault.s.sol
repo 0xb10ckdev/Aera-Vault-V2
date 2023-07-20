@@ -15,12 +15,15 @@ contract DeployTestVault is Script {
     using TargetSighashLib for TargetSighash;
     // TODO add live deployed factory address
 
-    address factoryAddress = 0x11e73abC581190B9fe31B804a5877aB5C2754C64;
+    address factoryAddressPolygon = 0x94491d7357097Bd55272bEeBF371b8d74125c233;
     address guardianAddress = 0xba1a7CEd3090D6235d454bfe52e53B215AB23421;
     address feeRecipientAddress = 0xba1a7CEd3090D6235d454bfe52e53B215AB23421;
     address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 0;
     uint256 maxDailyExecutionLoss = 100;
+    IERC20 usdc = IERC20(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
+    IERC20 weth = IERC20(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
+    address wethOracleAddress = 0xF9680D99D6C9589e2a93a78A04A279e509205945;
 
     bytes4 internal constant _APPROVE_SELECTOR =
         bytes4(keccak256("approve(address,uint256)"));
@@ -46,11 +49,10 @@ contract DeployTestVault is Script {
     );
 
     TargetSighash[] targetSighashAllowList = [
-        TargetSighashLib.toTargetSighash(swapRouterAddress, _APPROVE_SELECTOR),
-        TargetSighashLib.toTargetSighash(
-            swapRouterAddress, _INCREASE_ALLOWANCE_SELECTOR
-        ),
-        TargetSighashLib.toTargetSighash(swapRouterAddress, _TRANSFER_SELECTOR),
+        TargetSighashLib.toTargetSighash(address(usdc), _APPROVE_SELECTOR),
+        TargetSighashLib.toTargetSighash(address(usdc), _TRANSFER_SELECTOR),
+        TargetSighashLib.toTargetSighash(address(weth), _APPROVE_SELECTOR),
+        TargetSighashLib.toTargetSighash(address(weth), _TRANSFER_SELECTOR),
         TargetSighashLib.toTargetSighash(swapRouterAddress, _EXACT_INPUT_SELECTOR),
         TargetSighashLib.toTargetSighash(
             swapRouterAddress, _EXACT_INPUT_SINGLE_SELECTOR
@@ -65,7 +67,7 @@ contract DeployTestVault is Script {
         address assetRegistryAddress = deployAssetRegistry();
 
         IAeraVaultV2Factory aeraVaultV2Factory =
-            IAeraVaultV2Factory(factoryAddress);
+            IAeraVaultV2Factory(factoryAddressPolygon);
         vm.startBroadcast();
         aeraVaultV2Factory.create(
             assetRegistryAddress,
@@ -81,9 +83,6 @@ contract DeployTestVault is Script {
     function deployAssetRegistry() public returns (address) {
         IAssetRegistry.AssetInformation[] memory assets =
             new IAssetRegistry.AssetInformation[](2);
-        IERC20 usdc = IERC20(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
-        IERC20 weth = IERC20(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
-        address wethOracleAddress = 0xF9680D99D6C9589e2a93a78A04A279e509205945;
         assets[0] = IAssetRegistry.AssetInformation({
             asset: usdc,
             isERC4626: false,
