@@ -64,13 +64,12 @@ contract DeployTestVault is Script {
             maxDailyExecutionLoss,
             targetSighashAllowlist
         );
-        AeraVaultHooks hooks =
-        new AeraVaultHooks(address(vault), maxDailyExecutionLoss, targetSighashAllowlist);
-        vault.setHooks(address(hooks));
+        // Currently Factory.create deploys and sets hooks, but won't in the future
+        // AeraVaultHooks hooks =
+        // new AeraVaultHooks(address(vault), maxDailyExecutionLoss, targetSighashAllowlist);
+        // vault.setHooks(address(hooks));
         vm.stopBroadcast();
     }
-
-    function deployHooks() public returns (address) {}
 
     function deployAssetRegistry() public returns (address) {
         IAssetRegistry.AssetInformation[] memory assets =
