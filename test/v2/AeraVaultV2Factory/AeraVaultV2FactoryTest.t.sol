@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/interfaces/ICustodyEvents.sol";
+import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/interfaces/ICustodyEvents.sol";
 import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
 
 contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
-    AeraVaultV2Factory factory;
-
-    function setUp() public virtual override {
+    function setUp() public override {
         super.setUp();
 
-        factory = new AeraVaultV2Factory();
+        if (_testWithDeployedContracts()) {
+            (address deployedAssetRegistry, address deployedFactory,,) =
+                _loadDeployedAddresses();
+
+            assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+            factory = AeraVaultV2Factory(deployedFactory);
+
+            _updateOwnership();
+            _loadParameters();
+        }
     }
 
     function test_createAeraVaultV2_fail_whenCallerIsNotOwner() public {

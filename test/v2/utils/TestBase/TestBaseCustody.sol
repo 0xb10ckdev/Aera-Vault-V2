@@ -1,50 +1,161 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import {stdJson} from "forge-std/Script.sol";
 import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import {Deployer} from "test/utils/Deployer.sol";
+import "src/v2/AeraVaultV2Factory.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
-import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
-import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
+import {OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
-    address internal _WBTC_ADDRESS = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address internal _USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address internal _WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address internal _BTC_USD_ORACLE =
+contract TestBaseCustody is TestBase, TestBaseVariables {
+    using stdJson for string;
+
+    address internal constant _WBTC_ADDRESS =
+        0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal constant _USDC_ADDRESS =
+        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal constant _WETH_ADDRESS =
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal constant _BTC_USD_ORACLE =
         0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
-    address internal _ETH_USD_ORACLE =
+    address internal constant _ETH_USD_ORACLE =
         0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    uint256 internal constant _MAX_FEE = 10 ** 9;
+    uint256 internal constant _MAX_DAILY_EXECUTION_LOSS = 0.1e18;
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
-    uint256 internal _MAX_FEE = 10 ** 9;
-    uint256 internal _MAX_DAILY_EXECUTION_LOSS = 0.1e18;
 
-    AeraVaultAssetRegistry assetRegistry;
-    AeraVaultHooks hooks;
-    AeraVaultV2 vault;
-    mapping(IERC20 => bool) isERC4626;
-    mapping(IERC20 => uint256) underlyingIndex;
-    IAssetRegistry.AssetInformation[] assetsInformation;
-    IERC20 feeToken;
-    uint256[] oraclePrices;
-    uint256 numeraireId;
-    uint256 nonNumeraireId;
-    TargetSighash[] targetSighashAllowlist;
+    AeraVaultV2Factory public factory;
+    AeraVaultAssetRegistry public assetRegistry;
+    AeraVaultHooks public hooks;
+    AeraVaultV2 public vault;
+    mapping(IERC20 => bool) public isERC4626;
+    mapping(IERC20 => uint256) public underlyingIndex;
+    IAssetRegistry.AssetInformation[] public assetsInformation;
+    IERC20 public feeToken;
+    uint256[] public oraclePrices;
+    uint256 public numeraireId;
+    uint256 public nonNumeraireId;
+    TargetSighash[] public targetSighashAllowlist;
 
     function setUp() public virtual {
-        vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 17642400);
+        if (_testWithDeployedContracts()) {
+            vm.createSelectFork(vm.envString("FORK_URL"));
+        } else {
+            vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 17642400);
 
-        _init();
+            _init();
 
-        _deployAssetRegistry();
-        _deployAeraVaultV2();
-        _deployHooks();
+            _deployAeraVaultV2Factory();
+            _deployAssetRegistry();
+            _deployAeraVaultV2();
+            _deployHooks();
+        }
+    }
+
+    function _updateOwnership() internal {
+        if (address(assetRegistry) != address(0)) {
+            vm.prank(assetRegistry.owner());
+            assetRegistry.transferOwnership(address(this));
+        }
+        if (address(factory) != address(0)) {
+            vm.prank(factory.owner());
+            factory.transferOwnership(address(this));
+        }
+        if (address(vault) != address(0)) {
+            vm.prank(vault.owner());
+            vault.transferOwnership(address(this));
+        }
+        if (address(hooks) != address(0)) {
+            vm.prank(hooks.owner());
+            hooks.transferOwnership(address(this));
+        }
+    }
+
+    function _loadParameters() internal {
+        if (address(vault) != address(0)) {
+            _GUARDIAN = vault.guardian();
+            _FEE_RECIPIENT = vault.feeRecipient();
+        }
+
+        if (address(assetRegistry) != address(0)) {
+            feeToken = assetRegistry.feeToken();
+            numeraireId = assetRegistry.numeraireId();
+
+            IAssetRegistry.AssetInformation[] memory registeredAssets =
+                assetRegistry.assets();
+
+            for (uint256 i = 0; i < registeredAssets.length; i++) {
+                assetsInformation.push(registeredAssets[i]);
+                assets.push(registeredAssets[i].asset);
+
+                deal(address(assets[i]), address(this), 10_000_000e18);
+                deal(address(assets[i]), _USER, 10_000_000e18);
+
+                if (registeredAssets[i].isERC4626) {
+                    yieldAssets.push(
+                        IERC4626(address(registeredAssets[i].asset))
+                    );
+                } else {
+                    erc20Assets.push(registeredAssets[i].asset);
+
+                    if (i != numeraireId) {
+                        nonNumeraireId = i;
+                    }
+                }
+            }
+
+            _initUnderlyingIndexes();
+
+            for (uint256 i = 0; i < assets.length; i++) {
+                uint256 index = i;
+                if (assetsInformation[i].isERC4626) {
+                    index = underlyingIndex[assets[i]];
+                }
+                if (index == numeraireId) {
+                    oraclePrices.push(_getScaler(assets[numeraireId]));
+                } else {
+                    oraclePrices.push(
+                        _getOraclePrice(
+                            address(assetsInformation[index].oracle)
+                        )
+                    );
+                }
+            }
+        }
+    }
+
+    function _loadDeployedAddresses()
+        internal
+        returns (
+            address deployedAssetRegistry,
+            address deployedFactory,
+            address deployedCustody,
+            address deployedHooks
+        )
+    {
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/Deployments.json");
+        string memory json = vm.readFile(path);
+
+        try vm.parseJsonAddress(json, ".assetRegistry") returns (address addr)
+        {
+            deployedAssetRegistry = addr;
+        } catch {}
+        try vm.parseJsonAddress(json, ".factory") returns (address addr) {
+            deployedFactory = addr;
+        } catch {}
+        try vm.parseJsonAddress(json, ".custody") returns (address addr) {
+            deployedCustody = addr;
+        } catch {}
+        try vm.parseJsonAddress(json, ".hooks") returns (address addr) {
+            deployedHooks = addr;
+        } catch {}
     }
 
     function _init() internal {
@@ -81,15 +192,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
             }
         }
 
-        for (uint256 i = 0; i < yieldAssets.length; i++) {
-            isERC4626[yieldAssets[i]] = true;
-            for (uint256 j = 0; j < assets.length; j++) {
-                if (yieldAssets[i].asset() == address(assets[j])) {
-                    underlyingIndex[yieldAssets[i]] = j;
-                    break;
-                }
-            }
-        }
+        _initUnderlyingIndexes();
 
         for (uint256 i = 0; i < assets.length; i++) {
             if (!isERC4626[assets[i]]) {
@@ -149,6 +252,18 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
         feeToken = IERC20(_USDC_ADDRESS);
     }
 
+    function _initUnderlyingIndexes() internal {
+        for (uint256 i = 0; i < yieldAssets.length; i++) {
+            isERC4626[yieldAssets[i]] = true;
+            for (uint256 j = 0; j < assets.length; j++) {
+                if (yieldAssets[i].asset() == address(assets[j])) {
+                    underlyingIndex[yieldAssets[i]] = j;
+                    break;
+                }
+            }
+        }
+    }
+
     function _deployYieldAssets() internal {
         ERC4626Mock[] memory erc4626Mocks = new ERC4626Mock[](2);
 
@@ -170,6 +285,10 @@ contract TestBaseCustody is TestBase, TestBaseVariables, Deployer {
             yieldAssets.push(IERC4626(address(erc4626Mocks[1])));
             yieldAssets.push(IERC4626(address(erc4626Mocks[0])));
         }
+    }
+
+    function _deployAeraVaultV2Factory() internal {
+        factory = new AeraVaultV2Factory();
     }
 
     function _deployAssetRegistry() internal {

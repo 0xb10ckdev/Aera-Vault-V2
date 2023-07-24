@@ -1,15 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "src/v2/AeraVaultAssetRegistry.sol";
+import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/ICustodyEvents.sol";
 import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
 import {OracleMock} from "test/utils/OracleMock.sol";
-import "forge-std/console.sol";
 
 contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
     function setUp() public virtual override {
         super.setUp();
+
+        if (_testWithDeployedContracts()) {
+            (,, address deployedCustody,) = _loadDeployedAddresses();
+
+            vault = AeraVaultV2(deployedCustody);
+            assetRegistry =
+                AeraVaultAssetRegistry(address(vault.assetRegistry()));
+            hooks = AeraVaultHooks(address(vault.hooks()));
+
+            _updateOwnership();
+            _loadParameters();
+        }
 
         for (uint256 i = 0; i < assets.length; i++) {
             assets[i].approve(
@@ -36,12 +49,13 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
     }
 
     function _setInvalidOracle(uint256 index) internal {
-        OracleMock oracle = new OracleMock(6);
-        oracle.setLatestAnswer(-1);
-        assetsInformation[index].oracle =
-            AggregatorV2V3Interface(address(oracle));
-
-        assetRegistry.removeAsset(address(assetsInformation[index].asset));
-        assetRegistry.addAsset(assetsInformation[index]);
+        deployCodeTo(
+            "OracleMock.sol",
+            abi.encode(6),
+            address(assetsInformation[index].oracle)
+        );
+        OracleMock(address(assetsInformation[index].oracle)).setLatestAnswer(
+            -1
+        );
     }
 }

@@ -10,13 +10,8 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         uint256 numAssets = assets.length;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            hooks.addTargetSighash(
-                address(assets[i]),
-                bytes4(keccak256("transfer(address,uint256)"))
-            );
-        }
+            hooks.addTargetSighash(address(assets[i]), _TRANSFER_SELECTOR);
 
-        for (uint256 i = 0; i < numAssets; i++) {
             assets[i].approve(
                 address(vault), 1_000_000 * _getScaler(assets[i])
             );
@@ -45,7 +40,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
                 data: abi.encodeWithSignature(
                     "transfer(address,uint256)",
                     address(this),
-                    assets[i].balanceOf(address(vault)) - 100e6
+                    assets[i].balanceOf(address(vault)) / 2
                     )
             });
         }
@@ -70,7 +65,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
                 data: abi.encodeWithSignature(
                     "transfer(address,uint256)",
                     address(this),
-                    assets[i].balanceOf(address(vault)) - 100e6
+                    assets[i].balanceOf(address(vault)) / 2
                     )
             });
         }
@@ -96,11 +91,9 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
             target: address(erc20Assets[0]),
             value: 0,
             data: abi.encodeWithSignature(
-                "transfer(address,uint256)", address(this), 100e6
+                "transfer(address,uint256)", address(this), 1
                 )
         });
-
-        hooks.addTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -127,7 +120,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
             target: address(erc20Assets[0]),
             value: 0,
             data: abi.encodeWithSignature(
-                "transfer(address,uint256)", address(this), 100e6
+                "transfer(address,uint256)", address(this), 100
                 )
         });
         operations[2] = Operation({
@@ -138,14 +131,12 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
                 )
         });
 
-        hooks.addTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
-
         uint256 balance = erc20Assets[0].balanceOf(address(vault));
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
 
-        assertEq(erc20Assets[0].balanceOf(address(vault)), balance - 100e6);
+        assertEq(erc20Assets[0].balanceOf(address(vault)), balance - 100);
         assertEq(erc20Assets[0].allowance(address(vault), address(this)), 0);
     }
 
