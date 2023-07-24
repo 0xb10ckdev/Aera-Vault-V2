@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.19;
 
 import {console} from "forge-std/console.sol";
 import {AeraVaultV2Factory} from "src/v2/AeraVaultV2Factory.sol";
