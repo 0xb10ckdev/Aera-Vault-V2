@@ -6,6 +6,8 @@ import "forge-std/Test.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "src/v2/interfaces/IAeraVaultV2Factory.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
+import "src/v2/interfaces/IHooks.sol";
+import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/Types.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
@@ -20,12 +22,14 @@ contract DeployTestVault is Script {
     address feeRecipientAddress = 0xba1a7CEd3090D6235d454bfe52e53B215AB23421;
     address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 0;
-    uint256 maxDailyExecutionLoss = 100;
+    uint256 maxDailyExecutionLoss = 1e18;
     IERC20 usdc = IERC20(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
     IERC20 weth = IERC20(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
     address wethOracleAddress = 0xF9680D99D6C9589e2a93a78A04A279e509205945;
 
-    TargetSighash[] targetSighashAllowList = [
+    event SetHooks(address hooks);
+
+    TargetSighash[] targetSighashAllowlist = [
         TargetSighashLib.toTargetSighash(address(usdc), IERC20.approve.selector),
         TargetSighashLib.toTargetSighash(address(usdc), IERC20.transfer.selector),
         TargetSighashLib.toTargetSighash(address(weth), IERC20.approve.selector),
@@ -49,6 +53,8 @@ contract DeployTestVault is Script {
 
         IAeraVaultV2Factory aeraVaultV2Factory =
             IAeraVaultV2Factory(factoryAddressPolygon);
+        address vaultAddress = 0x14F19E4a7364c4e6da55f2B08D65323e95A71915;
+        AeraVaultV2 vault = AeraVaultV2(vaultAddress);
         vm.startBroadcast();
         aeraVaultV2Factory.create(
             assetRegistryAddress,
@@ -56,10 +62,15 @@ contract DeployTestVault is Script {
             feeRecipientAddress,
             fee,
             maxDailyExecutionLoss,
-            targetSighashAllowList
+            targetSighashAllowlist
         );
+        AeraVaultHooks hooks =
+        new AeraVaultHooks(address(vault), maxDailyExecutionLoss, targetSighashAllowlist);
+        vault.setHooks(address(hooks));
         vm.stopBroadcast();
     }
+
+    function deployHooks() public returns (address) {}
 
     function deployAssetRegistry() public returns (address) {
         IAssetRegistry.AssetInformation[] memory assets =
