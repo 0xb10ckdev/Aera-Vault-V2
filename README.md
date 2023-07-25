@@ -89,13 +89,6 @@ Prior to deployment, make sure you have provided private key or mnemonic in your
 And you should specify the parameters in configs.
 To do this, copy the example config files without the `.example` name in `/config` path.
 
-Deploy the AeraVaultAssetRegistry to a specific network:
-
-```sh
-$ forge script script/v2/deploy/DeployAeraVaultAssetRegistry.s.sol --fork-url <URL> --broadcast
-
-```
-
 Deploy the AeraVaultV2Factory to a specific network:
 
 ```sh
@@ -106,6 +99,13 @@ Deploy the AeraVaultV2 to a specific network:
 
 ```sh
 $ forge script script/v2/deploy/DeployAeraVaultV2.s.sol --fork-url <URL> --broadcast
+```
+
+Deploy the AeraVaultAssetRegistry to a specific network:
+
+```sh
+$ forge script script/v2/deploy/DeployAeraVaultAssetRegistry.s.sol --fork-url <URL> --broadcast
+
 ```
 
 Deploy the AeraVaultHooks to a specific network:
