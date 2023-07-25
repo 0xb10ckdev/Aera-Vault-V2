@@ -1,9 +1,19 @@
+# DIRECTORIES
+
+broadcast/
 cache/
 out/
 lib/
 node_modules/
 
+# CONFIGS
+config/AeraVaultAssetRegistry.json
+config/AeraVaultHooks.json
+config/AeraVaultV2.json
+config/Deployments.json
+
 coverage*
+lcov.info
 
 .DS_Store
 

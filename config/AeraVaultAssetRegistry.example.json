@@ -1,0 +1,21 @@
+{
+  "assets": [
+    {
+      "asset": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+      "isERC4626": false,
+      "oracle": "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+    },
+    {
+      "asset": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "isERC4626": false,
+      "oracle": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "asset": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "isERC4626": false,
+      "oracle": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+    }
+  ],
+  "numeraireId": "1",
+  "feeToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+}

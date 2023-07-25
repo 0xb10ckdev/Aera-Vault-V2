@@ -11,17 +11,30 @@ import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBase {
-    AeraVaultAssetRegistry assetRegistry;
-    IAssetRegistry.AssetInformation[] assets;
-    IERC20 feeToken;
-    address numeraireAsset;
-    address nonNumeraireAsset;
-    uint256 numeraireId;
-    uint256 nonNumeraireId;
-    uint256 numAssets;
+    AeraVaultAssetRegistry public assetRegistry;
+    IAssetRegistry.AssetInformation[] public assets;
+    IERC20 public feeToken;
+    address public numeraireAsset;
+    address public nonNumeraireAsset;
+    uint256 public numeraireId;
+    uint256 public nonNumeraireId;
+    uint256 public numAssets;
 
     function setUp() public virtual {
-        _deploy();
+        if (_testWithDeployedContracts()) {
+            vm.createSelectFork(vm.envString("FORK_URL"));
+
+            address deployedAssetRegistry = _loadDeployedAddress();
+
+            assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+
+            vm.prank(assetRegistry.owner());
+            assetRegistry.transferOwnership(address(this));
+
+            _loadParameters();
+        } else {
+            _deploy();
+        }
     }
 
     function propNumeraire() public {
@@ -81,6 +94,36 @@ contract TestBaseAssetRegistry is TestBase {
             assertEq(
                 address(registryAssets[i].oracle), address(assets[i].oracle)
             );
+        }
+    }
+
+    function _loadDeployedAddress()
+        internal
+        returns (address deployedAssetRegistry)
+    {
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/Deployments.json");
+        string memory json = vm.readFile(path);
+
+        deployedAssetRegistry = vm.parseJsonAddress(json, ".assetRegistry");
+    }
+
+    function _loadParameters() internal {
+        IAssetRegistry.AssetInformation[] memory registeredAssets =
+            assetRegistry.assets();
+
+        numAssets = registeredAssets.length;
+        feeToken = assetRegistry.feeToken();
+        numeraireId = assetRegistry.numeraireId();
+        numeraireAsset = address(registeredAssets[numeraireId].asset);
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            assets.push(registeredAssets[i]);
+
+            if (!registeredAssets[i].isERC4626 && i != numeraireId) {
+                nonNumeraireId = i;
+                nonNumeraireAsset = address(registeredAssets[i].asset);
+            }
         }
     }
 

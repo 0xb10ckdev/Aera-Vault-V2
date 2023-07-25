@@ -4,7 +4,7 @@ out = 'out'
 libs = ['lib']
 
 fs_permissions = [
-  { access = "read", path = "./" },
+  { access = "read-write", path = "./" },
 ]
 
 [fmt]

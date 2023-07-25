@@ -8,7 +8,7 @@ import {TestBase} from "test/utils/TestBase.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 abstract contract TestBaseSweepable is TestBase, ISweepableEvents {
-    ISweepable sweepable;
+    ISweepable public sweepable;
 
     function test_sweep_success_fuzzed(
         uint256 balance,

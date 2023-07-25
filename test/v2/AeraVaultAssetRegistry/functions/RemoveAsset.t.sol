@@ -26,12 +26,23 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_fail_whenRemovalAssetIsFeeToken() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__CannotRemoveFeeToken.selector,
-                feeToken
-            )
-        );
+        if (address(feeToken) == numeraireAsset) {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    AeraVaultAssetRegistry
+                        .Aera__CannotRemoveNumeraireAsset
+                        .selector,
+                    feeToken
+                )
+            );
+        } else {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    AeraVaultAssetRegistry.Aera__CannotRemoveFeeToken.selector,
+                    feeToken
+                )
+            );
+        }
         assetRegistry.removeAsset(address(feeToken));
     }
 
