@@ -99,19 +99,19 @@ $ forge script script/v2/deploy/DeployAeraVaultAssetRegistry.s.sol --fork-url <U
 Deploy the AeraVaultV2Factory to a specific network:
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultV2Factory.s.sol.s.sol --fork-url <URL> --broadcast
+$ forge script script/v2/deploy/DeployAeraVaultV2Factory.s.sol --fork-url <URL> --broadcast
 ```
 
 Deploy the AeraVaultV2 to a specific network:
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultV2.s.sol.s.sol --fork-url <URL> --broadcast
+$ forge script script/v2/deploy/DeployAeraVaultV2.s.sol --fork-url <URL> --broadcast
 ```
 
 Deploy the AeraVaultHooks to a specific network:
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultHooks.s.sol.s.sol --fork-url <URL> --broadcast
+$ forge script script/v2/deploy/DeployAeraVaultHooks.s.sol --fork-url <URL> --broadcast
 ```
 
 To just get transaction calldata instead of deployment, you can omit `--broadcast`.
