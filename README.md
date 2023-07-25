@@ -119,6 +119,48 @@ Once the deployments are done, the deployed addresses will be stored in the `/co
 If you want to run the tests with the deployed contracts, you need to specify the deployment addresses in the file, and set `TEST_WITH_DEPLOYED_CONTRACTS` as `true`.
 Then just run the tests.
 
+#### Deployment Flow
+
+```mermaid
+graph LR
+    D{Deployer}
+    subgraph Contracts
+        F(AeraVaultV2Factory)
+        A(AeraVaultAssetRegistry)
+        V(AeraVaultV2)
+        H(AeraVaultHooks)
+    end
+    subgraph Process
+        S1[1. Deploy AeraVaultV2Factory]:::Process
+        S2[2. Deploy AeraVaultAssetRegistry]:::Process
+        S3[3. Deploy AeraVaultV2]:::Process
+        S4[4. Deploy AeraVaultHooks]:::Process
+        S5[5. Link Vault and Hooks]:::Process
+    end
+    D --- S1 --> F
+    D --- S2 --> A
+    D --- S3 --> F -. Create .-> V -. link .-> A
+    D --- S4 --> H -. link .-> V
+    D --- S5 --> V -. link .-> H
+
+    %% ===== This is just for order of process =====
+    S1 --- A
+    S2 --- H
+    %% =============================================
+
+    linkStyle 0,1 stroke:black
+    linkStyle 2,3 stroke:cyan
+    linkStyle 4,5,6,7 stroke:red
+    linkStyle 8,9,10 stroke:blue
+    linkStyle 11,12,13 stroke:green
+    linkStyle 14,15 stroke:none
+
+    classDef Process fill:none,stroke:none
+
+    style Process fill:none,stroke:grey
+    style Contracts fill:none,stroke:grey
+```
+
 ## Syntax Highlighting
 
 If you use VSCode, you can enjoy syntax highlighting for your Solidity code via the
