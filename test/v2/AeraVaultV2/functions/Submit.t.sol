@@ -115,4 +115,19 @@ contract SubmitTest is TestBaseAeraVaultV2 {
             assertEq(erc20Assets[i].balanceOf(address(this)), balances[i] + 1);
         }
     }
+
+    function test_submit_increases_fees() public {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_GUARDIAN, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+
+        vm.warp(block.timestamp + 1000);
+
+        test_submit_success();
+
+        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.fees(feeRecipient), 499999);
+    }
 }

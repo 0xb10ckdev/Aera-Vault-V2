@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import "src/v2/interfaces/ICustodyEvents.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
     AssetValue[] public depositAmounts;
@@ -87,5 +88,20 @@ contract DepositTest is TestBaseAeraVaultV2 {
                 depositAmounts[i].value
             );
         }
+    }
+
+    function test_deposit_increases_fees() public {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+
+        vm.warp(block.timestamp + 1000);
+
+        test_deposit_success();
+
+        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.fees(feeRecipient), 499999);
     }
 }
