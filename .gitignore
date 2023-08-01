@@ -18,3 +18,5 @@ lcov.info
 .DS_Store
 
 .env
+
+mnemonic.txt
