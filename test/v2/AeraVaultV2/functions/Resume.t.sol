@@ -36,4 +36,21 @@ contract ResumeTest is TestBaseAeraVaultV2 {
 
         vault.resume();
     }
+
+    function test_resume_does_not_increase_fees() public {
+        vault.pause();
+
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+
+        vm.warp(block.timestamp + 1000);
+
+        vault.resume();
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+    }
 }

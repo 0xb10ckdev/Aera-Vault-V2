@@ -67,4 +67,19 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
 
         assertEq(address(vault.assetRegistry()), address(newAssetRegistry));
     }
+
+    function test_setAssetRegistry_increases_fees() public {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+
+        vm.warp(block.timestamp + 1000);
+
+        test_setAssetRegistry_success();
+
+        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.fees(feeRecipient), 499999);
+    }
 }

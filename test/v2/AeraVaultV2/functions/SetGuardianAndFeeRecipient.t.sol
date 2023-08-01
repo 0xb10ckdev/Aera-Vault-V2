@@ -72,4 +72,19 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
         assertEq(vault.guardian(), _USER);
         assertEq(vault.feeRecipient(), address(1));
     }
+
+    function test_setGuardianAndFeeRecipient_increases_fees() public {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+
+        vm.warp(block.timestamp + 1000);
+
+        test_setGuardianAndFeeRecipient_success();
+
+        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.fees(feeRecipient), 499999);
+    }
 }
