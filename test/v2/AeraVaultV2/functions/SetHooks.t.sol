@@ -11,6 +11,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
         super.setUp();
 
         newHooks = new AeraVaultHooks(
+            address(this),
             address(vault),
             _MAX_DAILY_EXECUTION_LOSS,
             targetSighashAllowlist

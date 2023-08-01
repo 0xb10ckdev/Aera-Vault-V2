@@ -131,7 +131,7 @@ contract TestBaseAssetRegistry is TestBase {
         _createAssets(4, 2);
 
         assetRegistry =
-            new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
+        new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {

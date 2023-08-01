@@ -9,6 +9,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     {
         vm.expectRevert(IHooks.Aera__CustodyIsZeroAddress.selector);
         new AeraVaultHooks(
+            address(this),
             address(0),
             _MAX_DAILY_EXECUTION_LOSS,
             new TargetSighash[](0)
@@ -25,6 +26,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         );
 
         new AeraVaultHooks(
+            address(this),
             address(1),
             _MAX_DAILY_EXECUTION_LOSS,
             new TargetSighash[](0)
@@ -44,6 +46,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         }
 
         hooks = new AeraVaultHooks(
+            address(this),
             address(vault),
             _MAX_DAILY_EXECUTION_LOSS,
             targetSighashAllowlist

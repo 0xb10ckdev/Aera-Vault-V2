@@ -9,6 +9,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
         new AeraVaultV2(
+            address(this),
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
@@ -26,6 +27,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
 
         new AeraVaultV2(
+            address(this),
             address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
@@ -38,6 +40,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             address(0),
             _FEE_RECIPIENT,
@@ -48,6 +51,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenGuardianIsOwner() public {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             address(this),
             _FEE_RECIPIENT,
@@ -60,6 +64,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
         new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             _GUARDIAN,
             address(0),
@@ -72,6 +77,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             _GUARDIAN,
             address(this),
@@ -86,6 +92,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             )
         );
         new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
@@ -100,6 +107,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
         vault = new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
