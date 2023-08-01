@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
@@ -73,10 +72,6 @@ contract DeployScript is DeployScriptBase {
         if (address(vault.hooks()) != deployedHooks) {
             vault.setHooks(deployedHooks);
         }
-
-        console.log(vault.owner());
-        console.log(AeraVaultAssetRegistry(deployedAssetRegistry).owner());
-        console.log(AeraVaultHooks(deployedHooks).owner());
 
         vm.stopBroadcast();
 
