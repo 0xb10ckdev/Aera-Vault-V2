@@ -140,6 +140,55 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         assertEq(erc20Assets[0].allowance(address(vault), address(this)), 0);
     }
 
+    function test_afterSubmit_newDay_success() public {
+        Operation[] memory operations = new Operation[](3);
+        operations[0] = Operation({
+            target: address(erc20Assets[0]),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "approve(address,uint256)", address(this), 1000
+                )
+        });
+        operations[1] = Operation({
+            target: address(erc20Assets[0]),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "transfer(address,uint256)", address(this), 100
+                )
+        });
+        operations[2] = Operation({
+            target: address(erc20Assets[0]),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "approve(address,uint256)", address(this), 0
+                )
+        });
+
+        uint256 balance = erc20Assets[0].balanceOf(address(vault));
+
+        uint256 hooksCurrentDay = hooks.currentDay();
+        uint256 day = block.timestamp / 1 days;
+        assertEq(hooksCurrentDay, day);
+        vm.warp(block.timestamp + 1 days);
+        day = block.timestamp / 1 days;
+        assertEq(hooksCurrentDay + 1, day);
+
+        vm.prank(vault.feeRecipient());
+        vault.claim();
+
+        uint256 beforeValue = vault.value();
+        vm.prank(_GUARDIAN);
+        vault.submit(operations);
+
+        assertEq(
+            hooks.cumulativeDailyMultiplier(),
+            vault.value() * ONE / beforeValue
+        );
+
+        assertEq(erc20Assets[0].balanceOf(address(vault)), balance - 100);
+        assertEq(erc20Assets[0].allowance(address(vault), address(this)), 0);
+    }
+
     function _deposit() internal {
         AssetValue[] memory amounts = new AssetValue[](assets.length);
 
