@@ -49,7 +49,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// FUNCTIONS ///
 
+    /// @notice Initialize the asset registry contract by providing references to
+    ///         asset registry, guardian and other parameters.
+    /// @param owner_ The address of initial owner.
+    /// @param assets_ List of assets.
+    /// @param numeraireId_ Index of numeraire asset.
+    /// @param feeToken_ Address of fee token.
     constructor(
+        address owner_,
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
         IERC20 feeToken_
@@ -94,6 +101,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         numeraireId = numeraireId_;
         feeToken = feeToken_;
+
+        _transferOwnership(owner_);
     }
 
     /// @inheritdoc IAssetRegistry

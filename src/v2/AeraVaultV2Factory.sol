@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 
@@ -26,22 +27,39 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
 
     /// @inheritdoc IAeraVaultV2Factory
     function create(
+        bytes32 salt,
+        address owner,
         address assetRegistry,
         address guardian,
         address feeRecipient,
         uint256 fee
-    ) external override onlyOwner returns (AeraVaultV2 vault) {
-        vault = new AeraVaultV2(
-            assetRegistry,
-            guardian,
-            feeRecipient,
-            fee
+    ) external override onlyOwner returns (address deployed) {
+        bytes memory bytecode = abi.encodePacked(
+            type(AeraVaultV2).creationCode,
+            abi.encode(owner, assetRegistry, guardian, feeRecipient, fee)
         );
 
-        vault.transferOwnership(msg.sender);
+        Create2.deploy(0, salt, bytecode);
 
-        emit VaultCreated(
-            address(vault), assetRegistry, guardian, feeRecipient, fee
+        deployed = Create2.computeAddress(salt, keccak256(bytecode));
+
+        emit VaultCreated(deployed, assetRegistry, guardian, feeRecipient, fee);
+    }
+
+    /// @inheritdoc IAeraVaultV2Factory
+    function computeAddress(
+        bytes32 salt,
+        address owner,
+        address assetRegistry,
+        address guardian,
+        address feeRecipient,
+        uint256 fee
+    ) external view override returns (address) {
+        bytes memory bytecode = abi.encodePacked(
+            type(AeraVaultV2).creationCode,
+            abi.encode(owner, assetRegistry, guardian, feeRecipient, fee)
         );
+
+        return Create2.computeAddress(salt, keccak256(bytecode));
     }
 }

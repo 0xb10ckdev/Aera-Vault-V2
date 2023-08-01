@@ -57,11 +57,13 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
 
     /// @notice Initialize the hooks contract by providing references to
     ///         custody module and other parameters.
+    /// @param owner_ The address of initial owner.
     /// @param custody_ The address of custody module.
     /// @param maxDailyExecutionLoss_  The fraction of value that the vault can
     ///                                lose per day in the course of submissions.
     /// @param targetSighashAllowlist Array of target sighash to allow.
     constructor(
+        address owner_,
         address custody_,
         uint256 maxDailyExecutionLoss_,
         TargetSighash[] memory targetSighashAllowlist
@@ -87,6 +89,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         maxDailyExecutionLoss = maxDailyExecutionLoss_;
         currentDay = block.timestamp / 1 days;
         cumulativeDailyMultiplier = ONE;
+
+        _transferOwnership(owner_);
     }
 
     /// @inheritdoc IHooks

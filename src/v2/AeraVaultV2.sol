@@ -85,11 +85,13 @@ contract AeraVaultV2 is
 
     /// @notice Initialize the custody contract by providing references to
     ///         asset registry, guardian and other parameters.
+    /// @param owner_ The address of initial owner.
     /// @param assetRegistry_ The address of asset registry.
     /// @param guardian_ The address of guardian.
     /// @param feeRecipient_ The address of fee recipient.
     /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
     constructor(
+        address owner_,
         address assetRegistry_,
         address guardian_,
         address feeRecipient_,
@@ -108,6 +110,8 @@ contract AeraVaultV2 is
         feeRecipient = feeRecipient_;
         fee = fee_;
         lastFeeCheckpoint = block.timestamp;
+
+        _transferOwnership(owner_);
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
