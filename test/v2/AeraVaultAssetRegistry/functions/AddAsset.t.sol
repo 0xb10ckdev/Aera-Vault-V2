@@ -64,7 +64,6 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addERC20Asset_success() public {
-        console2.log("numeraireId", numeraireId);
         _addAsset_success(false);
     }
 
