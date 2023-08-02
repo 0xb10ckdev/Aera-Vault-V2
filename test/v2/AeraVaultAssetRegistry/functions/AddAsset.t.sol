@@ -6,31 +6,33 @@ import "../TestBaseAssetRegistry.sol";
 contract AddAssetTest is TestBaseAssetRegistry {
     event AssetAdded(IAssetRegistry.AssetInformation asset);
 
-    IAssetRegistry.AssetInformation newAsset;
+    IAssetRegistry.AssetInformation newERC20Asset;
+    IAssetRegistry.AssetInformation newERC4626Asset;
 
     function setUp() public override {
         _deploy();
 
-        (, newAsset) = _createAsset();
+        (, newERC20Asset) = _createAsset(false, address(0));
+        (, newERC4626Asset) = _createAsset(true, address(newERC20Asset.asset));
     }
 
     function test_addAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        assetRegistry.addAsset(newAsset);
+        assetRegistry.addAsset(newERC20Asset);
     }
 
     function test_addAsset_fail_whenOracleIsZeroAddress() public {
-        newAsset.oracle = AggregatorV2V3Interface(address(0));
+        newERC20Asset.oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OracleIsZeroAddress.selector,
-                newAsset.asset
+                newERC20Asset.asset
             )
         );
-        assetRegistry.addAsset(newAsset);
+        assetRegistry.addAsset(newERC20Asset);
     }
 
     function test_addAsset_fail_whenAssetIsAlreadyRegistered() public {
@@ -43,10 +45,24 @@ contract AddAssetTest is TestBaseAssetRegistry {
         assetRegistry.addAsset(assets[nonNumeraireId]);
     }
 
-    function test_addAsset_success() public {
+    function test_addERC20Asset_success() public {
+        _addAsset_success(false);
+    }
+
+    function test_addERC4626Asset_success() public {
+        _addAsset_success(true);
+    }
+
+    function _addAsset_success(bool isERC4626) internal {
         uint256 numRegistryAssets = assetRegistry.assets().length;
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
+        IAssetRegistry.AssetInformation memory newAsset;
+        if (isERC4626) {
+            newAsset = newERC4626Asset;
+        } else {
+            newAsset = newERC20Asset;
+        }
         emit AssetAdded(newAsset);
 
         assetRegistry.addAsset(newAsset);
@@ -83,7 +99,11 @@ contract AddAssetTest is TestBaseAssetRegistry {
 
         propNumeraire();
         propFeeToken();
-        propNumYieldAssets();
+        if (isERC4626) {
+            propNumNonYieldAssets();
+        } else {
+            propNumYieldAssets();
+        }
         propAssetsSorted();
     }
 }

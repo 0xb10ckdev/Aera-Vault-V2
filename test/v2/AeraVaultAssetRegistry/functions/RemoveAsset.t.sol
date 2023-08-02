@@ -47,19 +47,28 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {
-        (ERC20Mock erc20,) = _createAsset();
+        (address assetAddress,) = _createAsset(false, address(0));
+        ERC20Mock erc20 = ERC20Mock(assetAddress);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__AssetNotRegistered.selector, erc20
             )
         );
-        assetRegistry.removeAsset(address(erc20));
+        assetRegistry.removeAsset(assetAddress);
     }
 
-    function test_removeAsset_success() public {
+    function test_removeERC20Asset_success() public {
+        _removeAsset_success(nonNumeraireId, false);
+    }
+
+    function test_removeERC4626Asset_success() public {
+        _removeAsset_success(nonNumeraireERC4626Id, true);
+    }
+
+    function _removeAsset_success(uint256 assetId, bool isERC4626) internal {
         uint256 numRegistryAssets = assetRegistry.assets().length;
-        IERC20 removalAsset = assets[nonNumeraireId].asset;
+        IERC20 removalAsset = assets[assetId].asset;
 
         vm.expectEmit(true, true, true, true, address(assetRegistry));
         emit AssetRemoved(address(removalAsset));
@@ -97,7 +106,11 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
 
         propNumeraire();
         propFeeToken();
-        propNumYieldAssets();
+        if (isERC4626) {
+            propNumNonYieldAssets();
+        } else {
+            propNumYieldAssets();
+        }
         propAssetsSorted();
     }
 }

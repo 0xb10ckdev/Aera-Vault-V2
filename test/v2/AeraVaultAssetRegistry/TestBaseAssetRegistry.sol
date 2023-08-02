@@ -16,8 +16,10 @@ contract TestBaseAssetRegistry is TestBase {
     IERC20 public feeToken;
     address public numeraireAsset;
     address public nonNumeraireAsset;
+    address public nonNumeraireERC4626Asset;
     uint256 public numeraireId;
     uint256 public nonNumeraireId;
+    uint256 public nonNumeraireERC4626Id;
     uint256 public numAssets;
 
     function setUp() public virtual {
@@ -48,6 +50,27 @@ contract TestBaseAssetRegistry is TestBase {
 
     function propFeeToken() public {
         assertEq(address(feeToken), address(assetRegistry.feeToken()));
+    }
+
+    function propNumNonYieldAssets() public {
+        IAssetRegistry.AssetInformation[] memory registryAssets =
+            assetRegistry.assets();
+
+        uint256 numNonYieldAssets = 0;
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (!assets[i].isERC4626) {
+                numNonYieldAssets++;
+            }
+        }
+
+        uint256 numRegisteredNonYieldAssets = 0;
+        for (uint256 i = 0; i < registryAssets.length; i++) {
+            if (!registryAssets[i].isERC4626) {
+                numRegisteredNonYieldAssets++;
+            }
+        }
+
+        assertEq(numNonYieldAssets, numRegisteredNonYieldAssets);
     }
 
     function propNumYieldAssets() public {
@@ -124,6 +147,10 @@ contract TestBaseAssetRegistry is TestBase {
                 nonNumeraireId = i;
                 nonNumeraireAsset = address(registeredAssets[i].asset);
             }
+            if (registeredAssets[i].isERC4626 && i != numeraireId) {
+                nonNumeraireERC4626Id = i;
+                nonNumeraireERC4626Asset = address(registeredAssets[i].asset);
+            }
         }
     }
 
@@ -136,8 +163,10 @@ contract TestBaseAssetRegistry is TestBase {
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
         for (uint256 i = 0; i < numERC20; i++) {
-            (ERC20Mock erc20, IAssetRegistry.AssetInformation memory asset) =
-                _createAsset();
+            (
+                address assetAddress,
+                IAssetRegistry.AssetInformation memory asset
+            ) = _createAsset(false, address(0));
 
             if (i == 0) {
                 numeraireAsset = address(asset.asset);
@@ -151,20 +180,14 @@ contract TestBaseAssetRegistry is TestBase {
             assets.push(asset);
 
             if (i < numERC4626) {
-                ERC4626Mock erc4626 = new ERC4626Mock(
-                    erc20,
-                    erc20.name(),
-                    erc20.symbol()
-                );
-                assets.push(
-                    IAssetRegistry.AssetInformation({
-                        asset: IERC20(address(erc4626)),
-                        isERC4626: true,
-                        oracle: AggregatorV2V3Interface(
-                            address(new OracleMock(18))
-                            )
-                    })
-                );
+                (
+                    address asset4626Address,
+                    IAssetRegistry.AssetInformation memory asset4626
+                ) = _createAsset(true, assetAddress);
+                assets.push(asset4626);
+                if (i == 0) {
+                    nonNumeraireERC4626Asset = asset4626Address;
+                }
             }
         }
 
@@ -183,21 +206,37 @@ contract TestBaseAssetRegistry is TestBase {
                 numeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireAsset) {
                 nonNumeraireId = i;
+            } else if (address(assets[i].asset) == nonNumeraireERC4626Asset) {
+                nonNumeraireERC4626Id = i;
             }
         }
     }
 
-    function _createAsset()
+    function _createAsset(
+        bool isERC4626,
+        address baseAssetAddress
+    )
         internal
         returns (
-            ERC20Mock erc20,
+            address asset,
             IAssetRegistry.AssetInformation memory newAsset
         )
     {
-        erc20 = new ERC20Mock("Token", "TOKEN", 18, 1e30);
+        if (isERC4626) {
+            ERC20Mock baseAsset = ERC20Mock(baseAssetAddress);
+            asset = address(
+                new ERC4626Mock(
+                    baseAsset,
+                    baseAsset.name(),
+                    baseAsset.symbol()
+                )
+            );
+        } else {
+            asset = address(new ERC20Mock("Token", "TOKEN", 18, 1e30));
+        }
         newAsset = IAssetRegistry.AssetInformation({
-            asset: IERC20(address(erc20)),
-            isERC4626: false,
+            asset: IERC20(asset),
+            isERC4626: isERC4626,
             oracle: AggregatorV2V3Interface(address(new OracleMock(18)))
         });
 
