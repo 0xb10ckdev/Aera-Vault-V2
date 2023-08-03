@@ -18,6 +18,12 @@ contract DeployScript is DeployScriptBase {
 
     bytes32 internal _salt;
 
+    /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt
+    ///         if they were not deployed yet.
+    /// @param salt The salt value to create contract.
+    /// @return deployedAssetRegistry The address of deployed AssetRegistry.
+    /// @return deployedCustody The address of deployed AeraVaultV2.
+    /// @return deployedHooks The address of deployed Hooks.
     function run(bytes32 salt)
         public
         returns (
