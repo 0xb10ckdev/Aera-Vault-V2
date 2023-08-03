@@ -11,9 +11,16 @@ interface ICreate2Deployer {
 }
 
 library Aeraform {
+    /// @notice The address of Create2Deployer contract.
+    /// @dev Create2Deployer contract is deployed at same addresses on all networks.
+    ///      https://github.com/pcaversaccio/create2deployer#deployments-create2deployer
     address internal constant _CREATE2_DEPLOYER =
         0x13b0D85CcB8bf860b6b79AF3029fCA081AE9beF2;
 
+    /// @notice Deploy contract with the given bytecode if it's not deployed yet.
+    /// @param salt The salt value to create contract.
+    /// @param code Bytecode of contract to be deployed.
+    /// @return deployed The address of deployed contract.
     function idempotentDeploy(
         bytes32 salt,
         bytes memory code
