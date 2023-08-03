@@ -9,7 +9,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
     IAssetRegistry.AssetInformation newERC20Asset;
     IAssetRegistry.AssetInformation newERC4626Asset;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         _deploy();
 
         // this high number (50) is just to make sure we didn't already
