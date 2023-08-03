@@ -38,8 +38,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
-    error Aera__OracleIsZeroAddress(address asset);
-    error Aera__4626OracleIsNotZeroAddress(address asset);
+    error Aera__ERC20OracleIsZeroAddress(address asset);
+    error Aera__ERC4626OracleIsNotZeroAddress(address asset);
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__AssetIsAlreadyRegistered(uint256 index);
@@ -87,12 +87,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
                 !assets_[i].isERC4626
                     && address(assets_[i].oracle) == address(0)
             ) {
-                revert Aera__OracleIsZeroAddress(address(assets_[i].asset));
+                revert Aera__ERC20OracleIsZeroAddress(
+                    address(assets_[i].asset)
+                );
             } else if (
                 assets_[i].isERC4626
                     && address(assets_[i].oracle) != address(0)
             ) {
-                revert Aera__4626OracleIsNotZeroAddress(
+                revert Aera__ERC4626OracleIsNotZeroAddress(
                     address(assets_[i].asset)
                 );
             }
@@ -112,10 +114,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     {
         if (asset.isERC4626) {
             if (address(asset.oracle) != address(0)) {
-                revert Aera__4626OracleIsNotZeroAddress(address(asset.asset));
+                revert Aera__ERC4626OracleIsNotZeroAddress(
+                    address(asset.asset)
+                );
             }
         } else if (address(asset.oracle) == address(0)) {
-            revert Aera__OracleIsZeroAddress(address(asset.asset));
+            revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
         }
 
         uint256 numAssets = _assets.length;
