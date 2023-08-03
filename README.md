@@ -96,10 +96,16 @@ Deploy the AeraVaultV2Factory to a specific network:
 $ forge script script/v2/deploy/DeployAeraVaultV2Factory.s.sol --fork-url <URL> --broadcast
 ```
 
-Deploy the AeraVaultV2, AeraVaultAssetRegistry and AeraVaultHooks to a specific network:
+Deploy the AeraVaultV2, AeraVaultAssetRegistry and AeraVaultHooks to a specific network with salt value:
 
 ```sh
 $ forge script script/v2/deploy/DeployAeraContracts.s.sol --fork-url <URL> --broadcast --sig "run(bytes32)" <SALT>
+```
+
+You can omit `--sig "run(bytes32)" <SALT>` to use `0x00` for salt value.
+
+```sh
+$ forge script script/v2/deploy/DeployAeraContracts.s.sol --fork-url <URL> --broadcast
 ```
 
 Once the deployments are done, the deployed addresses will be stored in the `/config/Deployments.json` file.
