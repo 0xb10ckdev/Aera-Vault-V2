@@ -15,7 +15,9 @@ import {Aeraform} from "script/utils/Aeraform.sol";
 contract DeployScript is DeployScriptBase {
     using stdJson for string;
 
-    function run()
+    bytes32 internal _salt;
+
+    function run(bytes32 salt)
         public
         returns (
             address deployedAssetRegistry,
@@ -23,6 +25,8 @@ contract DeployScript is DeployScriptBase {
             address deployedHooks
         )
     {
+        _salt = salt;
+
         // Get parameters for AssetRegistry
         (
             IAssetRegistry.AssetInformation[] memory assets,

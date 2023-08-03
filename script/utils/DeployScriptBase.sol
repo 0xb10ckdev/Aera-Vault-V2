@@ -8,13 +8,10 @@ import {Test} from "forge-std/Test.sol";
 contract DeployScriptBase is Script, Test {
     using stdJson for string;
 
-    bytes32 internal _salt;
     uint256 internal _deployerPrivateKey;
     address internal _deployerAddress;
 
     constructor() {
-        _salt = vm.envBytes32("SALT");
-
         _deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
 
         if (_deployerPrivateKey == 0) {
