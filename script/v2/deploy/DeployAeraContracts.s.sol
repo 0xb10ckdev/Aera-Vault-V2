@@ -40,7 +40,8 @@ contract DeployScript is DeployScriptBase {
             address aeraVaultV2Factory,
             address guardian,
             address feeRecipient,
-            uint256 fee
+            uint256 fee,
+            string memory description
         ) = _getAeraVaultV2Params();
 
         // Get parameters for AeraVaultHooks
@@ -61,7 +62,8 @@ contract DeployScript is DeployScriptBase {
             deployedAssetRegistry,
             guardian,
             feeRecipient,
-            fee
+            fee,
+            description
         );
 
         // Deploy AeraVaultHooks
@@ -90,7 +92,12 @@ contract DeployScript is DeployScriptBase {
         );
 
         _checkAeraVaultV2Integrity(
-            vault, deployedAssetRegistry, guardian, feeRecipient, fee
+            vault,
+            deployedAssetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description
         );
 
         _checkAeraVaultHooksIntegrity(
@@ -133,7 +140,8 @@ contract DeployScript is DeployScriptBase {
             address aeraVaultV2Factory,
             address guardian,
             address feeRecipient,
-            uint256 fee
+            uint256 fee,
+            string memory description
         )
     {
         string memory path =
@@ -144,6 +152,7 @@ contract DeployScript is DeployScriptBase {
         guardian = json.readAddress(".guardian");
         feeRecipient = json.readAddress(".feeRecipient");
         fee = json.readUint(".fee");
+        description = json.readString(".description");
     }
 
     function _getAeraVaultHooksParams()
@@ -185,10 +194,17 @@ contract DeployScript is DeployScriptBase {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee
+        uint256 fee,
+        string memory description
     ) internal returns (address deployed) {
         deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeAddress(
-            _salt, _deployerAddress, assetRegistry, guardian, feeRecipient, fee
+            _salt,
+            _deployerAddress,
+            assetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description
         );
 
         uint256 size;
@@ -203,7 +219,8 @@ contract DeployScript is DeployScriptBase {
                 assetRegistry,
                 guardian,
                 feeRecipient,
-                fee
+                fee,
+                description
             );
         }
     }
@@ -262,7 +279,8 @@ contract DeployScript is DeployScriptBase {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee
+        uint256 fee,
+        string memory description
     ) internal {
         console.log("Checking Aera Vault V2 Integrity");
 
@@ -270,6 +288,7 @@ contract DeployScript is DeployScriptBase {
         assertEq(vault.guardian(), guardian);
         assertEq(vault.feeRecipient(), feeRecipient);
         assertEq(vault.fee(), fee);
+        assertEq(vault.description(), description);
 
         console.log("Checked Aera Vault V2 Integrity");
     }

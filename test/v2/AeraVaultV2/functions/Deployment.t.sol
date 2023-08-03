@@ -13,7 +13,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -31,7 +32,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -44,7 +46,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(0),
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -55,7 +58,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(this),
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -68,7 +72,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             address(0),
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -81,7 +86,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             address(this),
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -96,7 +102,20 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE + 1
+            _MAX_FEE + 1,
+            "Test Vault"
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenDescriptionIsEmpty() public {
+        vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
+        new AeraVaultV2(
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            ""
         );
     }
 
@@ -111,12 +130,14 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
 
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
+        assertEq(vault.description(), "Test Vault");
     }
 }

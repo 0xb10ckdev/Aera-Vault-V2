@@ -317,7 +317,8 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 

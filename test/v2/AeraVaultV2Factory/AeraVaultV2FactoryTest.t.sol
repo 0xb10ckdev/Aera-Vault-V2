@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/Create2.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
+import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/interfaces/ICustodyEvents.sol";
 import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
@@ -33,7 +34,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -47,7 +49,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -61,7 +64,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -73,7 +77,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(assetRegistry),
             address(0),
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -85,7 +90,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(assetRegistry),
             address(factory),
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -99,7 +105,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(assetRegistry),
             _GUARDIAN,
             address(0),
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -111,7 +118,8 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(assetRegistry),
             _GUARDIAN,
             address(factory),
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -123,7 +131,21 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE + 1
+            _MAX_FEE + 1,
+            "Test Vault"
+        );
+    }
+
+    function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
+        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        factory.create(
+            bytes32(0),
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            ""
         );
     }
 
@@ -133,13 +155,22 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         vm.expectEmit(true, true, true, true);
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
-        factory.create(
-            bytes32(0),
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE
+        AeraVaultV2 vault = AeraVaultV2(
+            factory.create(
+                bytes32(0),
+                address(this),
+                address(assetRegistry),
+                _GUARDIAN,
+                _FEE_RECIPIENT,
+                _MAX_FEE,
+                "Test Vault"
+            )
         );
+
+        assertEq(address(vault.assetRegistry()), address(assetRegistry));
+        assertEq(vault.guardian(), _GUARDIAN);
+        assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
+        assertEq(vault.fee(), _MAX_FEE);
+        assertEq(vault.description(), "Test Vault");
     }
 }

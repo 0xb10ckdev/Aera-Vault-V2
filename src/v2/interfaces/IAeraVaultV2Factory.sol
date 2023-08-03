@@ -14,6 +14,7 @@ interface IAeraVaultV2Factory {
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function create(
         bytes32 salt,
@@ -21,7 +22,8 @@ interface IAeraVaultV2Factory {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee
+        uint256 fee,
+        string memory description
     ) external returns (address deployed);
 
     /// @notice Calculate deployment address of v2 vault.
@@ -31,6 +33,7 @@ interface IAeraVaultV2Factory {
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function computeAddress(
         bytes32 salt,
@@ -38,6 +41,7 @@ interface IAeraVaultV2Factory {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee
+        uint256 fee,
+        string memory description
     ) external view returns (address deployed);
 }
