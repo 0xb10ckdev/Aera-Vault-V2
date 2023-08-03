@@ -80,6 +80,26 @@ contract DeploymentTest is TestBaseAssetRegistry {
         new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
     }
 
+    function test_assetRegistryDeployment_fail_when4626OracleIsNotZeroAddress()
+        public
+    {
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                assets[i].oracle = AggregatorV2V3Interface(address(1));
+                vm.expectRevert(
+                    abi.encodeWithSelector(
+                        AeraVaultAssetRegistry
+                            .Aera__4626OracleIsNotZeroAddress
+                            .selector,
+                        assets[i].asset
+                    )
+                );
+                new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
+                assets[i].oracle = AggregatorV2V3Interface(address(0));
+            }
+        }
+    }
+
     function test_assetRegistryDeployment_success() public {
         assetRegistry =
             new AeraVaultAssetRegistry(assets, numeraireId, feeToken);

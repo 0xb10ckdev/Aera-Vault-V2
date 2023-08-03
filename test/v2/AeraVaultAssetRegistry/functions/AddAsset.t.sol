@@ -23,7 +23,9 @@ contract AddAssetTest is TestBaseAssetRegistry {
         assetRegistry.addAsset(newERC20Asset);
     }
 
-    function test_addAsset_fail_whenOracleIsZeroAddress() public {
+    function test_addAsset_fail_not_4626_and_whenOracleIsZeroAddress()
+        public
+    {
         newERC20Asset.oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
@@ -33,6 +35,20 @@ contract AddAssetTest is TestBaseAssetRegistry {
             )
         );
         assetRegistry.addAsset(newERC20Asset);
+    }
+
+    function test_addAsset_fail_when4626OracleNotIsZeroAddress() public {
+        newERC4626Asset.oracle = AggregatorV2V3Interface(address(1));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__4626OracleIsNotZeroAddress
+                    .selector,
+                newERC4626Asset.asset
+            )
+        );
+        assetRegistry.addAsset(newERC4626Asset);
     }
 
     function test_addAsset_fail_whenAssetIsAlreadyRegistered() public {
