@@ -44,4 +44,17 @@ interface IAeraVaultV2Factory {
         uint256 fee,
         string memory description
     ) external view returns (address deployed);
+
+    /// @notice Deploy contract with the given bytecode if it's not deployed yet.
+    /// @param salt The salt value to create contract.
+    /// @param code Bytecode of contract to be deployed.
+    function deploy(bytes32 salt, bytes memory code) external;
+
+    /// @notice Calculate deployment address of contract.
+    /// @param salt The salt value to create contract.
+    /// @param code Bytecode of contract to be deployed.
+    function computeAddress(
+        bytes32 salt,
+        bytes calldata code
+    ) external view returns (address);
 }

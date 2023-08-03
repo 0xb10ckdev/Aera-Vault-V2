@@ -35,7 +35,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         address guardian,
         address feeRecipient,
         uint256 fee,
-        string memory description
+        string calldata description
     ) external override onlyOwner returns (address deployed) {
         bytes memory bytecode = abi.encodePacked(
             type(AeraVaultV2).creationCode,
@@ -61,7 +61,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         address guardian,
         address feeRecipient,
         uint256 fee,
-        string memory description
+        string calldata description
     ) external view override returns (address) {
         bytes memory bytecode = abi.encodePacked(
             type(AeraVaultV2).creationCode,
@@ -71,5 +71,21 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
         );
 
         return Create2.computeAddress(salt, keccak256(bytecode));
+    }
+
+    /// @inheritdoc IAeraVaultV2Factory
+    function deploy(
+        bytes32 salt,
+        bytes calldata code
+    ) external override onlyOwner {
+        Create2.deploy(0, salt, code);
+    }
+
+    /// @inheritdoc IAeraVaultV2Factory
+    function computeAddress(
+        bytes32 salt,
+        bytes calldata code
+    ) external view override returns (address) {
+        return Create2.computeAddress(salt, keccak256(code));
     }
 }

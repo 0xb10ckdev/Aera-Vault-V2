@@ -34,21 +34,168 @@ contract DeployScript is DeployScriptBase {
     {
         _salt = salt;
 
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/AeraVaultV2.json");
+        string memory json = vm.readFile(path);
+
+        address aeraVaultV2Factory = json.readAddress(".aeraVaultV2Factory");
+
         vm.startBroadcast(_deployerPrivateKey);
 
         // Deploy AssetRegistry
-        deployedAssetRegistry = _deployAssetRegistry();
+        deployedAssetRegistry = _deployAssetRegistry(aeraVaultV2Factory);
 
         // Deploy AeraVaultV2
         deployedCustody = _deployAeraVaultV2(deployedAssetRegistry);
 
         // Deploy AeraVaultHooks
-        deployedHooks = _deployAeraVaultHooks(deployedCustody);
+        deployedHooks =
+            _deployAeraVaultHooks(aeraVaultV2Factory, deployedCustody);
 
         // Link modules
         _linkModules(deployedAssetRegistry, deployedCustody, deployedHooks);
 
         vm.stopBroadcast();
+    }
+
+    function _deployAssetRegistry(address aeraVaultV2Factory)
+        internal
+        returns (address deployed)
+    {
+        // Get parameters for AssetRegistry
+        (
+            address owner,
+            IAssetRegistry.AssetInformation[] memory assets,
+            uint256 numeraireId,
+            address feeToken
+        ) = _getAssetRegistryParams();
+
+        // Get bytecode
+        bytes memory bytecode = abi.encodePacked(
+            type(AeraVaultAssetRegistry).creationCode,
+            abi.encode(
+                owner == address(0) ? _deployerAddress : owner,
+                assets,
+                numeraireId,
+                feeToken
+            )
+        );
+
+        // Deploy AssetRegistry
+        deployed =
+            Aeraform.idempotentDeploy(aeraVaultV2Factory, _salt, bytecode);
+
+        // Check deployed AssetRegistry
+        _checkAssetRegistryIntegrity(
+            AeraVaultAssetRegistry(deployed), assets, numeraireId, feeToken
+        );
+
+        // Store deployed address
+        _storeDeployedAddress("assetRegistry", deployed);
+    }
+
+    function _deployAeraVaultV2(address assetRegistry)
+        internal
+        returns (address deployed)
+    {
+        // Get parameters for AeraVaultV2
+        (
+            address aeraVaultV2Factory,
+            address owner,
+            address guardian,
+            address feeRecipient,
+            uint256 fee,
+            string memory description
+        ) = _getAeraVaultV2Params();
+
+        deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeAddress(
+            _salt,
+            owner == address(0) ? _deployerAddress : owner,
+            assetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description
+        );
+
+        uint256 size;
+        assembly {
+            size := extcodesize(deployed)
+        }
+
+        // Deploy AeraVaultV2
+        if (size == 0) {
+            AeraVaultV2Factory(aeraVaultV2Factory).create(
+                _salt,
+                owner == address(0) ? _deployerAddress : owner,
+                assetRegistry,
+                guardian,
+                feeRecipient,
+                fee,
+                description
+            );
+        }
+
+        // Check deployed AeraVaultV2
+        _checkAeraVaultV2Integrity(
+            deployed, assetRegistry, guardian, feeRecipient, fee, description
+        );
+
+        // Store deployed address
+        _storeDeployedAddress("custody", deployed);
+    }
+
+    function _deployAeraVaultHooks(
+        address aeraVaultV2Factory,
+        address custody
+    ) internal returns (address deployed) {
+        // Get parameters for AeraVaultHooks
+        (
+            address owner,
+            uint256 maxDailyExecutionLoss,
+            TargetSighash[] memory targetSighashAllowlist
+        ) = _getAeraVaultHooksParams();
+
+        // Get bytecode
+        bytes memory bytecode = abi.encodePacked(
+            type(AeraVaultHooks).creationCode,
+            abi.encode(
+                owner == address(0) ? _deployerAddress : owner,
+                custody,
+                maxDailyExecutionLoss,
+                targetSighashAllowlist
+            )
+        );
+
+        // Deploy AeraVaultHooks
+        deployed =
+            Aeraform.idempotentDeploy(aeraVaultV2Factory, _salt, bytecode);
+
+        // Check deployed AeraVaultHooks
+        _checkAeraVaultHooksIntegrity(
+            AeraVaultHooks(deployed),
+            custody,
+            maxDailyExecutionLoss,
+            targetSighashAllowlist
+        );
+
+        // Store deployed address
+        _storeDeployedAddress("hooks", deployed);
+    }
+
+    function _linkModules(
+        address deployedAssetRegistry,
+        address deployedCustody,
+        address deployedHooks
+    ) internal {
+        AeraVaultV2 vault = AeraVaultV2(deployedCustody);
+
+        if (address(vault.assetRegistry()) != deployedAssetRegistry) {
+            vault.setAssetRegistry(deployedAssetRegistry);
+        }
+        if (address(vault.hooks()) != deployedHooks) {
+            vault.setHooks(deployedHooks);
+        }
     }
 
     function _getAssetRegistryParams()
@@ -116,141 +263,6 @@ contract DeployScript is DeployScriptBase {
 
         assembly {
             targetSighashAllowlist := allowlist
-        }
-    }
-
-    function _deployAssetRegistry() internal returns (address deployed) {
-        // Get parameters for AssetRegistry
-        (
-            address owner,
-            IAssetRegistry.AssetInformation[] memory assets,
-            uint256 numeraireId,
-            address feeToken
-        ) = _getAssetRegistryParams();
-
-        // Get bytecode
-        bytes memory bytecode = abi.encodePacked(
-            type(AeraVaultAssetRegistry).creationCode,
-            abi.encode(
-                owner == address(0) ? _deployerAddress : owner,
-                assets,
-                numeraireId,
-                feeToken
-            )
-        );
-
-        // Deploy AssetRegistry
-        deployed = Aeraform.idempotentDeploy(_salt, bytecode);
-
-        // Check deployed AssetRegistry
-        _checkAssetRegistryIntegrity(
-            AeraVaultAssetRegistry(deployed), assets, numeraireId, feeToken
-        );
-
-        // Store deployed address
-        _storeDeployedAddress("assetRegistry", deployed);
-    }
-
-    function _deployAeraVaultV2(address assetRegistry)
-        internal
-        returns (address deployed)
-    {
-        // Get parameters for AeraVaultV2
-        (
-            address aeraVaultV2Factory,
-            address owner,
-            address guardian,
-            address feeRecipient,
-            uint256 fee,
-            string memory description
-        ) = _getAeraVaultV2Params();
-
-        deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeAddress(
-            _salt,
-            owner == address(0) ? _deployerAddress : owner,
-            assetRegistry,
-            guardian,
-            feeRecipient,
-            fee,
-            description
-        );
-
-        uint256 size;
-        assembly {
-            size := extcodesize(deployed)
-        }
-
-        // Deploy AeraVaultV2
-        if (size == 0) {
-            AeraVaultV2Factory(aeraVaultV2Factory).create(
-                _salt,
-                owner == address(0) ? _deployerAddress : owner,
-                assetRegistry,
-                guardian,
-                feeRecipient,
-                fee,
-                description
-            );
-        }
-
-        // Check deployed AeraVaultV2
-        _checkAeraVaultV2Integrity(
-            deployed, assetRegistry, guardian, feeRecipient, fee, description
-        );
-
-        // Store deployed address
-        _storeDeployedAddress("custody", deployed);
-    }
-
-    function _deployAeraVaultHooks(address custody)
-        internal
-        returns (address deployed)
-    {
-        // Get parameters for AeraVaultHooks
-        (
-            address owner,
-            uint256 maxDailyExecutionLoss,
-            TargetSighash[] memory targetSighashAllowlist
-        ) = _getAeraVaultHooksParams();
-
-        // Get bytecode
-        bytes memory bytecode = abi.encodePacked(
-            type(AeraVaultHooks).creationCode,
-            abi.encode(
-                owner == address(0) ? _deployerAddress : owner,
-                custody,
-                maxDailyExecutionLoss,
-                targetSighashAllowlist
-            )
-        );
-
-        // Deploy AeraVaultHooks
-        deployed = Aeraform.idempotentDeploy(_salt, bytecode);
-
-        // Check deployed AeraVaultHooks
-        _checkAeraVaultHooksIntegrity(
-            AeraVaultHooks(deployed),
-            custody,
-            maxDailyExecutionLoss,
-            targetSighashAllowlist
-        );
-
-        // Store deployed address
-        _storeDeployedAddress("hooks", deployed);
-    }
-
-    function _linkModules(
-        address deployedAssetRegistry,
-        address deployedCustody,
-        address deployedHooks
-    ) internal {
-        AeraVaultV2 vault = AeraVaultV2(deployedCustody);
-
-        if (address(vault.assetRegistry()) != deployedAssetRegistry) {
-            vault.setAssetRegistry(deployedAssetRegistry);
-        }
-        if (address(vault.hooks()) != deployedHooks) {
-            vault.setHooks(deployedHooks);
         }
     }
 

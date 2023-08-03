@@ -155,6 +155,16 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         vm.expectEmit(true, true, true, true);
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
+        address predict = factory.computeAddress(
+            bytes32(0),
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+
         AeraVaultV2 vault = AeraVaultV2(
             factory.create(
                 bytes32(0),
@@ -167,6 +177,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             )
         );
 
+        assertEq(address(vault), predict);
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
