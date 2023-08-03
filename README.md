@@ -88,6 +88,7 @@ $ forge clean
 Prior to deployment, make sure you have provided private key or mnemonic in your environment. If private key exists, it uses the private key, otherwise, it uses mnemonic.
 And you should specify the parameters in configs.
 To do this, copy the example config files without the `.example` name in `/config` path.
+If you left `owner` with zero address, the deployer will be the owner of deployed contracts.
 
 Deploy the AeraVaultV2Factory to a specific network:
 
