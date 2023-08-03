@@ -1,4 +1,5 @@
 {
+  "owner": "0x0000000000000000000000000000000000000000",
   "maxDailyExecutionLoss": "100000000000000000",
   "targetSighashAllowlist": []
 }
