@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
+import {console} from "forge-std/Console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
@@ -231,6 +232,8 @@ contract DeployScript is DeployScriptBase {
         uint256 numeraireId,
         address feeToken
     ) internal {
+        console.log("Checking Asset Registry Integrity");
+
         uint256 numAssets = assets.length;
 
         IAssetRegistry.AssetInformation[] memory registeredAssets =
@@ -250,6 +253,8 @@ contract DeployScript is DeployScriptBase {
 
         assertEq(numeraireId, assetRegistry.numeraireId());
         assertEq(feeToken, address(assetRegistry.feeToken()));
+
+        console.log("Checked Asset Registry Integrity");
     }
 
     function _checkAeraVaultV2Integrity(
@@ -259,10 +264,14 @@ contract DeployScript is DeployScriptBase {
         address feeRecipient,
         uint256 fee
     ) internal {
+        console.log("Checking Aera Vault V2 Integrity");
+
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), guardian);
         assertEq(vault.feeRecipient(), feeRecipient);
         assertEq(vault.fee(), fee);
+
+        console.log("Checked Aera Vault V2 Integrity");
     }
 
     function _checkAeraVaultHooksIntegrity(
@@ -271,6 +280,8 @@ contract DeployScript is DeployScriptBase {
         uint256 maxDailyExecutionLoss,
         TargetSighash[] memory targetSighashAllowlist
     ) internal {
+        console.log("Checking Hooks Integrity");
+
         assertEq(address(hooks.custody()), custody);
         assertEq(hooks.maxDailyExecutionLoss(), maxDailyExecutionLoss);
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
@@ -281,5 +292,7 @@ contract DeployScript is DeployScriptBase {
         for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
             assertTrue(hooks.targetSighashAllowed(targetSighashAllowlist[i]));
         }
+
+        console.log("Checked Hooks Integrity");
     }
 }
