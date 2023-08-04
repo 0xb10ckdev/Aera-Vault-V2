@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import {console2} from "forge-std/console2.sol";
 import "../TestBaseAssetRegistry.sol";
 
 contract AddAssetTest is TestBaseAssetRegistry {
@@ -63,6 +64,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
     }
 
     function test_addERC20Asset_success() public {
+        console2.log("numeraireId", numeraireId);
         _addAsset_success(false);
     }
 
