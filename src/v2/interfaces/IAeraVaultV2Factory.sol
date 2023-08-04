@@ -8,15 +8,53 @@ import {TargetSighash} from "../Types.sol";
 /// @title Interface for v2 vault factory.
 interface IAeraVaultV2Factory {
     /// @notice Create v2 vault.
+    /// @param salt The salt value to create vault.
+    /// @param owner The address of initial owner.
     /// @param assetRegistry The address of asset registry.
     /// @param guardian The address of guardian.
     /// @param feeRecipient The address of fee recipient.
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
-    /// @return vault The address of deployed vault.
+    /// @param description Vault description.
+    /// @return deployed The address of deployed vault.
     function create(
+        bytes32 salt,
+        address owner,
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee
-    ) external returns (AeraVaultV2 vault);
+        uint256 fee,
+        string memory description
+    ) external returns (address deployed);
+
+    /// @notice Calculate deployment address of v2 vault.
+    /// @param salt The salt value to create vault.
+    /// @param owner The address of initial owner.
+    /// @param assetRegistry The address of asset registry.
+    /// @param guardian The address of guardian.
+    /// @param feeRecipient The address of fee recipient.
+    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param description Vault description.
+    /// @return deployed The address of deployed vault.
+    function computeAddress(
+        bytes32 salt,
+        address owner,
+        address assetRegistry,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string memory description
+    ) external view returns (address deployed);
+
+    /// @notice Deploy contract with the given bytecode if it's not deployed yet.
+    /// @param salt The salt value to create contract.
+    /// @param code Bytecode of contract to be deployed.
+    function deploy(bytes32 salt, bytes memory code) external;
+
+    /// @notice Calculate deployment address of contract.
+    /// @param salt The salt value to create contract.
+    /// @param code Bytecode of contract to be deployed.
+    function computeAddress(
+        bytes32 salt,
+        bytes calldata code
+    ) external view returns (address);
 }

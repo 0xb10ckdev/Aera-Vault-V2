@@ -88,6 +88,7 @@ $ forge clean
 Prior to deployment, make sure you have provided private key or mnemonic in your environment. If private key exists, it uses the private key, otherwise, it uses mnemonic.
 And you should specify the parameters in configs.
 To do this, copy the example config files without the `.example` name in `/config` path.
+If you left `owner` with zero address, the deployer will be the owner of deployed contracts.
 
 Deploy the AeraVaultV2Factory to a specific network:
 
@@ -95,26 +96,18 @@ Deploy the AeraVaultV2Factory to a specific network:
 $ forge script script/v2/deploy/DeployAeraVaultV2Factory.s.sol --fork-url <URL> --broadcast
 ```
 
-Deploy the AeraVaultV2 to a specific network:
+Deploy the AeraVaultV2, AeraVaultAssetRegistry and AeraVaultHooks to a specific network with salt value:
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultV2.s.sol --fork-url <URL> --broadcast
+$ forge script script/v2/deploy/DeployAeraContracts.s.sol --fork-url <URL> --broadcast --sig "run(bytes32)" <SALT>
 ```
 
-Deploy the AeraVaultAssetRegistry to a specific network:
+You can omit `--sig "run(bytes32)" <SALT>` to use `0x00` for salt value.
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultAssetRegistry.s.sol --fork-url <URL> --broadcast
-
+$ forge script script/v2/deploy/DeployAeraContracts.s.sol --fork-url <URL> --broadcast
 ```
 
-Deploy the AeraVaultHooks to a specific network:
-
-```sh
-$ forge script script/v2/deploy/DeployAeraVaultHooks.s.sol --fork-url <URL> --broadcast
-```
-
-To just get transaction calldata instead of deployment, you can omit `--broadcast`.
 Once the deployments are done, the deployed addresses will be stored in the `/config/Deployments.json` file.
 If you want to run the tests with the deployed contracts, you need to specify the deployment addresses in the file, and set `TEST_WITH_DEPLOYED_CONTRACTS` as `true`.
 Then just run the tests.
@@ -132,10 +125,12 @@ graph LR
     end
     subgraph Process
         S1[1. Deploy AeraVaultV2Factory]:::Process
-        S2[2. Deploy AeraVaultAssetRegistry]:::Process
-        S3[3. Deploy AeraVaultV2]:::Process
-        S4[4. Deploy AeraVaultHooks]:::Process
-        S5[5. Link Vault and Hooks]:::Process
+        subgraph DeployContracts[Deploy Contracts]
+            S2[2. Check and Deploy AeraVaultAssetRegistry]:::Process
+            S3[3. Check and Deploy AeraVaultV2]:::Process
+            S4[4. Check and Deploy AeraVaultHooks]:::Process
+            S5[5. Link Vault and Hooks]:::Process
+        end
     end
     D --- S1 --> F
     D --- S2 --> A
@@ -158,6 +153,7 @@ graph LR
     classDef Process fill:none,stroke:none
 
     style Process fill:none,stroke:grey
+    style DeployContracts fill:none,stroke:grey
     style Contracts fill:none,stroke:grey
 ```
 

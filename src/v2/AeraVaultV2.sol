@@ -33,6 +33,11 @@ contract AeraVaultV2 is
 
     /// STORAGE ///
 
+    /// @notice Describes vault purpose and modelling assumptions for
+    ///         differentiating between vaults.
+    /// @dev string cannot be immutable bytecode but only set in constructor
+    string public description;
+
     /// @notice The address of asset registry.
     IAssetRegistry public assetRegistry;
 
@@ -85,15 +90,18 @@ contract AeraVaultV2 is
 
     /// @notice Initialize the custody contract by providing references to
     ///         asset registry, guardian and other parameters.
+    /// @param owner_ The address of initial owner.
     /// @param assetRegistry_ The address of asset registry.
     /// @param guardian_ The address of guardian.
     /// @param feeRecipient_ The address of fee recipient.
     /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
     constructor(
+        address owner_,
         address assetRegistry_,
         address guardian_,
         address feeRecipient_,
-        uint256 fee_
+        uint256 fee_,
+        string memory description_
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkGuardianAddress(guardian_);
@@ -102,12 +110,18 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
+        if (bytes(description_).length == 0) {
+            revert Aera__DescriptionIsEmpty();
+        }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
         fee = fee_;
+        description = description_;
         lastFeeCheckpoint = block.timestamp;
+
+        _transferOwnership(owner_);
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);

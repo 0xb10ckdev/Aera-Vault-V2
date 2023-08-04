@@ -6,6 +6,8 @@ import {AeraVaultV2Factory} from "src/v2/AeraVaultV2Factory.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 
 contract DeployScript is DeployScriptBase {
+    /// @notice Deploy AeraVaultV2Factory contract.
+    /// @param deployed The address of deployed factory.
     function run() public returns (AeraVaultV2Factory deployed) {
         vm.startBroadcast(_deployerPrivateKey);
 

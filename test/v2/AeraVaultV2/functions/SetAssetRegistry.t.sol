@@ -11,6 +11,7 @@ contract SetAssetRegistryTest is TestBaseAeraVaultV2 {
         super.setUp();
 
         newAssetRegistry = new AeraVaultAssetRegistry(
+            address(this),
             assetsInformation,
             numeraireId,
             feeToken

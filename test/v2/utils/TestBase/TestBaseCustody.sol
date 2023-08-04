@@ -293,6 +293,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
 
     function _deployAssetRegistry() internal {
         assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
             assetsInformation,
             numeraireId,
             feeToken
@@ -301,6 +302,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
 
     function _deployHooks() internal {
         hooks = new AeraVaultHooks(
+            address(this),
             address(vault),
             _MAX_DAILY_EXECUTION_LOSS,
             targetSighashAllowlist
@@ -311,10 +313,12 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
 
     function _deployAeraVaultV2() internal {
         vault = new AeraVaultV2(
+            address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
