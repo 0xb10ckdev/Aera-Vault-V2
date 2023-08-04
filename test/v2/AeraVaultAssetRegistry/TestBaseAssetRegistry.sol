@@ -222,6 +222,7 @@ contract TestBaseAssetRegistry is TestBase {
             IAssetRegistry.AssetInformation memory newAsset
         )
     {
+        address oracleAddress;
         if (isERC4626) {
             ERC20Mock baseAsset = ERC20Mock(baseAssetAddress);
             asset = address(
@@ -233,14 +234,14 @@ contract TestBaseAssetRegistry is TestBase {
             );
         } else {
             asset = address(new ERC20Mock("Token", "TOKEN", 18, 1e30));
+            oracleAddress = address(new OracleMock(18));
+            IOracleMock(oracleAddress).setLatestAnswer(int256(_ONE));
         }
         newAsset = IAssetRegistry.AssetInformation({
             asset: IERC20(asset),
             isERC4626: isERC4626,
-            oracle: AggregatorV2V3Interface(address(new OracleMock(18)))
+            oracle: AggregatorV2V3Interface(oracleAddress)
         });
-
-        IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(_ONE));
     }
 
     function _generateValidWeights()

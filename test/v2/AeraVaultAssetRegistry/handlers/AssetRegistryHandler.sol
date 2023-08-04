@@ -17,10 +17,14 @@ contract AssetRegistryHandler is CommonBase, StdCheats, StdUtils {
         assetCount = assetRegistry.assets().length;
     }
 
-    function addERC20Asset(address assetAddress, address oracleAddress) public {
+    function addERC20Asset(
+        address assetAddress,
+        address oracleAddress
+    ) public {
         // This handler will not use the asset registry for getting spot prices
         // so we can use random addresses for asset information
-        IAssetRegistry.AssetInformation memory asset = IAssetRegistry.AssetInformation({
+        IAssetRegistry.AssetInformation memory asset = IAssetRegistry
+            .AssetInformation({
             asset: IERC20(assetAddress),
             isERC4626: false,
             oracle: AggregatorV2V3Interface(oracleAddress)

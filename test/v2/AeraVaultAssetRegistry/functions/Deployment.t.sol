@@ -87,13 +87,13 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenNonNumeraireOracleIsZeroAddress(
+    function test_assetRegistryDeployment_fail_whenNonNumeraireERC20OracleIsZeroAddress(
     ) public {
         assets[nonNumeraireId].oracle = AggregatorV2V3Interface(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__OracleIsZeroAddress.selector,
+                AeraVaultAssetRegistry.Aera__ERC20OracleIsZeroAddress.selector,
                 assets[nonNumeraireId].asset
             )
         );
@@ -103,6 +103,25 @@ contract DeploymentTest is TestBaseAssetRegistry {
             numeraireId,
             feeToken
         );
+    }
+
+    function test_assetRegistryDeployment_fail_whenERC4626OracleIsNotZeroAddress(
+    ) public {
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].isERC4626) {
+                assets[i].oracle = AggregatorV2V3Interface(address(1));
+                vm.expectRevert(
+                    abi.encodeWithSelector(
+                        AeraVaultAssetRegistry
+                            .Aera__ERC4626OracleIsNotZeroAddress
+                            .selector,
+                        assets[i].asset
+                    )
+                );
+                new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
+                assets[i].oracle = AggregatorV2V3Interface(address(0));
+            }
+        }
     }
 
     function test_assetRegistryDeployment_success() public {
