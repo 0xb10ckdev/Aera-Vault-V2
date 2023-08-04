@@ -83,22 +83,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
-            } else if (
-                !assets_[i].isERC4626
-                    && address(assets_[i].oracle) == address(0)
-            ) {
-                revert Aera__ERC20OracleIsZeroAddress(
-                    address(assets_[i].asset)
-                );
-            } else if (
-                assets_[i].isERC4626
-                    && address(assets_[i].oracle) != address(0)
-            ) {
-                revert Aera__ERC4626OracleIsNotZeroAddress(
-                    address(assets_[i].asset)
-                );
+            } else {
+                _checkAssetOracle(assets_[i]);
             }
-
             _insertAsset(assets_[i], i);
         }
 
@@ -112,16 +99,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         override
         onlyOwner
     {
-        if (asset.isERC4626) {
-            if (address(asset.oracle) != address(0)) {
-                revert Aera__ERC4626OracleIsNotZeroAddress(
-                    address(asset.asset)
-                );
-            }
-        } else if (address(asset.oracle) == address(0)) {
-            revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
-        }
-
+        _checkAssetOracle(asset);
         uint256 numAssets = _assets.length;
 
         uint256 i = 0;
@@ -260,6 +238,20 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     }
 
     /// INTERNAL FUNCTIONS ///
+
+    /// @notice Ensure non-zero oracle address for erc20 and 0 for 4626.
+    /// @param asset Asset details to check
+    function _checkAssetOracle(AssetInformation memory asset) internal {
+        if (asset.isERC4626) {
+            if (address(asset.oracle) != address(0)) {
+                revert Aera__ERC4626OracleIsNotZeroAddress(
+                    address(asset.asset)
+                );
+            }
+        } else if (address(asset.oracle) == address(0)) {
+            revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
+        }
+    }
 
     /// @notice Insert asset at the given index in an array of assets.
     /// @param asset New asset details.
