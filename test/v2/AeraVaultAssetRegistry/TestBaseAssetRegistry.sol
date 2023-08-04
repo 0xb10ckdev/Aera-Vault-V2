@@ -8,7 +8,9 @@ import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
+import {ERC20MockFactory} from "test/utils/ERC20Mock.sol";
 import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
+import {ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBaseFactory {
@@ -170,9 +172,11 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             (
                 address assetAddress,
                 IAssetRegistry.AssetInformation memory asset
-            ) = _createAsset(false, address(0));
-
+            ) =
+            // salt value was from trial/error to get desired sorting
+             _createAsset(false, address(0), numERC20 - i);
             if (i == 0) {
+                _createAsset(false, address(0), numERC20 - i);
                 numeraireAsset = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
             } else if (i == 1) {
@@ -187,7 +191,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 (
                     address asset4626Address,
                     IAssetRegistry.AssetInformation memory asset4626
-                ) = _createAsset(true, assetAddress);
+                ) = _createAsset(true, assetAddress, i);
                 assets.push(asset4626);
                 if (i == 0) {
                     nonNumeraireERC4626Asset = asset4626Address;
@@ -218,7 +222,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
     function _createAsset(
         bool isERC4626,
-        address baseAssetAddress
+        address baseAssetAddress,
+        uint256 indexForSalt
     )
         internal
         returns (
@@ -227,17 +232,20 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         )
     {
         address oracleAddress;
+        bytes32 salt = bytes32(indexForSalt);
         if (isERC4626) {
             ERC20Mock baseAsset = ERC20Mock(baseAssetAddress);
-            asset = address(
-                new ERC4626Mock(
-                    baseAsset,
-                    baseAsset.name(),
-                    baseAsset.symbol()
-                )
+            asset = ERC4626MockFactory.deploy(
+                address(factory),
+                baseAsset,
+                baseAsset.name(),
+                baseAsset.symbol(),
+                salt
             );
         } else {
-            asset = address(new ERC20Mock("Token", "TOKEN", 18, 1e30));
+            asset = ERC20MockFactory.deploy(
+                address(factory), "Token", "TOKEN", 18, 1e30, salt
+            );
             oracleAddress = address(new OracleMock(18));
             IOracleMock(oracleAddress).setLatestAnswer(int256(_ONE));
         }
