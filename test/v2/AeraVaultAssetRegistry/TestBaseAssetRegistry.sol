@@ -24,6 +24,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     uint256 public nonNumeraireId;
     uint256 public nonNumeraireERC4626Id;
     uint256 public numAssets;
+    // found by trial and error to make sure sorted numeraire address
+    // is before non-numeraire address
+    uint256 public numeraireSetIdx = 1;
 
     function setUp() public virtual override {
         if (_testWithDeployedContracts()) {
@@ -175,13 +178,13 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             ) =
             // salt value was from trial/error to get desired sorting
              _createAsset(false, address(0), numERC20 - i);
-            if (i == 0) {
-                _createAsset(false, address(0), numERC20 - i);
+
+            if (i == numeraireSetIdx) {
                 numeraireAsset = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
-            } else if (i == 1) {
+            } else if (i == (numeraireSetIdx + 1) % numERC20) {
                 nonNumeraireAsset = address(asset.asset);
-            } else if (i == 2) {
+            } else if (i == (numeraireSetIdx + 2) % numERC20) {
                 feeToken = asset.asset;
             }
 
