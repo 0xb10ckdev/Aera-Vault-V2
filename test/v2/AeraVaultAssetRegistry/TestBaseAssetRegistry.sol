@@ -242,6 +242,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 baseAsset.symbol(),
                 salt
             );
+            oracleAddress = address(0);
         } else {
             asset = ERC20MockFactory.deploy(
                 address(factory), "Token", "TOKEN", 18, 1e30, salt
