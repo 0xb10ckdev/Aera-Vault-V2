@@ -235,16 +235,13 @@ contract TestBaseAssetRegistry is TestBase {
         } else {
             asset = address(new ERC20Mock("Token", "TOKEN", 18, 1e30));
             oracleAddress = address(new OracleMock(18));
+            IOracleMock(oracleAddress).setLatestAnswer(int256(_ONE));
         }
         newAsset = IAssetRegistry.AssetInformation({
             asset: IERC20(asset),
             isERC4626: isERC4626,
             oracle: AggregatorV2V3Interface(oracleAddress)
         });
-
-        if (!isERC4626) {
-            IOracleMock(address(newAsset.oracle)).setLatestAnswer(int256(_ONE));
-        }
     }
 
     function _generateValidWeights()
