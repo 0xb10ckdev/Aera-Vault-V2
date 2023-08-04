@@ -118,7 +118,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                         assets[i].asset
                     )
                 );
-                new AeraVaultAssetRegistry(assets, numeraireId, feeToken);
+                new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
                 assets[i].oracle = AggregatorV2V3Interface(address(0));
             }
         }
