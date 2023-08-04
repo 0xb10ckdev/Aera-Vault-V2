@@ -239,9 +239,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// INTERNAL FUNCTIONS ///
 
-    /// @notice Ensure non-zero oracle address for erc20 and 0 for 4626.
+    /// @notice Ensure non-zero oracle address for ERC20
+    ///         and zero oracle address for ERC4626.
     /// @param asset Asset details to check
-    function _checkAssetOracle(AssetInformation memory asset) internal {
+    function _checkAssetOracle(AssetInformation memory asset) internal pure {
         if (asset.isERC4626) {
             if (address(asset.oracle) != address(0)) {
                 revert Aera__ERC4626OracleIsNotZeroAddress(
