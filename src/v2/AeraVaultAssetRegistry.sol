@@ -113,12 +113,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         uint256 i = 0;
         for (; i < numAssets; i++) {
-            if (asset.asset >= _assets[i].asset) {
-                if (asset.asset == _assets[i].asset) {
-                    revert Aera__AssetIsAlreadyRegistered(i);
-                }
-            } else {
+            if (asset.asset < _assets[i].asset) {
                 break;
+            }
+
+            if (asset.asset == _assets[i].asset) {
+                revert Aera__AssetIsAlreadyRegistered(i);
             }
         }
 
