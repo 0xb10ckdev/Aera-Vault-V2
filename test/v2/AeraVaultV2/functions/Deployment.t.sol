@@ -134,6 +134,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             "Test Vault"
         );
 
+        assertTrue(vault.paused());
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);

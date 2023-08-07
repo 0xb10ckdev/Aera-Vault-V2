@@ -33,6 +33,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
         vm.warp(block.timestamp + 1000);
 
         _deposit();
+        vault.resume();
     }
 
     function _deposit() internal {

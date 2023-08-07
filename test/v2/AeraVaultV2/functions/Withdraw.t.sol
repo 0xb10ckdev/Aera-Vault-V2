@@ -26,6 +26,16 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         vault.withdraw(withdrawAmounts);
     }
 
+    function test_withdraw_fail_whenHooksIsNotSet() public {
+        vm.store(
+            address(vault),
+            bytes32(uint256(4)), // storage slot of hooks
+            bytes32(uint256(0))
+        );
+        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vault.withdraw(withdrawAmounts);
+    }
+
     function test_withdraw_fail_whenFinalized() public {
         vault.finalize();
 

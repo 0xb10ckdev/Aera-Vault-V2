@@ -86,6 +86,14 @@ contract AeraVaultV2 is
         _;
     }
 
+    /// @dev Throws if hooks is not set
+    modifier whenHooksSet() {
+        if (address(hooks) == address(0)) {
+            revert Aera__HooksIsZeroAddress();
+        }
+        _;
+    }
+
     /// FUNCTIONS ///
 
     /// @notice Initialize the custody contract by providing references to
@@ -122,6 +130,7 @@ contract AeraVaultV2 is
         lastFeeCheckpoint = block.timestamp;
 
         _transferOwnership(owner_);
+        _pause();
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
@@ -133,6 +142,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -176,6 +186,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -263,6 +274,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -304,6 +316,7 @@ contract AeraVaultV2 is
         override
         onlyOwner
         whenPaused
+        whenHooksSet
         whenNotFinalized
     {
         lastFeeCheckpoint = block.timestamp;

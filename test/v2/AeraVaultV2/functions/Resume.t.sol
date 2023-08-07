@@ -13,6 +13,17 @@ contract ResumeTest is TestBaseAeraVaultV2 {
         vault.resume();
     }
 
+    function test_resume_fail_whenHooksIsNotSet() public {
+        vault.pause();
+        vm.store(
+            address(vault),
+            bytes32(uint256(4)), // storage slot of hooks
+            bytes32(uint256(0))
+        );
+        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vault.resume();
+    }
+
     function test_resume_fail_whenFinalized() public {
         vault.pause();
         vault.finalize();
