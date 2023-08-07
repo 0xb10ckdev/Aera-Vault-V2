@@ -430,7 +430,7 @@ contract AeraVaultV2 is
 
     /// @notice Calculate current guardian fees.
     function _reserveFees() internal {
-        if (fee == 0) {
+        if (fee == 0 || paused() || finalized) {
             return;
         }
 
