@@ -5,6 +5,7 @@ import "../TestBaseAssetRegistry.sol";
 
 contract DeploymentTest is TestBaseAssetRegistry {
     function setUp() public override {
+        _deployAeraVaultV2Factory();
         _createAssets(4, 2);
 
         feeToken = assets[numeraireId].asset;

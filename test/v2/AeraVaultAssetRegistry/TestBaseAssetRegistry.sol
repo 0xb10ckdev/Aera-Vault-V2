@@ -5,12 +5,13 @@ import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
-import {TestBase} from "test/utils/TestBase.sol";
+import "src/v2/AeraVaultV2Factory.sol";
+import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseAssetRegistry is TestBase {
+contract TestBaseAssetRegistry is TestBaseFactory {
     AeraVaultAssetRegistry public assetRegistry;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
@@ -22,12 +23,14 @@ contract TestBaseAssetRegistry is TestBase {
     uint256 public nonNumeraireERC4626Id;
     uint256 public numAssets;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            address deployedAssetRegistry = _loadDeployedAddress();
+            address deployedFactory = _loadDeployedFactory();
+            factory = AeraVaultV2Factory(deployedFactory);
 
+            address deployedAssetRegistry = _loadDeployedAssetRegistry();
             assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
 
             vm.prank(assetRegistry.owner());
@@ -120,7 +123,7 @@ contract TestBaseAssetRegistry is TestBase {
         }
     }
 
-    function _loadDeployedAddress()
+    function _loadDeployedAssetRegistry()
         internal
         returns (address deployedAssetRegistry)
     {
@@ -155,6 +158,7 @@ contract TestBaseAssetRegistry is TestBase {
     }
 
     function _deploy() internal {
+        _deployAeraVaultV2Factory();
         _createAssets(4, 2);
 
         assetRegistry =

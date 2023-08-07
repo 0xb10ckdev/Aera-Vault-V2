@@ -7,12 +7,12 @@ import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultV2Factory.sol";
-import {TestBase} from "test/utils/TestBase.sol";
+import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseCustody is TestBase, TestBaseVariables {
+contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
     using stdJson for string;
 
     address internal constant _WBTC_ADDRESS =
@@ -30,7 +30,6 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
 
-    AeraVaultV2Factory public factory;
     AeraVaultAssetRegistry public assetRegistry;
     AeraVaultHooks public hooks;
     AeraVaultV2 public vault;
@@ -43,7 +42,7 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
     uint256 public nonNumeraireId;
     TargetSighash[] public targetSighashAllowlist;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
         } else {
@@ -285,10 +284,6 @@ contract TestBaseCustody is TestBase, TestBaseVariables {
             yieldAssets.push(IERC4626(address(erc4626Mocks[1])));
             yieldAssets.push(IERC4626(address(erc4626Mocks[0])));
         }
-    }
-
-    function _deployAeraVaultV2Factory() internal {
-        factory = new AeraVaultV2Factory();
     }
 
     function _deployAssetRegistry() internal {
