@@ -65,7 +65,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         assertEq(vault.fees(feeRecipient), 499999);
     }
 
-    function test_execute_does_not_increases_fees_while_paused() public {
+    function test_execute_success_withoutIncreasingFeesWhenPaused() public {
         address feeRecipient = address(1);
         vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
 
@@ -81,7 +81,9 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         assertEq(vault.fees(feeRecipient), 0);
     }
 
-    function test_execute_does_not_increases_fees_while_finalized() public {
+    function test_execute_success_withoutIncreasingFeesWhenFinalized()
+        public
+    {
         address feeRecipient = address(1);
         vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
 
