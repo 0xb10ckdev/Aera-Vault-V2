@@ -70,6 +70,21 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
+    function test_assetRegistryDeployment_fail_whenNumeraireAssetMarkedAsERC4626(
+    ) public {
+        assets[numeraireId].isERC4626 = true;
+
+        vm.expectRevert(
+            AeraVaultAssetRegistry.Aera__NumeraireAssetMarkedAsERC4626.selector
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress(
     ) public {
         assets[numeraireId].oracle = AggregatorV2V3Interface(address(1));
