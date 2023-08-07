@@ -31,15 +31,15 @@ contract AeraVaultV2 is
     /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
+    /// @notice The address of asset registry.
+    IAssetRegistry public immutable assetRegistry;
+
     /// STORAGE ///
 
     /// @notice Describes vault purpose and modelling assumptions for
     ///         differentiating between vaults.
     /// @dev string cannot be immutable bytecode but only set in constructor
     string public description;
-
-    /// @notice The address of asset registry.
-    IAssetRegistry public assetRegistry;
 
     /// @notice The address of hooks module.
     IHooks public hooks;
@@ -219,22 +219,6 @@ contract AeraVaultV2 is
         feeRecipient = newFeeRecipient;
 
         emit SetGuardianAndFeeRecipient(newGuardian, newFeeRecipient);
-    }
-
-    /// @inheritdoc ICustody
-    function setAssetRegistry(address newAssetRegistry)
-        external
-        override
-        onlyOwner
-        whenNotFinalized
-    {
-        _checkAssetRegistryAddress(newAssetRegistry);
-
-        _reserveFees();
-
-        assetRegistry = IAssetRegistry(newAssetRegistry);
-
-        emit SetAssetRegistry(newAssetRegistry);
     }
 
     /// @inheritdoc ICustody
