@@ -6,6 +6,14 @@ import "../TestBaseAssetRegistry.sol";
 contract RemoveAssetTest is TestBaseAssetRegistry {
     event AssetRemoved(address asset);
 
+    function setUp() public override {
+        super.setUp();
+
+        if (address(assetRegistry.custody()) == address(0)) {
+            assetRegistry.setCustody(address(vault));
+        }
+    }
+
     function test_removeAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);
 
@@ -44,6 +52,18 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
             );
         }
         assetRegistry.removeAsset(address(feeToken));
+    }
+
+    function test_removeAsset_fail_whenAssetBalanceIsNotZero() public {
+        deal(address(assets[nonNumeraireId].asset), address(vault), 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__AssetBalanceIsNotZero.selector,
+                assets[nonNumeraireId].asset
+            )
+        );
+        assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {

@@ -54,6 +54,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
+    error Aera__AssetBalanceIsNotZero(address asset);
     error Aera__CustodyIsAlreadySet();
     error Aera__CustodyIsZeroAddress();
     error Aera__CustodyIsNotValid(address custody);
@@ -143,6 +144,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         }
         if (address(feeToken) == asset) {
             revert Aera__CannotRemoveFeeToken(asset);
+        }
+        if (custody.holding(IERC20(asset)).value > 0) {
+            revert Aera__AssetBalanceIsNotZero(asset);
         }
 
         uint256 numAssets = _assets.length;

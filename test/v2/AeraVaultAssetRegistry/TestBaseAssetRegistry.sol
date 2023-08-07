@@ -5,13 +5,19 @@ import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
+import "src/v2/AeraVaultV2.sol";
 import {TestBase} from "test/utils/TestBase.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBase {
+    address internal constant _GUARDIAN = address(0x123456);
+    address internal constant _FEE_RECIPIENT = address(0x7890ab);
+    uint256 internal constant _MAX_FEE = 10 ** 9;
+
     AeraVaultAssetRegistry public assetRegistry;
+    AeraVaultV2 public vault;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
     address public numeraireAsset;
@@ -26,9 +32,11 @@ contract TestBaseAssetRegistry is TestBase {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            address deployedAssetRegistry = _loadDeployedAddress();
+            (address deployedAssetRegistry, address deployedCustody) =
+                _loadDeployedAddress();
 
             assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+            vault = AeraVaultV2(deployedCustody);
 
             vm.prank(assetRegistry.owner());
             assetRegistry.transferOwnership(address(this));
@@ -122,13 +130,14 @@ contract TestBaseAssetRegistry is TestBase {
 
     function _loadDeployedAddress()
         internal
-        returns (address deployedAssetRegistry)
+        returns (address deployedAssetRegistry, address deployedCustody)
     {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);
 
         deployedAssetRegistry = vm.parseJsonAddress(json, ".assetRegistry");
+        deployedCustody = vm.parseJsonAddress(json, ".custody");
     }
 
     function _loadParameters() internal {
@@ -159,6 +168,15 @@ contract TestBaseAssetRegistry is TestBase {
 
         assetRegistry =
         new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
+
+        vault = new AeraVaultV2(
+                address(this),
+                address(assetRegistry),
+                _GUARDIAN,
+                _FEE_RECIPIENT,
+                _MAX_FEE,
+                "Test Vault"
+            );
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {

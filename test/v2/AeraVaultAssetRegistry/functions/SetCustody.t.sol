@@ -1,30 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "src/v2/AeraVaultV2.sol";
 import "../TestBaseAssetRegistry.sol";
 
 contract SetCustodyTest is TestBaseAssetRegistry {
     event SetCustody(address custody);
-
-    address internal constant _GUARDIAN = address(0x123456);
-    address internal constant _FEE_RECIPIENT = address(0x7890ab);
-    uint256 internal constant _MAX_FEE = 10 ** 9;
-
-    AeraVaultV2 public vault;
-
-    function setUp() public override {
-        super.setUp();
-
-        vault = new AeraVaultV2(
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
-        );
-    }
 
     function test_setCustody_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
