@@ -40,6 +40,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__ERC20OracleIsZeroAddress(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
+    error Aera__NumeraireAssetMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__AssetIsAlreadyRegistered(uint256 index);
@@ -87,6 +88,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         for (uint256 i = 0; i < numAssets; i++) {
             if (i == numeraireId_) {
+                if (assets_[i].isERC4626) {
+                    revert Aera__NumeraireAssetMarkedAsERC4626();
+                }
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
