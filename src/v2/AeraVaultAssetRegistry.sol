@@ -145,7 +145,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         if (address(feeToken) == asset) {
             revert Aera__CannotRemoveFeeToken(asset);
         }
-        if (custody.holding(IERC20(asset)).value > 0) {
+        if (IERC20(asset).balanceOf(address(custody)) > 0) {
             revert Aera__AssetBalanceIsNotZero(asset);
         }
 

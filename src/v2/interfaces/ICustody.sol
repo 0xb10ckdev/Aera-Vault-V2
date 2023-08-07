@@ -103,14 +103,6 @@ interface ICustody is ICustodyEvents {
     /// @return fee Guardian fee per second in 18 decimal fixed point format.
     function fee() external view returns (uint256 fee);
 
-    /// @notice Get total amount of asset in custody module.
-    /// @param asset Address of asset.
-    /// @return assetAmount Amount of asset.
-    function holding(IERC20 asset)
-        external
-        view
-        returns (AssetValue memory assetAmount);
-
     /// @notice Get current balances of all assets.
     /// @return assetAmounts Amounts of assets.
     function holdings()
