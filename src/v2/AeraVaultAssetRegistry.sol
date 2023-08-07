@@ -54,6 +54,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
+    error Aera__CustodyIsAlreadySet();
     error Aera__CustodyIsZeroAddress();
     error Aera__CustodyIsNotValid(address custody);
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
@@ -180,6 +181,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// @inheritdoc IAssetRegistry
     function setCustody(address newCustody) external override onlyOwner {
+        if (address(custody) != address(0)) {
+            revert Aera__CustodyIsAlreadySet();
+        }
         if (newCustody == address(0)) {
             revert Aera__CustodyIsZeroAddress();
         }

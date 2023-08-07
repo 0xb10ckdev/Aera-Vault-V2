@@ -7,8 +7,8 @@ import "../TestBaseAssetRegistry.sol";
 contract SetCustodyTest is TestBaseAssetRegistry {
     event SetCustody(address custody);
 
-    address internal _GUARDIAN = address(0x123456);
-    address internal _FEE_RECIPIENT = address(0x7890ab);
+    address internal constant _GUARDIAN = address(0x123456);
+    address internal constant _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal constant _MAX_FEE = 10 ** 9;
 
     AeraVaultV2 public vault;
@@ -31,6 +31,15 @@ contract SetCustodyTest is TestBaseAssetRegistry {
 
         vm.prank(_USER);
         assetRegistry.setCustody(address(vault));
+    }
+
+    function test_setCustody_fail_whenCustodyIsAlreadySet() public {
+        assetRegistry.setCustody(address(vault));
+
+        vm.expectRevert(
+            AeraVaultAssetRegistry.Aera__CustodyIsAlreadySet.selector
+        );
+        assetRegistry.setCustody(address(0));
     }
 
     function test_setCustody_fail_whenCustodyIsZeroAddress() public {
