@@ -387,6 +387,23 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc ICustody
+    function holding(IERC20 asset)
+        external
+        view
+        override
+        returns (AssetValue memory assetAmount)
+    {
+        IERC20 feeToken = assetRegistry.feeToken();
+
+        assetAmount =
+            AssetValue({asset: asset, value: asset.balanceOf(address(this))});
+
+        if (asset == feeToken) {
+            assetAmount.value -= feeTotal;
+        }
+    }
+
+    /// @inheritdoc ICustody
     function holdings() public view override returns (AssetValue[] memory) {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -582,7 +599,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Get total amount of assets in execution and custody module.
+    /// @notice Get total amount of assets in custody module.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)
