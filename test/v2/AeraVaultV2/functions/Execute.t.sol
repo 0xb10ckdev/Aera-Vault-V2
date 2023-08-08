@@ -27,6 +27,17 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         vault.execute(operation);
     }
 
+    function test_execute_fail_whenTargetIsHooks() public {
+        AssetValue[] memory amounts = new AssetValue[](0);
+        Operation memory hooksOp = Operation({
+            target: address(vault.hooks()),
+            value: 0,
+            data: abi.encodeWithSelector(IHooks.beforeDeposit.selector, amounts)
+        });
+        vm.expectRevert(ICustody.Aera__ExecuteTargetIsHooksAddress.selector);
+        vault.execute(hooksOp);
+    }
+
     function test_execute_fail_whenOperationFails() public {
         operation.target = address(this);
 
