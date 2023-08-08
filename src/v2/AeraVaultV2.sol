@@ -281,6 +281,8 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
+        _reserveFees();
+
         hooks.beforeFinalize();
 
         finalized = true;
