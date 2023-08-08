@@ -19,7 +19,7 @@ contract AddAssetAtEnd is AddAssetTest {
         }
         address newERC20Address = address(newERC20Asset.asset);
         for (uint256 i = 51; i < 51000; i++) {
-            (, newERC4626Asset) = _createAsset(true, newERC20Address, i);
+            (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, i);
             if (address(newERC4626Asset.asset) > newERC20Address) {
                 break;
             }

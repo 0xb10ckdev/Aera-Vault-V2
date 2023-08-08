@@ -125,6 +125,41 @@ contract DeploymentTest is TestBaseAssetRegistry {
         }
     }
 
+    function test_assetRegistryDeployment_fail_whenUnderlyingAssetIsNotInList()
+        public
+    {
+        (
+            address newERC20,
+            IAssetRegistry.AssetInformation memory newERC20Asset
+        ) = _createAsset(false, address(0), 50);
+        IAssetRegistry.AssetInformation memory newERC4626Asset;
+
+        for (uint256 i = 51; i < 51000; i++) {
+            (, newERC4626Asset) = _createAsset(true, newERC20, i);
+            if (newERC4626Asset.asset > assets[numAssets - 1].asset) {
+                break;
+            }
+        }
+
+        assets.push(newERC4626Asset);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__UnderlyingAssetIsNotRegistered
+                    .selector,
+                newERC4626Asset.asset,
+                newERC20Asset.asset
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_assetRegistryDeployment_success() public {
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
