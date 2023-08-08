@@ -37,6 +37,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// ERRORS ///
 
     error Aera__FeeTokenIsNotRegistered(address feeToken);
+    error Aera__FeeTokenIsERC4626(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__ERC20OracleIsZeroAddress(address asset);
@@ -82,7 +83,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         if (feeTokenIndex == numAssets) {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
         }
-
+        if (assets_[feeTokenIndex].isERC4626) {
+            revert Aera__FeeTokenIsERC4626(address(feeToken_));
+        }
         if (numeraireId_ >= numAssets) {
             revert Aera__NumeraireIndexTooHigh(numAssets, numeraireId_);
         }
