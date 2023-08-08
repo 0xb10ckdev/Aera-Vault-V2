@@ -19,7 +19,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
 
-    ICustody public custody;
+    /// @notice The address of the vault.
+    address public custody;
 
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraireId;
@@ -145,7 +146,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         if (address(feeToken) == asset) {
             revert Aera__CannotRemoveFeeToken(asset);
         }
-        if (IERC20(asset).balanceOf(address(custody)) > 0) {
+        if (IERC20(asset).balanceOf(custody) > 0) {
             revert Aera__AssetBalanceIsNotZero(asset);
         }
 
@@ -185,7 +186,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// @inheritdoc IAssetRegistry
     function setCustody(address newCustody) external override onlyOwner {
-        if (address(custody) != address(0)) {
+        if (custody != address(0)) {
             revert Aera__CustodyIsAlreadySet();
         }
         if (newCustody == address(0)) {
@@ -199,7 +200,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
             revert Aera__CustodyIsNotValid(newCustody);
         }
 
-        custody = ICustody(newCustody);
+        custody = newCustody;
 
         emit SetCustody(newCustody);
     }
