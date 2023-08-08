@@ -32,11 +32,9 @@ contract TestBaseAssetRegistry is TestBase {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            (address deployedAssetRegistry, address deployedCustody) =
-                _loadDeployedAddress();
-
-            assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
-            vault = AeraVaultV2(deployedCustody);
+            assetRegistry =
+                AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
+            vault = AeraVaultV2(_loadDeployedCustody());
 
             vm.prank(assetRegistry.owner());
             assetRegistry.transferOwnership(address(this));
@@ -128,16 +126,20 @@ contract TestBaseAssetRegistry is TestBase {
         }
     }
 
-    function _loadDeployedAddress()
-        internal
-        returns (address deployedAssetRegistry, address deployedCustody)
-    {
+    function _loadDeployedAssetRegistry() internal returns (address) {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);
 
-        deployedAssetRegistry = vm.parseJsonAddress(json, ".assetRegistry");
-        deployedCustody = vm.parseJsonAddress(json, ".custody");
+        return vm.parseJsonAddress(json, ".assetRegistry");
+    }
+
+    function _loadDeployedCustody() internal returns (address) {
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/Deployments.json");
+        string memory json = vm.readFile(path);
+
+        return vm.parseJsonAddress(json, ".custody");
     }
 
     function _loadParameters() internal {
