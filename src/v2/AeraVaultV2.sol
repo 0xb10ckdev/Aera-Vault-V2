@@ -450,6 +450,10 @@ contract AeraVaultV2 is
             (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
         } catch {}
 
+        if (lastFeeTokenPrice == 0) {
+            return;
+        }
+
         uint256 newFee = (
             ((lastValue * feeIndex * fee) / ONE)
                 * 10 ** IERC20Metadata(address(feeToken)).decimals()

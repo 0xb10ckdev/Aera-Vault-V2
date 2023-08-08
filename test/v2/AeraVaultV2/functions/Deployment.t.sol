@@ -139,5 +139,14 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
         assertEq(vault.description(), "Test Vault");
+
+        _setInvalidOracle(nonNumeraireId);
+
+        skip(1000);
+
+        vault.setHooks(address(hooks));
+
+        assertEq(address(vault.hooks()), address(hooks));
+        assertEq(vault.feeTotal(), 0);
     }
 }
