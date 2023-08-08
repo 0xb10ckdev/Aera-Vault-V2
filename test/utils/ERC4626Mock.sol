@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "forge-std/interfaces/IERC20.sol";
 import "solmate/tokens/ERC20.sol";
 import "solmate/mixins/ERC4626.sol";
+import {Aeraform} from "script/utils/Aeraform.sol";
 
 /**
  * @dev Mock ERC4626 token with initial total supply.
@@ -78,5 +79,21 @@ contract ERC4626Mock is ERC4626 {
 
     function pause() external {
         paused = true;
+    }
+}
+
+library ERC4626MockFactory {
+    function deploy(
+        address factory,
+        ERC20 asset,
+        string memory name,
+        string memory symbol,
+        bytes32 salt
+    ) internal returns (address deployed) {
+        bytes memory bytecode = abi.encodePacked(
+            type(ERC4626Mock).creationCode, abi.encode(asset, name, symbol)
+        );
+
+        deployed = Aeraform.idempotentDeploy(factory, salt, bytecode);
     }
 }

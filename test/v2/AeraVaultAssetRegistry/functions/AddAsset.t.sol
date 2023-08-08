@@ -9,11 +9,14 @@ contract AddAssetTest is TestBaseAssetRegistry {
     IAssetRegistry.AssetInformation newERC20Asset;
     IAssetRegistry.AssetInformation newERC4626Asset;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         _deploy();
 
-        (, newERC20Asset) = _createAsset(false, address(0));
-        (, newERC4626Asset) = _createAsset(true, address(newERC20Asset.asset));
+        // this high number (50) is just to make sure we didn't already
+        // create this asset previously, and so ensures the address is different
+        (, newERC20Asset) = _createAsset(false, address(0), 50);
+        (, newERC4626Asset) =
+            _createAsset(true, address(newERC20Asset.asset), 50);
     }
 
     function test_addAsset_fail_whenCallerIsNotOwner() public {

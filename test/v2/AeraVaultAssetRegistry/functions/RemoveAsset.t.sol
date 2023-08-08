@@ -67,7 +67,9 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {
-        (address assetAddress,) = _createAsset(false, address(0));
+        // this high number (49) is just to make sure we didn't already
+        // create this asset previously, and so ensures the address is different
+        (address assetAddress,) = _createAsset(false, address(0), 49);
         ERC20Mock erc20 = ERC20Mock(assetAddress);
 
         vm.expectRevert(
@@ -121,7 +123,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         assertEq(numRegistryAssets - 1, updatedAssets.length);
 
         if (removalAsset < assets[numeraireId].asset) {
-            numeraireId++;
+            numeraireId--;
         }
 
         propNumeraire();
