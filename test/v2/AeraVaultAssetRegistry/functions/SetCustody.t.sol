@@ -6,6 +6,17 @@ import "../TestBaseAssetRegistry.sol";
 contract SetCustodyTest is TestBaseAssetRegistry {
     event SetCustody(address custody);
 
+    function setUp() public override {
+        super.setUp();
+
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_setCustody_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 

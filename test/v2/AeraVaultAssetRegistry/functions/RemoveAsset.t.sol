@@ -6,14 +6,6 @@ import "../TestBaseAssetRegistry.sol";
 contract RemoveAssetTest is TestBaseAssetRegistry {
     event AssetRemoved(address asset);
 
-    function setUp() public override {
-        super.setUp();
-
-        if (address(assetRegistry.custody()) == address(0)) {
-            assetRegistry.setCustody(address(vault));
-        }
-    }
-
     function test_removeAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);
 

@@ -176,17 +176,23 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         _deployAeraVaultV2Factory();
         _createAssets(4, 2);
 
-        assetRegistry =
-        new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
 
         vault = new AeraVaultV2(
-                address(this),
-                address(assetRegistry),
-                _GUARDIAN,
-                _FEE_RECIPIENT,
-                _MAX_FEE,
-                "Test Vault"
-            );
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+
+        assetRegistry.setCustody(address(vault));
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
