@@ -2,10 +2,13 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import "lib/forge-std/src/StdStorage.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import "src/v2/interfaces/ICustodyEvents.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
     AssetValue[] public depositAmounts;
 
     function setUp() public override {
@@ -22,6 +25,16 @@ contract DepositTest is TestBaseAeraVaultV2 {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
+        vault.deposit(depositAmounts);
+    }
+
+    function test_deposit_fail_whenHooksIsNotSet() public {
+        vm.store(
+            address(vault),
+            bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
+            bytes32(uint256(0))
+        );
+        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
         vault.deposit(depositAmounts);
     }
 

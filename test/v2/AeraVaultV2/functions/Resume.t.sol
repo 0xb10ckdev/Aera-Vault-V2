@@ -1,15 +1,29 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "lib/forge-std/src/StdStorage.sol";
 import "../TestBaseAeraVaultV2.sol";
 
 contract ResumeTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
     event Unpaused(address);
 
     function test_resume_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
+        vault.resume();
+    }
+
+    function test_resume_fail_whenHooksIsNotSet() public {
+        vault.pause();
+        vm.store(
+            address(vault),
+            bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
+            bytes32(uint256(0))
+        );
+        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
         vault.resume();
     }
 

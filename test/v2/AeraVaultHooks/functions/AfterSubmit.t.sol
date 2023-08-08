@@ -18,6 +18,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         }
 
         _deposit();
+        vault.resume();
     }
 
     function test_afterSubmit_fail_whenCallerIsNotCustody() public {
