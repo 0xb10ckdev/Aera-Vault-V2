@@ -3,17 +3,6 @@ pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
 
-interface ILastFeeCheckpoint {
-    function lastFeeCheckpoint() external view returns (uint256 checkpoint);
-}
-
-interface IGuardiansFeeTotal {
-    function guardiansFeeTotal(address asset)
-        external
-        view
-        returns (uint256 fee);
-}
-
 contract FinalizeTest is TestBaseAeraVaultV2 {
     function test_finalize_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
@@ -60,9 +49,6 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             })
         );
 
-        uint256 lastFeeCheckpoint =
-            ILastFeeCheckpoint(address(vault)).lastFeeCheckpoint();
-
         AssetValue[] memory holdings = vault.holdings();
         uint256[] memory balances = new uint256[](holdings.length);
 
@@ -70,16 +56,25 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             balances[i] = holdings[i].asset.balanceOf(address(this));
         }
 
+        skip(1000);
+
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized();
 
         vault.finalize();
 
+        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.fees(_FEE_RECIPIENT), 499999);
+
         for (uint256 i = 0; i < holdings.length; i++) {
-            assertApproxEqRel(
-                balances[i] + holdings[i].value,
-                holdings[i].asset.balanceOf(address(this)),
-                vault.fee() * (block.timestamp - lastFeeCheckpoint)
+            assertEq(
+                balances[i] + holdings[i].value
+                    - (
+                        holdings[i].asset == assetRegistry.feeToken()
+                            ? vault.feeTotal()
+                            : 0
+                    ),
+                holdings[i].asset.balanceOf(address(this))
             );
         }
     }

@@ -31,15 +31,15 @@ contract AeraVaultV2 is
     /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
+    /// @notice The address of asset registry.
+    IAssetRegistry public immutable assetRegistry;
+
     /// STORAGE ///
 
     /// @notice Describes vault purpose and modelling assumptions for
     ///         differentiating between vaults.
     /// @dev string cannot be immutable bytecode but only set in constructor
     string public description;
-
-    /// @notice The address of asset registry.
-    IAssetRegistry public assetRegistry;
 
     /// @notice The address of hooks module.
     IHooks public hooks;
@@ -222,22 +222,6 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc ICustody
-    function setAssetRegistry(address newAssetRegistry)
-        external
-        override
-        onlyOwner
-        whenNotFinalized
-    {
-        _checkAssetRegistryAddress(newAssetRegistry);
-
-        _reserveFees();
-
-        assetRegistry = IAssetRegistry(newAssetRegistry);
-
-        emit SetAssetRegistry(newAssetRegistry);
-    }
-
-    /// @inheritdoc ICustody
     function setHooks(address newHooks)
         external
         override
@@ -281,6 +265,8 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
+        _reserveFees();
+
         hooks.beforeFinalize();
 
         finalized = true;
@@ -428,7 +414,7 @@ contract AeraVaultV2 is
 
     /// @notice Calculate current guardian fees.
     function _reserveFees() internal {
-        if (fee == 0) {
+        if (fee == 0 || paused() || finalized) {
             return;
         }
 
@@ -447,6 +433,10 @@ contract AeraVaultV2 is
         ) {
             (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
         } catch {}
+
+        if (lastFeeTokenPrice == 0) {
+            return;
+        }
 
         uint256 newFee = (
             ((lastValue * feeIndex * fee) / ONE)

@@ -64,4 +64,47 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         assertEq(vault.feeTotal(), 499999);
         assertEq(vault.fees(feeRecipient), 499999);
     }
+
+    function test_execute_success_withoutIncreasingFeesWhenPaused() public {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+        vault.pause();
+
+        vm.warp(block.timestamp + 1000);
+
+        test_execute_success();
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+    }
+
+    function test_execute_success_withoutIncreasingFeesWhenFinalized()
+        public
+    {
+        address feeRecipient = address(1);
+        vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+        vault.finalize();
+
+        vm.warp(block.timestamp + 1000);
+        Operation memory approval = Operation({
+            target: address(erc20Assets[0]),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "approve(address,uint256)",
+                address(this),
+                erc20Assets[0].balanceOf(address(vault))
+                )
+        });
+
+        vault.execute(approval);
+
+        assertEq(vault.feeTotal(), 0);
+        assertEq(vault.fees(feeRecipient), 0);
+    }
 }

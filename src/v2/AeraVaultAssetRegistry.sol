@@ -47,6 +47,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__UnderlyingAssetIsRegistered(
         address asset, address underlyingAsset
     );
+    error Aera__NumeraireAssetIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__AssetIsAlreadyRegistered(uint256 index);
@@ -98,6 +99,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         for (uint256 i = 0; i < numAssets; i++) {
             if (i == numeraireId_) {
+                if (assets_[i].isERC4626) {
+                    revert Aera__NumeraireAssetIsMarkedAsERC4626();
+                }
                 if (address(assets_[i].oracle) != address(0)) {
                     revert Aera__NumeraireOracleIsNotZeroAddress();
                 }
@@ -148,12 +152,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
         uint256 i = 0;
         for (; i < numAssets; i++) {
-            if (asset.asset >= _assets[i].asset) {
-                if (asset.asset == _assets[i].asset) {
-                    revert Aera__AssetIsAlreadyRegistered(i);
-                }
-            } else {
+            if (asset.asset < _assets[i].asset) {
                 break;
+            }
+
+            if (asset.asset == _assets[i].asset) {
+                revert Aera__AssetIsAlreadyRegistered(i);
             }
         }
 

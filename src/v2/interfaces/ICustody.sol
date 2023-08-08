@@ -50,10 +50,6 @@ interface ICustody is ICustodyEvents {
         address feeRecipient
     ) external;
 
-    /// @notice Sets current asset registry.
-    /// @param assetRegistry Address of new asset registry.
-    function setAssetRegistry(address assetRegistry) external;
-
     /// @notice Sets current hooks module.
     /// @param hooks Address of new hooks module.
     function setHooks(address hooks) external;
