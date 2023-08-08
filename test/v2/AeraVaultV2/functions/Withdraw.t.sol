@@ -2,9 +2,12 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import "lib/forge-std/src/StdStorage.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 
 contract WithdrawTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
     AssetValue[] withdrawAmounts;
 
     function setUp() public override {
@@ -29,7 +32,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     function test_withdraw_fail_whenHooksIsNotSet() public {
         vm.store(
             address(vault),
-            bytes32(uint256(4)), // storage slot of hooks
+            bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
             bytes32(uint256(0))
         );
         vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);

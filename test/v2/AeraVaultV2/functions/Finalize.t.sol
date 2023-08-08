@@ -2,12 +2,26 @@
 pragma solidity 0.8.19;
 
 import "../TestBaseAeraVaultV2.sol";
+import "lib/forge-std/src/StdStorage.sol";
 
 contract FinalizeTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
     function test_finalize_fail_whenCallerIsNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
 
         vm.prank(_USER);
+        vault.finalize();
+    }
+
+    function test_finalize_fail_whenHooksIsNotSet() public {
+        vault.pause();
+        vm.store(
+            address(vault),
+            bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
+            bytes32(uint256(0))
+        );
+        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
         vault.finalize();
     }
 

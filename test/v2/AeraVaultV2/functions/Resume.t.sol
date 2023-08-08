@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
+import "lib/forge-std/src/StdStorage.sol";
 import "../TestBaseAeraVaultV2.sol";
 
 contract ResumeTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
     event Unpaused(address);
 
     function test_resume_fail_whenCallerIsNotOwner() public {
@@ -17,7 +20,7 @@ contract ResumeTest is TestBaseAeraVaultV2 {
         vault.pause();
         vm.store(
             address(vault),
-            bytes32(uint256(4)), // storage slot of hooks
+            bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
             bytes32(uint256(0))
         );
         vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
