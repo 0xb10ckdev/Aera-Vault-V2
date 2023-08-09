@@ -70,7 +70,7 @@ contract DeployScript is DeployScriptBase {
             _deployAeraVaultHooks(aeraVaultV2Factory, deployedCustody);
 
         // Link modules
-        _linkModules(deployedCustody, deployedHooks);
+        _linkModules(deployedAssetRegistry, deployedCustody, deployedHooks);
 
         vm.stopBroadcast();
     }
@@ -201,6 +201,7 @@ contract DeployScript is DeployScriptBase {
     }
 
     function _linkModules(
+        address deployedAssetRegistry,
         address deployedCustody,
         address deployedHooks
     ) internal {
