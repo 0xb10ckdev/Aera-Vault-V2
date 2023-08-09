@@ -254,11 +254,11 @@ contract AeraVaultV2 is
         override
         onlyOwner
     {
-        _reserveFees();
-
         if (operation.target == address(hooks)) {
             revert Aera__ExecuteTargetIsHooksAddress();
         }
+
+        _reserveFees();
 
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
