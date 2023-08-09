@@ -29,6 +29,20 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         vault.submit(operations);
     }
 
+    function test_submit_fail_whenSubmitTargetIsHooks() public {
+        AssetValue[] memory amounts = new AssetValue[](0);
+        Operation[] memory hookOperations = new Operation[](1);
+        hooks.addTargetSighash(address(hooks), IHooks.beforeDeposit.selector);
+        hookOperations[0] = Operation({
+            target: address(vault.hooks()),
+            value: 0,
+            data: abi.encodeWithSelector(IHooks.beforeDeposit.selector, amounts)
+        });
+        vm.prank(_GUARDIAN);
+        vm.expectRevert(ICustody.Aera__SubmitTargetIsHooksAddress.selector);
+        vault.submit(hookOperations);
+    }
+
     function test_submit_fail_whenOperationIsNotAllowed() public {
         vm.expectRevert(
             abi.encodeWithSelector(
