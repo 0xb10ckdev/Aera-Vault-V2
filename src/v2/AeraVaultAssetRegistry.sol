@@ -122,6 +122,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
         }
 
+        if (assets_[feeTokenIndex].isERC4626) {
+            revert Aera__FeeTokenIsERC4626(address(feeToken_));
+        }
+
         // Requirements: confirm that numeraire index is in valid range.
         if (numeraireId_ >= numAssets) {
             revert Aera__NumeraireIndexTooHigh(numAssets, numeraireId_);

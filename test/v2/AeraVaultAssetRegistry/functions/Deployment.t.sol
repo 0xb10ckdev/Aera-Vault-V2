@@ -65,17 +65,12 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenFeeTokenIsERC4626()
         public
     {
-        uint256 idx4626 = 0;
-        for (; idx4626 < numAssets; idx4626++) {
-            if (idx4626 == numeraireId) {
-                continue;
-            }
-            if (assets[idx4626].isERC4626) {
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].asset == feeToken) {
+                assets[i].isERC4626 = true;
                 break;
             }
         }
-        assertTrue(assets[idx4626].isERC4626);
-        feeToken = assets[idx4626].asset;
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__FeeTokenIsERC4626.selector,
@@ -133,17 +128,6 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenNumeraireAssetIsMarkedAsERC4626(
     ) public {
         assets[numeraireId].isERC4626 = true;
-        // ensure fee token is not numeraire but is ERC20
-        uint256 feeIdx = 0;
-        for (; feeIdx < numAssets; feeIdx++) {
-            if (feeIdx == numeraireId) {
-                continue;
-            }
-            if (!assets[feeIdx].isERC4626) {
-                break;
-            }
-        }
-        feeToken = assets[feeIdx].asset;
         vm.expectRevert(
             AeraVaultAssetRegistry
                 .Aera__NumeraireAssetIsMarkedAsERC4626
