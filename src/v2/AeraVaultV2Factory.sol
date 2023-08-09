@@ -17,7 +17,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
     /// @param description Vault description.
     event VaultCreated(
-        address vault,
+        address indexed vault,
         address assetRegistry,
         address guardian,
         address feeRecipient,
