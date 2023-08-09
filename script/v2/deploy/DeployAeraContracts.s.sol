@@ -205,9 +205,14 @@ contract DeployScript is DeployScriptBase {
         address deployedHooks
     ) internal {
         AeraVaultV2 vault = AeraVaultV2(deployedCustody);
+        AeraVaultAssetRegistry assetRegistry =
+            AeraVaultAssetRegistry(deployedAssetRegistry);
 
         if (address(vault.hooks()) != deployedHooks) {
             vault.setHooks(deployedHooks);
+        }
+        if (address(assetRegistry.custody()) != deployedCustody) {
+            assetRegistry.setCustody(deployedCustody);
         }
     }
 

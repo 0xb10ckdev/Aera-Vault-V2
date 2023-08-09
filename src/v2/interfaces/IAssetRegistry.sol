@@ -52,6 +52,10 @@ interface IAssetRegistry {
     /// @param asset An asset to remove.
     function removeAsset(address asset) external;
 
+    /// @notice Sets current custody module.
+    /// @param custody Address of new custody module.
+    function setCustody(address custody) external;
+
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets.
     function spotPrices()

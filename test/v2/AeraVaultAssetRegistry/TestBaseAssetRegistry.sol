@@ -5,6 +5,7 @@ import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
+import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
@@ -14,7 +15,12 @@ import {ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBaseFactory {
+    address internal constant _GUARDIAN = address(0x123456);
+    address internal constant _FEE_RECIPIENT = address(0x7890ab);
+    uint256 internal constant _MAX_FEE = 10 ** 9;
+
     AeraVaultAssetRegistry public assetRegistry;
+    AeraVaultV2 public vault;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
     address public numeraireAsset;
@@ -32,11 +38,10 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            address deployedFactory = _loadDeployedFactory();
-            factory = AeraVaultV2Factory(deployedFactory);
-
-            address deployedAssetRegistry = _loadDeployedAssetRegistry();
-            assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+            factory = AeraVaultV2Factory(_loadDeployedFactory());
+            assetRegistry =
+                AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
+            vault = AeraVaultV2(_loadDeployedCustody());
 
             vm.prank(assetRegistry.owner());
             assetRegistry.transferOwnership(address(this));
@@ -128,15 +133,20 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         }
     }
 
-    function _loadDeployedAssetRegistry()
-        internal
-        returns (address deployedAssetRegistry)
-    {
+    function _loadDeployedAssetRegistry() internal returns (address) {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);
 
-        deployedAssetRegistry = vm.parseJsonAddress(json, ".assetRegistry");
+        return vm.parseJsonAddress(json, ".assetRegistry");
+    }
+
+    function _loadDeployedCustody() internal returns (address) {
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/Deployments.json");
+        string memory json = vm.readFile(path);
+
+        return vm.parseJsonAddress(json, ".custody");
     }
 
     function _loadParameters() internal {
@@ -166,8 +176,23 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         _deployAeraVaultV2Factory();
         _createAssets(4, 2);
 
-        assetRegistry =
-        new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
+
+        vault = new AeraVaultV2(
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+
+        assetRegistry.setCustody(address(vault));
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
