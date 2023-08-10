@@ -352,11 +352,12 @@ contract AeraVaultV2 is
         Operation memory operation;
         bool success;
         bytes memory result;
+        address hooksAddress = address(hooks);
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
 
-            if (operation.target == address(hooks)) {
+            if (operation.target == hooksAddress) {
                 revert Aera__SubmitTargetIsHooksAddress();
             }
 
@@ -365,6 +366,9 @@ contract AeraVaultV2 is
 
             if (!success) {
                 revert Aera__SubmissionFailed(i, result);
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
 
