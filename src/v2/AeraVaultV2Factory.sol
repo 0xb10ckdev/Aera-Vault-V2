@@ -2,11 +2,11 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 
 /// @title Aera Vault V2 Factory contract.
-contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable {
+contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// EVENTS ///
 
     /// @notice Emitted when the vault is created.
