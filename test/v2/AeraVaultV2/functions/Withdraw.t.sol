@@ -23,7 +23,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
     }
 
     function test_withdraw_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.withdraw(withdrawAmounts);

@@ -22,7 +22,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
     function test_addAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);
 
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
         assetRegistry.addAsset(newERC20Asset);
     }
 

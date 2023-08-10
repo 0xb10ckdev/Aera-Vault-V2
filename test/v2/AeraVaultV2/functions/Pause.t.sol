@@ -7,7 +7,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     event Paused(address);
 
     function test_pause_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.pause();
@@ -24,7 +24,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     function test_pause_fail_whenVaultIsPaused() public {
         vault.pause();
 
-        vm.expectRevert(bytes("Pausable: paused"));
+        vm.expectRevert("Pausable: paused");
 
         vault.pause();
     }
