@@ -156,7 +156,7 @@ contract AeraVaultV2 is
         AssetValue memory assetValue;
         bool isRegistered;
 
-        for (uint256 i = 0; i < numAmounts; i++) {
+        for (uint256 i = 0; i < numAmounts;) {
             assetValue = amounts[i];
             (isRegistered,) = _isAssetRegistered(assetValue.asset, assets);
 
@@ -164,15 +164,22 @@ contract AeraVaultV2 is
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
-            for (uint256 j = 0; j < numAmounts; j++) {
+            for (uint256 j = 0; j < numAmounts;) {
                 if (i != j && assetValue.asset == amounts[j].asset) {
                     revert Aera__AssetIsDuplicated(assetValue.asset);
+                }
+                unchecked {
+                    j++; // gas savings
                 }
             }
 
             assetValue.asset.safeTransferFrom(
                 owner(), address(this), assetValue.value
             );
+
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         hooks.afterDeposit(amounts);
@@ -295,8 +302,11 @@ contract AeraVaultV2 is
         AssetValue[] memory assetAmounts = _getHoldings(assets);
         uint256 numAssetAmounts = assetAmounts.length;
 
-        for (uint256 i = 0; i < numAssetAmounts; i++) {
+        for (uint256 i = 0; i < numAssetAmounts;) {
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         hooks.afterFinalize();
@@ -352,11 +362,12 @@ contract AeraVaultV2 is
         Operation memory operation;
         bool success;
         bytes memory result;
+        address hooksAddress = address(hooks);
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
 
-            if (operation.target == address(hooks)) {
+            if (operation.target == hooksAddress) {
                 revert Aera__SubmitTargetIsHooksAddress();
             }
 
@@ -365,6 +376,9 @@ contract AeraVaultV2 is
 
             if (!success) {
                 revert Aera__SubmissionFailed(i, result);
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
 
@@ -494,7 +508,7 @@ contract AeraVaultV2 is
         uint256 numAssets = assets.length;
         uint256 balance;
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             if (assets[i].isERC4626) {
                 balance = IERC4626(address(assets[i].asset)).convertToAssets(
                     assetAmounts[i].value
@@ -508,6 +522,9 @@ contract AeraVaultV2 is
             }
 
             vaultValue += (balance * spotPrices[i]) / assetUnits[i];
+            unchecked {
+                i++; // gas savings
+            }
         }
     }
 
@@ -526,7 +543,7 @@ contract AeraVaultV2 is
         AssetValue memory assetValue;
         uint256 assetIndex;
 
-        for (uint256 i = 0; i < numAmounts; i++) {
+        for (uint256 i = 0; i < numAmounts;) {
             assetValue = amounts[i];
             (isRegistered, assetIndex) =
                 _isAssetRegistered(assetValue.asset, assets);
@@ -535,9 +552,12 @@ contract AeraVaultV2 is
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
-            for (uint256 j = 0; j < numAmounts; j++) {
+            for (uint256 j = 0; j < numAmounts;) {
                 if (i != j && assetValue.asset == amounts[j].asset) {
                     revert Aera__AssetIsDuplicated(assetValue.asset);
+                }
+                unchecked {
+                    j++; // gas savings
                 }
             }
 
@@ -547,6 +567,9 @@ contract AeraVaultV2 is
                     assetValue.value,
                     assetAmounts[assetIndex].value
                 );
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
     }
@@ -573,29 +596,38 @@ contract AeraVaultV2 is
         IAssetRegistry.AssetInformation memory asset;
         address underlyingAsset;
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             asset = assets[i];
 
             if (asset.isERC4626) {
                 underlyingAsset = IERC4626(address(asset.asset)).asset();
-                for (uint256 j = 0; j < numERC20SpotPrices; j++) {
+                for (uint256 j = 0; j < numERC20SpotPrices;) {
                     if (underlyingAsset == address(erc20SpotPrices[j].asset)) {
                         spotPrices[i] = erc20SpotPrices[j].spotPrice;
                         assetUnits[i] =
                             10 ** IERC20Metadata(underlyingAsset).decimals();
                         break;
                     }
+                    unchecked {
+                        j++; // gas savings
+                    }
                 }
             } else {
-                for (uint256 j = 0; j < numERC20SpotPrices; j++) {
+                for (uint256 j = 0; j < numERC20SpotPrices;) {
                     if (asset.asset == erc20SpotPrices[j].asset) {
                         spotPrices[i] = erc20SpotPrices[j].spotPrice;
                         break;
+                    }
+                    unchecked {
+                        j++; // gas savings
                     }
                 }
 
                 assetUnits[i] =
                     10 ** IERC20Metadata(address(asset.asset)).decimals();
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
     }
@@ -614,7 +646,7 @@ contract AeraVaultV2 is
         assetAmounts = new AssetValue[](numAssets);
         IAssetRegistry.AssetInformation memory asset;
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             asset = assets[i];
             assetAmounts[i] = AssetValue({
                 asset: asset.asset,
@@ -627,6 +659,9 @@ contract AeraVaultV2 is
                 } else {
                     assetAmounts[i].value = 0;
                 }
+            }
+            unchecked {
+                i++; //gas savings
             }
         }
     }
