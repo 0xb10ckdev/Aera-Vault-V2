@@ -470,14 +470,8 @@ contract AeraVaultV2 is
                 * 10 ** IERC20Metadata(address(feeToken)).decimals()
         ) / lastFeeTokenPrice;
 
-        uint256 feeTokenBalance = feeToken.balanceOf(address(this));
-
-        if (feeTokenBalance > feeTotal) {
-            newFee = Math.min(feeTokenBalance - feeTotal, newFee);
-
-            fees[feeRecipient] += newFee;
-            feeTotal += newFee;
-        }
+        fees[feeRecipient] += newFee;
+        feeTotal += newFee;
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.

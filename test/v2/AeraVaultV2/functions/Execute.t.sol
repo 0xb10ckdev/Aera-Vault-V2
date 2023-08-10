@@ -111,8 +111,9 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         assertEq(vault.fees(feeRecipient), 499999);
     }
 
-    function test_execute_success_withoutIncreasingFeesWhenFeeTokenIsNotEnough(
-    ) public {
+    function test_execute_success_withIncreasingFeesWhenFeeTokenIsNotEnough()
+        public
+    {
         skip(1000);
 
         address feeRecipient = address(1);
@@ -124,7 +125,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
 
         skip(1000);
 
-        deal(address(feeToken), address(vault), 499999);
+        deal(address(feeToken), address(vault), 0);
 
         operation = Operation({
             target: address(erc20Assets[0]),
@@ -136,9 +137,10 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
 
         vault.execute(operation);
 
-        assertEq(vault.feeTotal(), 499999);
+        assertEq(vault.feeTotal(), 899998);
         assertEq(vault.fees(_FEE_RECIPIENT), 499999);
-        assertEq(vault.fees(feeRecipient), 0);
+        assertEq(vault.fees(feeRecipient), 399999);
+        assertEq(feeToken.balanceOf(address(vault)), 0);
     }
 
     function test_execute_success_withoutIncreasingFeesWhenPaused() public {
