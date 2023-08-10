@@ -178,31 +178,6 @@ contract TestGuardian is Test, DeployScript {
         );
     }
 
-    function _loadOperationsFromFile() internal {
-        // unused right now since we instead manually load the operations in Solidity
-
-        string memory guardianPath = string.concat(rootPath, "/Guardian.json");
-        string memory json = vm.readFile(guardianPath);
-        bytes memory rawOperation;
-        for (uint256 i = 0; i < 4; i++) {
-            // TODO: see what happens if I try to parse a non-existent operation
-            // after the end of the array (and can I make the loading dynamic by
-            // stopping at this point)
-            rawOperation = json.parseRaw(
-                string.concat(".operations[", Strings.toString(i), "]")
-            );
-            OperationAlpha memory operation =
-                abi.decode(rawOperation, (OperationAlpha));
-            operations.push(
-                Operation({
-                    data: operation.data,
-                    target: operation.target,
-                    value: operation.value
-                })
-            );
-        }
-    }
-
     function getSelector(bytes calldata data) public pure returns (bytes4) {
         return bytes4(data[0:4]);
     }
