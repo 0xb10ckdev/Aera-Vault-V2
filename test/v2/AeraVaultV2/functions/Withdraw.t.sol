@@ -106,7 +106,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         vm.warp(block.timestamp + 1000);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Withdraw(address(vault), withdrawAmounts);
+        emit Withdraw(vault.owner(), withdrawAmounts);
 
         vault.withdraw(withdrawAmounts);
     }
@@ -118,7 +118,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Withdraw(address(vault), withdrawAmounts);
+        emit Withdraw(vault.owner(), withdrawAmounts);
 
         vault.withdraw(withdrawAmounts);
 

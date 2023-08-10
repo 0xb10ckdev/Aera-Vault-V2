@@ -53,7 +53,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         uint256 balance = erc20Assets[0].balanceOf(address(this));
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Executed(address(vault), operation);
+        emit Executed(vault.owner(), operation);
 
         vault.execute(operation);
 

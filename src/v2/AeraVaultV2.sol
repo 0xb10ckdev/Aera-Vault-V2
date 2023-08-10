@@ -177,7 +177,7 @@ contract AeraVaultV2 is
 
         hooks.afterDeposit(amounts);
 
-        emit Deposit(address(this), amounts);
+        emit Deposit(owner(), amounts);
     }
 
     /// @inheritdoc ICustody
@@ -213,7 +213,7 @@ contract AeraVaultV2 is
 
         hooks.afterWithdraw(amounts);
 
-        emit Withdraw(address(this), amounts);
+        emit Withdraw(owner(), amounts);
     }
 
     /// @inheritdoc ICustody
@@ -269,7 +269,7 @@ contract AeraVaultV2 is
 
         _checkReservedFees();
 
-        emit Executed(address(this), operation);
+        emit Executed(owner(), operation);
     }
 
     /// @inheritdoc ICustody
@@ -366,7 +366,7 @@ contract AeraVaultV2 is
 
         hooks.afterSubmit(operations);
 
-        emit Submitted(address(this), operations);
+        emit Submitted(owner(), operations);
     }
 
     /// @inheritdoc ICustody

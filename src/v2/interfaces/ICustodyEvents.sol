@@ -6,10 +6,12 @@ import {AssetValue, Operation} from "../Types.sol";
 /// @title Interface for custody module events.
 interface ICustodyEvents {
     /// @notice Emitted when deposit is called.
+    /// @param owner Owner address.
     /// @param amounts Struct details for deposited assets and amounts.
     event Deposit(address indexed owner, AssetValue[] amounts);
 
     /// @notice Emitted when withdraw is called.
+    /// @param owner Owner address.
     /// @param amounts Struct details for withdrawn assets and amounts.
     event Withdraw(address indexed owner, AssetValue[] amounts);
 
@@ -29,6 +31,7 @@ interface ICustodyEvents {
     event SetHooks(address hooks);
 
     /// @notice Emitted when execute is called.
+    /// @param owner Owner address.
     /// @param operation Struct details for target and calldata.
     event Executed(address indexed owner, Operation operation);
 
@@ -38,6 +41,7 @@ interface ICustodyEvents {
     event Finalized(address indexed owner, AssetValue[] withdrawnAmounts);
 
     /// @notice Emitted when submit is called.
+    /// @param owner Owner address.
     /// @param operations Array of struct details for targets and calldatas.
     event Submitted(address indexed owner, Operation[] operations);
 
