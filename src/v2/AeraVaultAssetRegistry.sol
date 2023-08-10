@@ -38,6 +38,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param asset Address of removed asset.
     event AssetRemoved(address asset);
 
+    /// @notice Emitted in constructor.
+    /// @param owner Address of owner.
+    /// @param assets Array of assets & associated info in the registry.
+    /// @param numeraireId Index of numeraire asset.
+    /// @param feeToken Address of fee token.
+    event Created(
+        address indexed owner,
+        AssetInformation[] assets,
+        uint256 numeraireId,
+        address feeToken
+    );
+
     /// @notice Emitted when custody is set.
     /// @param custody Address of new custody.
     event SetCustody(address custody);
@@ -117,6 +129,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         feeToken = feeToken_;
 
         _transferOwnership(owner_);
+        emit Created(owner_, assets_, numeraireId_, address(feeToken_));
     }
 
     /// @inheritdoc IAssetRegistry

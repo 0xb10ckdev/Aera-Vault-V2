@@ -177,7 +177,7 @@ contract AeraVaultV2 is
 
         hooks.afterDeposit(amounts);
 
-        emit Deposit(amounts);
+        emit Deposit(owner(), amounts);
     }
 
     /// @inheritdoc ICustody
@@ -213,7 +213,7 @@ contract AeraVaultV2 is
 
         hooks.afterWithdraw(amounts);
 
-        emit Withdraw(amounts);
+        emit Withdraw(owner(), amounts);
     }
 
     /// @inheritdoc ICustody
@@ -272,7 +272,7 @@ contract AeraVaultV2 is
 
         _checkReservedFees(prevFeeTokenBalance);
 
-        emit Executed(operation);
+        emit Executed(owner(), operation);
     }
 
     /// @inheritdoc ICustody
@@ -301,7 +301,7 @@ contract AeraVaultV2 is
 
         hooks.afterFinalize();
 
-        emit Finalized();
+        emit Finalized(owner(), assetAmounts);
     }
 
     /// @inheritdoc ICustody
@@ -372,7 +372,7 @@ contract AeraVaultV2 is
 
         hooks.afterSubmit(operations);
 
-        emit Submitted(operations);
+        emit Submitted(owner(), operations);
     }
 
     /// @inheritdoc ICustody
@@ -389,6 +389,7 @@ contract AeraVaultV2 is
 
         uint256 availableFee =
             Math.min(feeToken.balanceOf(address(this)), reservedFee);
+        uint256 unavailableFee = reservedFee - availableFee;
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
@@ -396,7 +397,7 @@ contract AeraVaultV2 is
 
         feeToken.safeTransfer(msg.sender, availableFee);
 
-        emit Claimed(msg.sender, availableFee);
+        emit Claimed(msg.sender, availableFee, unavailableFee);
     }
 
     /// @inheritdoc ICustody
