@@ -49,6 +49,7 @@ contract TestGuardian is
     address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 1000000000;
     uint256 maxDailyExecutionLoss = 100000000000000000;
+    uint256 minBlockNumber = 46145721;
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
 
@@ -59,6 +60,7 @@ contract TestGuardian is
         vm.label(usdc, "USDC");
 
         _deployFactory();
+        _saveAeraVaultV2Params();
         _deployContracts();
     }
 
@@ -66,7 +68,7 @@ contract TestGuardian is
         if (this.getChainID() != 137) {
             return;
         }
-        if (block.number < 46145721) {
+        if (block.number < minBlockNumber) {
             return;
         }
         assertEq(address(this), vault.owner());
@@ -103,7 +105,9 @@ contract TestGuardian is
         AeraVaultV2Factory factory = new AeraVaultV2Factory();
         factoryAddress = address(factory);
         vm.label(factoryAddress, "Factory");
+    }
 
+    function _saveAeraVaultV2Params() internal {
         string memory aeraVaultV2Path =
             string.concat(rootPath, "/AeraVaultV2.json");
 
