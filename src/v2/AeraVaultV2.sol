@@ -122,7 +122,7 @@ contract AeraVaultV2 is
             revert Aera__DescriptionIsEmpty();
         }
         if (owner_ == address(0)) {
-            revert("Initial owner_ is the zero address");
+            revert("Initial owner is the zero address");
         }
 
         assetRegistry = IAssetRegistry(assetRegistry_);

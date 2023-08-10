@@ -19,7 +19,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     }
 
     function test_aeraVaultV2Deployment_fail_whenOwnerIsZeroAddress() public {
-        vm.expectRevert(bytes("Initial owner_ is the zero address"));
+        vm.expectRevert(bytes("Initial owner is the zero address"));
         new AeraVaultV2(
             address(0),
             address(assetRegistry),
