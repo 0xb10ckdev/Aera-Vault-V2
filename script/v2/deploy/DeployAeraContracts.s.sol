@@ -53,7 +53,8 @@ contract DeployScript is DeployScriptBase {
             salt,
             "/config/AeraVaultAssetRegistry.json",
             "/config/AeraVaultV2.json",
-            "/config/AeraVaultHooks.json"
+            "/config/AeraVaultHooks.json",
+            true
         );
     }
 
@@ -61,7 +62,8 @@ contract DeployScript is DeployScriptBase {
         bytes32 salt,
         string memory assetRegistryPath,
         string memory aeraVaultV2Path,
-        string memory aeraVaultHooksPath
+        string memory aeraVaultHooksPath,
+        bool broadcast
     )
         public
         returns (
@@ -77,7 +79,9 @@ contract DeployScript is DeployScriptBase {
 
         address aeraVaultV2Factory = json.readAddress(".aeraVaultV2Factory");
 
-        vm.startBroadcast(_deployerPrivateKey);
+        if (broadcast) {
+            vm.startBroadcast(_deployerPrivateKey);
+        }
 
         // Deploy AssetRegistry
         deployedAssetRegistry =
@@ -95,7 +99,9 @@ contract DeployScript is DeployScriptBase {
         // Link modules
         _linkModules(deployedAssetRegistry, deployedCustody, deployedHooks);
 
-        vm.stopBroadcast();
+        if (broadcast) {
+            vm.stopBroadcast();
+        }
     }
 
     function _deployAssetRegistry(
