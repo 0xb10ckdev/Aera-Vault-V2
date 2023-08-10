@@ -28,6 +28,21 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         hooks.afterSubmit(new Operation[](0));
     }
 
+    function test_afterSubmit_fail_whenETHBalanceIsDecreased() public {
+        Operation[] memory operations = new Operation[](1);
+        operations[0] =
+            Operation({target: address(1), value: 1, data: hex"00000000"});
+
+        hooks.addTargetSighash(address(1), hex"00000000");
+
+        deal(address(vault), 1);
+
+        vm.expectRevert(IHooks.Aera__ETHBalanceIsDecreased.selector);
+
+        vm.prank(_GUARDIAN);
+        vault.submit(operations);
+    }
+
     function test_afterSubmit_fail_whenExceedsMaxDailyExecutionLossOnCurrentDay(
     ) public {
         uint256 numAssets = assets.length;
