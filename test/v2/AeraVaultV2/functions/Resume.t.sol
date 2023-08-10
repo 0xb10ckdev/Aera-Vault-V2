@@ -10,7 +10,7 @@ contract ResumeTest is TestBaseAeraVaultV2 {
     event Unpaused(address);
 
     function test_resume_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.resume();
@@ -37,7 +37,7 @@ contract ResumeTest is TestBaseAeraVaultV2 {
     }
 
     function test_resume_fail_whenVaultIsNotPaused() public {
-        vm.expectRevert(bytes("Pausable: not paused"));
+        vm.expectRevert("Pausable: not paused");
 
         vault.resume();
     }

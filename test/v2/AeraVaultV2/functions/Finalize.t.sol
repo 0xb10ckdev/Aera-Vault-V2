@@ -8,7 +8,7 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
 
     function test_finalize_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.finalize();

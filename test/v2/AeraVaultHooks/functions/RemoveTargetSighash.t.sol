@@ -5,7 +5,7 @@ import "../TestBaseAeraVaultHooks.sol";
 
 contract RemoveTargetSighashTest is TestBaseAeraVaultHooks {
     function test_removeTargetSighash_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         hooks.removeTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);

@@ -25,7 +25,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         factory.create(
