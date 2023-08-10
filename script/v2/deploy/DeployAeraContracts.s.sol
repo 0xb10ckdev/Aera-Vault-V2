@@ -49,10 +49,30 @@ contract DeployScript is DeployScriptBase {
             address deployedHooks
         )
     {
+        return runFromSpecifiedConfigPaths(
+            salt,
+            "/config/AeraVaultAssetRegistry.json",
+            "/config/AeraVaultV2.json",
+            "/config/AeraVaultHooks.json"
+        );
+    }
+
+    function runFromSpecifiedConfigPaths(
+        bytes32 salt,
+        string memory assetRegistryPath,
+        string memory aeraVaultV2Path,
+        string memory aeraVaultHooksPath
+    )
+        public
+        returns (
+            address deployedAssetRegistry,
+            address deployedCustody,
+            address deployedHooks
+        )
+    {
         _salt = salt;
 
-        string memory path =
-            string.concat(vm.projectRoot(), "/config/AeraVaultV2.json");
+        string memory path = string.concat(vm.projectRoot(), aeraVaultV2Path);
         string memory json = vm.readFile(path);
 
         address aeraVaultV2Factory = json.readAddress(".aeraVaultV2Factory");
@@ -60,14 +80,17 @@ contract DeployScript is DeployScriptBase {
         vm.startBroadcast(_deployerPrivateKey);
 
         // Deploy AssetRegistry
-        deployedAssetRegistry = _deployAssetRegistry(aeraVaultV2Factory);
+        deployedAssetRegistry =
+            _deployAssetRegistry(aeraVaultV2Factory, assetRegistryPath);
 
         // Deploy AeraVaultV2
-        deployedCustody = _deployAeraVaultV2(deployedAssetRegistry);
+        deployedCustody =
+            _deployAeraVaultV2(deployedAssetRegistry, aeraVaultV2Path);
 
         // Deploy AeraVaultHooks
-        deployedHooks =
-            _deployAeraVaultHooks(aeraVaultV2Factory, deployedCustody);
+        deployedHooks = _deployAeraVaultHooks(
+            aeraVaultV2Factory, deployedCustody, aeraVaultHooksPath
+        );
 
         // Link modules
         _linkModules(deployedAssetRegistry, deployedCustody, deployedHooks);
@@ -75,17 +98,17 @@ contract DeployScript is DeployScriptBase {
         vm.stopBroadcast();
     }
 
-    function _deployAssetRegistry(address aeraVaultV2Factory)
-        internal
-        returns (address deployed)
-    {
+    function _deployAssetRegistry(
+        address aeraVaultV2Factory,
+        string memory paramsRelFilePath
+    ) internal returns (address deployed) {
         // Get parameters for AssetRegistry
         (
             address owner,
             IAssetRegistry.AssetInformation[] memory assets,
             uint256 numeraireId,
             address feeToken
-        ) = _getAssetRegistryParams();
+        ) = _getAssetRegistryParams(paramsRelFilePath);
 
         // Get bytecode
         bytes memory bytecode = abi.encodePacked(
@@ -111,10 +134,10 @@ contract DeployScript is DeployScriptBase {
         _storeDeployedAddress("assetRegistry", deployed);
     }
 
-    function _deployAeraVaultV2(address assetRegistry)
-        internal
-        returns (address deployed)
-    {
+    function _deployAeraVaultV2(
+        address assetRegistry,
+        string memory paramsRelFilePath
+    ) internal returns (address deployed) {
         // Get parameters for AeraVaultV2
         (
             address aeraVaultV2Factory,
@@ -123,7 +146,7 @@ contract DeployScript is DeployScriptBase {
             address feeRecipient,
             uint256 fee,
             string memory description
-        ) = _getAeraVaultV2Params();
+        ) = _getAeraVaultV2Params(paramsRelFilePath);
 
         deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeAddress(
             _salt,
@@ -164,14 +187,15 @@ contract DeployScript is DeployScriptBase {
 
     function _deployAeraVaultHooks(
         address aeraVaultV2Factory,
-        address custody
+        address custody,
+        string memory paramsRelFilePath
     ) internal returns (address deployed) {
         // Get parameters for AeraVaultHooks
         (
             address owner,
             uint256 maxDailyExecutionLoss,
             TargetSighash[] memory targetSighashAllowlist
-        ) = _getAeraVaultHooksParams();
+        ) = _getAeraVaultHooksParams(paramsRelFilePath);
 
         // Get bytecode
         bytes memory bytecode = abi.encodePacked(
@@ -217,7 +241,7 @@ contract DeployScript is DeployScriptBase {
         }
     }
 
-    function _getAssetRegistryParams()
+    function _getAssetRegistryParams(string memory relFilePath)
         internal
         returns (
             address owner,
@@ -226,9 +250,7 @@ contract DeployScript is DeployScriptBase {
             address feeToken
         )
     {
-        string memory path = string.concat(
-            vm.projectRoot(), "/config/AeraVaultAssetRegistry.json"
-        );
+        string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
         bytes memory rawAssets = json.parseRaw(".assets");
@@ -239,7 +261,7 @@ contract DeployScript is DeployScriptBase {
         feeToken = json.readAddress(".feeToken");
     }
 
-    function _getAeraVaultV2Params()
+    function _getAeraVaultV2Params(string memory relFilePath)
         internal
         returns (
             address aeraVaultV2Factory,
@@ -250,8 +272,7 @@ contract DeployScript is DeployScriptBase {
             string memory description
         )
     {
-        string memory path =
-            string.concat(vm.projectRoot(), "/config/AeraVaultV2.json");
+        string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
         aeraVaultV2Factory = json.readAddress(".aeraVaultV2Factory");
@@ -262,7 +283,7 @@ contract DeployScript is DeployScriptBase {
         description = json.readString(".description");
     }
 
-    function _getAeraVaultHooksParams()
+    function _getAeraVaultHooksParams(string memory relFilePath)
         internal
         returns (
             address owner,
@@ -270,8 +291,7 @@ contract DeployScript is DeployScriptBase {
             TargetSighash[] memory targetSighashAllowlist
         )
     {
-        string memory path =
-            string.concat(vm.projectRoot(), "/config/AeraVaultHooks.json");
+        string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
         owner = json.readAddress(".owner");

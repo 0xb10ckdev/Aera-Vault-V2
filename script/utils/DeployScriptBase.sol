@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
+import {console2} from "forge-std/console2.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {Script} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
@@ -12,14 +13,14 @@ contract DeployScriptBase is Script, Test {
     address internal _deployerAddress;
 
     constructor() {
-        _deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
+        //_deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
 
-        if (_deployerPrivateKey == 0) {
-            string memory mnemonic = vm.envString("MNEMONIC");
-            _deployerPrivateKey = vm.deriveKey(mnemonic, 0);
-        }
+        //if (_deployerPrivateKey == 0) {
+        //    string memory mnemonic = vm.envString("MNEMONIC");
+        //    _deployerPrivateKey = vm.deriveKey(mnemonic, 0);
+        //}
 
-        _deployerAddress = vm.addr(_deployerPrivateKey);
+        //_deployerAddress = vm.addr(_deployerPrivateKey);
     }
 
     function _storeDeployedAddress(
