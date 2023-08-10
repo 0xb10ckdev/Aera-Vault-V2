@@ -7,22 +7,15 @@ contract AddAssetAtEnd is AddAssetTest {
     function setUp() public override {
         _deploy();
 
-        // the high number to start (51) is just to make sure we didn't already
-        // create this asset previously, and so ensures the address is different
-        address lastAssetAddress = address(assets[numAssets - 1].asset);
-        // loop until we create a new asset with higher address than all previously
-        for (uint256 i = 51; i < 51000; i++) {
-            (, newERC20Asset) = _createAsset(false, address(0), i);
-            if (address(newERC20Asset.asset) > lastAssetAddress) {
-                break;
-            }
-        }
-        address newERC20Address = address(newERC20Asset.asset);
-        for (uint256 i = 51; i < 51000; i++) {
-            (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, i);
-            if (address(newERC4626Asset.asset) > newERC20Address) {
-                break;
-            }
-        }
+        address newERC20Address = address(type(uint160).max - 1);
+        address newERC4626Address = address(type(uint160).max);
+
+        (, newERC20Asset) = _createAsset(false, address(0), 51);
+        vm.etch(newERC20Address, address(newERC20Asset.asset).code);
+        newERC20Asset.asset = IERC20(newERC20Address);
+
+        (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, 51);
+        vm.etch(newERC4626Address, address(newERC4626Asset.asset).code);
+        newERC4626Asset.asset = IERC20(newERC4626Address);
     }
 }
