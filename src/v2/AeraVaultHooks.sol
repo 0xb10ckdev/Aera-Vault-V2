@@ -115,8 +115,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external override onlyOwner {
-        targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
-        = false;
+        delete targetSighashAllowed[
+            TargetSighashLib.toTargetSighash(target, selector)
+        ];
 
         emit TargetSighashRemoved(target, selector);
     }
@@ -191,11 +192,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 day = block.timestamp / 1 days;
 
         if (_beforeValue > 0) {
-            uint256 submitMultiplier = custody.value() * ONE / _beforeValue;
+            uint256 submitMultiplier = (custody.value() * ONE) / _beforeValue;
 
             if (currentDay == day) {
                 uint256 dailyMultiplier =
-                    cumulativeDailyMultiplier * submitMultiplier / ONE;
+                    (cumulativeDailyMultiplier * submitMultiplier) / ONE;
                 if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
                 }
