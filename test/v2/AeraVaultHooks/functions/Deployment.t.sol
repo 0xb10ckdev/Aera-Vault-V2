@@ -33,6 +33,22 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         );
     }
 
+    function test_aeraVaultHooksDeployment_fail_whenMaxDailyExecutionLossIsGreaterThanOne(
+    ) public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IHooks.Aera__MaxDailyExecutionLossIsGreaterThanOne.selector
+            )
+        );
+
+        new AeraVaultHooks(
+            address(this),
+            address(vault),
+            1.1e18,
+            new TargetSighash[](0)
+        );
+    }
+
     function test_aeraVaultHooksDeployment_success() public {
         uint256 numERC20 = erc20Assets.length;
 

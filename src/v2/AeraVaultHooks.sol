@@ -78,6 +78,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         ) {
             revert Aera__CustodyIsNotValid(custody_);
         }
+        if (maxDailyExecutionLoss_ > ONE) {
+            revert Aera__MaxDailyExecutionLossIsGreaterThanOne();
+        }
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
