@@ -129,7 +129,7 @@ contract AeraVaultV2 is
         description = description_;
         lastFeeCheckpoint = block.timestamp;
 
-        _transferOwnership(owner_);
+        transferOwnership(owner_);
         _pause();
 
         emit SetAssetRegistry(assetRegistry_);
