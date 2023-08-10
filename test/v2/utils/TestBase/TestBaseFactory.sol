@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "src/v2/AeraVaultV2Factory.sol";
 import {TestBase} from "test/utils/TestBase.sol";
