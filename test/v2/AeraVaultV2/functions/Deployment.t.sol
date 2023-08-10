@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultV2.sol";
 
@@ -134,6 +134,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             "Test Vault"
         );
 
+        assertTrue(vault.paused());
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);

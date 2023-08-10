@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
@@ -33,6 +33,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
         vm.warp(block.timestamp + 1000);
 
         _deposit();
+        vault.resume();
     }
 
     function _deposit() internal {

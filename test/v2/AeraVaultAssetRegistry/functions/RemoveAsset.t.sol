@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC4626.sol";
 import "../TestBaseAssetRegistry.sol";
@@ -45,6 +45,18 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
             );
         }
         assetRegistry.removeAsset(address(feeToken));
+    }
+
+    function test_removeAsset_fail_whenAssetBalanceIsNotZero() public {
+        deal(address(assets[nonNumeraireId].asset), address(vault), 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__AssetBalanceIsNotZero.selector,
+                assets[nonNumeraireId].asset
+            )
+        );
+        assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {

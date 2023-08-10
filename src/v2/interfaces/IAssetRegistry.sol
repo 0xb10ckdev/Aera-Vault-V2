@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/IERC20.sol";
@@ -51,6 +51,10 @@ interface IAssetRegistry {
     /// @notice Remove an asset.
     /// @param asset An asset to remove.
     function removeAsset(address asset) external;
+
+    /// @notice Sets current custody module.
+    /// @param custody Address of new custody module.
+    function setCustody(address custody) external;
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets.

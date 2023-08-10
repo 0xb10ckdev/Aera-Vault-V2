@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultHooks.sol";
 
@@ -9,22 +9,6 @@ contract BeforeSubmitTest is TestBaseAeraVaultHooks {
 
         vm.prank(_USER);
         hooks.beforeSubmit(new Operation[](0));
-    }
-
-    function test_beforeSubmit_fail_whenTargetIsHooks() public {
-        Operation[] memory operations = new Operation[](1);
-        operations[0] = Operation({
-            target: address(hooks),
-            value: 0,
-            data: abi.encodeWithSignature(
-                "transfer(address,uint256)", address(this), 1
-                )
-        });
-
-        vm.expectRevert(IHooks.Aera__TargetIsHooks.selector);
-
-        vm.prank(address(vault));
-        hooks.beforeSubmit(operations);
     }
 
     function test_beforeSubmit_fail_whenCallIsNotAllowed() public {

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Math.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/Pausable.sol";
 import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
@@ -17,7 +17,7 @@ import {ONE} from "./Constants.sol";
 contract AeraVaultV2 is
     ICustody,
     ERC165,
-    Ownable,
+    Ownable2Step,
     Pausable,
     ReentrancyGuard
 {
@@ -86,6 +86,14 @@ contract AeraVaultV2 is
         _;
     }
 
+    /// @dev Throws if hooks is not set
+    modifier whenHooksSet() {
+        if (address(hooks) == address(0)) {
+            revert Aera__HooksIsZeroAddress();
+        }
+        _;
+    }
+
     /// FUNCTIONS ///
 
     /// @notice Initialize the custody contract by providing references to
@@ -122,6 +130,7 @@ contract AeraVaultV2 is
         lastFeeCheckpoint = block.timestamp;
 
         _transferOwnership(owner_);
+        _pause();
 
         emit SetAssetRegistry(assetRegistry_);
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
@@ -133,6 +142,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -176,6 +186,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -243,7 +254,14 @@ contract AeraVaultV2 is
         override
         onlyOwner
     {
+        if (operation.target == address(hooks)) {
+            revert Aera__ExecuteTargetIsHooksAddress();
+        }
+
         _reserveFees();
+
+        uint256 prevFeeTokenBalance =
+            assetRegistry.feeToken().balanceOf(address(this));
 
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
@@ -252,7 +270,7 @@ contract AeraVaultV2 is
             revert Aera__ExecutionFailed(result);
         }
 
-        _checkReservedFees();
+        _checkReservedFees(prevFeeTokenBalance);
 
         emit Executed(operation);
     }
@@ -263,6 +281,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyOwner
+        whenHooksSet
         whenNotFinalized
     {
         _reserveFees();
@@ -304,6 +323,7 @@ contract AeraVaultV2 is
         override
         onlyOwner
         whenPaused
+        whenHooksSet
         whenNotFinalized
     {
         lastFeeCheckpoint = block.timestamp;
@@ -322,9 +342,12 @@ contract AeraVaultV2 is
     {
         _reserveFees();
 
-        uint256 numOperations = operations.length;
-
         hooks.beforeSubmit(operations);
+
+        uint256 prevFeeTokenBalance =
+            assetRegistry.feeToken().balanceOf(address(this));
+
+        uint256 numOperations = operations.length;
 
         Operation memory operation;
         bool success;
@@ -332,6 +355,10 @@ contract AeraVaultV2 is
 
         for (uint256 i = 0; i < numOperations; i++) {
             operation = operations[i];
+
+            if (operation.target == address(hooks)) {
+                revert Aera__SubmitTargetIsHooksAddress();
+            }
 
             (success, result) =
                 operation.target.call{value: operation.value}(operation.data);
@@ -341,7 +368,7 @@ contract AeraVaultV2 is
             }
         }
 
-        _checkReservedFees();
+        _checkReservedFees(prevFeeTokenBalance);
 
         hooks.afterSubmit(operations);
 
@@ -572,7 +599,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Get total amount of assets in execution and custody module.
+    /// @notice Get total amount of assets in custody module.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)
@@ -594,13 +621,24 @@ contract AeraVaultV2 is
             });
 
             if (asset.asset == feeToken) {
-                assetAmounts[i].value -= feeTotal;
+                if (assetAmounts[i].value > feeTotal) {
+                    assetAmounts[i].value -= feeTotal;
+                } else {
+                    assetAmounts[i].value = 0;
+                }
             }
         }
     }
 
-    function _checkReservedFees() internal view {
-        if (assetRegistry.feeToken().balanceOf(address(this)) < feeTotal) {
+    /// @notice Check if balance of fee token gets worse.
+    /// @param prevFeeTokenBalance Balance of fee token before action.
+    function _checkReservedFees(uint256 prevFeeTokenBalance) internal view {
+        uint256 feeTokenBalance =
+            assetRegistry.feeToken().balanceOf(address(this));
+
+        if (
+            feeTokenBalance < feeTotal && feeTokenBalance < prevFeeTokenBalance
+        ) {
             revert Aera__CanNotUseReservedFees();
         }
     }

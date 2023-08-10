@@ -7,6 +7,9 @@ fs_permissions = [
   { access = "read-write", path = "./" },
 ]
 
+[profile.compiler]
+evm_version="paris"
+
 [fmt]
 line_length = 79
 multiline_func_header = "params_first"

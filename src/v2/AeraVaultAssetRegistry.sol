@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
+import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC20Metadata.sol";
 import "@openzeppelin/IERC4626.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAssetRegistry.sol";
+import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
-contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
+contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
@@ -17,6 +19,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
 
     /// @notice Array of all active assets for the vault.
     AssetInformation[] internal _assets;
+
+    /// @notice The address of the vault.
+    address public custody;
 
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraireId;
@@ -33,6 +38,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     /// @notice Emitted when an asset is removed.
     /// @param asset Address of removed asset.
     event AssetRemoved(address asset);
+
+    /// @notice Emitted when custody is set.
+    /// @param custody Address of new custody.
+    event SetCustody(address custody);
 
     /// ERRORS ///
 
@@ -54,6 +63,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
+    error Aera__AssetBalanceIsNotZero(address asset);
+    error Aera__CustodyIsAlreadySet();
+    error Aera__CustodyIsZeroAddress();
+    error Aera__CustodyIsNotValid(address custody);
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
 
     /// FUNCTIONS ///
@@ -181,6 +194,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         if (address(feeToken) == asset) {
             revert Aera__CannotRemoveFeeToken(asset);
         }
+        if (IERC20(asset).balanceOf(custody) > 0) {
+            revert Aera__AssetBalanceIsNotZero(asset);
+        }
 
         uint256 numAssets = _assets.length;
         uint256 oldAssetIndex = 0;
@@ -223,6 +239,27 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
         }
 
         emit AssetRemoved(asset);
+    }
+
+    /// @inheritdoc IAssetRegistry
+    function setCustody(address newCustody) external override onlyOwner {
+        if (custody != address(0)) {
+            revert Aera__CustodyIsAlreadySet();
+        }
+        if (newCustody == address(0)) {
+            revert Aera__CustodyIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(
+                newCustody, type(ICustody).interfaceId
+            )
+        ) {
+            revert Aera__CustodyIsNotValid(newCustody);
+        }
+
+        custody = newCustody;
+
+        emit SetCustody(newCustody);
     }
 
     /// @inheritdoc IAssetRegistry

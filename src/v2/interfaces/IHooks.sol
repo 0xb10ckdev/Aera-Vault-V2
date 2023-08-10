@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "./IHooksEvents.sol";
 import {AssetValue, Operation} from "../Types.sol";
@@ -11,7 +11,6 @@ interface IHooks is IHooksEvents {
     error Aera__CallerIsNotCustody();
     error Aera__CustodyIsZeroAddress();
     error Aera__CustodyIsNotValid(address custody);
-    error Aera__TargetIsHooks();
     error Aera__CallIsNotAllowed(Operation operation);
     error Aera__ExceedsMaxDailyExecutionLoss();
     error Aera__AllowanceIsNotZero(address asset, address spender);

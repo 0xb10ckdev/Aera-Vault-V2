@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
@@ -13,10 +13,12 @@ interface ICustody is ICustodyEvents {
     error Aera__AssetRegistryIsZeroAddress();
     error Aera__AssetRegistryIsNotValid(address assetRegistry);
     error Aera__HooksIsZeroAddress();
-    error Aera__HooksIsNotValid(address assetRegistry);
+    error Aera__HooksIsNotValid(address hooks);
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
     error Aera__FeeRecipientIsZeroAddress();
+    error Aera__ExecuteTargetIsHooksAddress();
+    error Aera__SubmitTargetIsHooksAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__DescriptionIsEmpty();

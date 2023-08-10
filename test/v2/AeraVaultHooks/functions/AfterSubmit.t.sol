@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultHooks.sol";
 
@@ -18,6 +18,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         }
 
         _deposit();
+        vault.resume();
     }
 
     function test_afterSubmit_fail_whenCallerIsNotCustody() public {

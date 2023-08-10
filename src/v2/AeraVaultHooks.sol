@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
@@ -11,7 +11,7 @@ import "./TargetSighashLib.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Hooks contract.
-contract AeraVaultHooks is IHooks, ERC165, Ownable {
+contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
     bytes4 internal constant _APPROVE_SELECTOR =
@@ -155,10 +155,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable {
         bytes4 selector;
 
         for (uint256 i = 0; i < numOperations; i++) {
-            if (operations[i].target == address(this)) {
-                revert Aera__TargetIsHooks();
-            }
-
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
                 continue;

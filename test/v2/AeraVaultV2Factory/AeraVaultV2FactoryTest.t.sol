@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
@@ -42,7 +42,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenAssetRegistryIsZeroAddress()
         public
     {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -57,7 +57,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenAssetRegistryIsNotValid()
         public
     {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -70,7 +70,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsZeroAddress() public {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -83,7 +83,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsFactory() public {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -98,7 +98,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenFeeRecipientIsZeroAddress()
         public
     {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -111,7 +111,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -124,7 +124,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenFeeIsAboveMax() public {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),
@@ -137,7 +137,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(Create2.Create2FailedDeployment.selector);
+        vm.expectRevert("Create2: Failed on deploy");
         factory.create(
             bytes32(0),
             address(this),

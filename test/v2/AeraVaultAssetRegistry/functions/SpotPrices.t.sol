@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../TestBaseAssetRegistry.sol";
 
 contract SpotPricesTest is TestBaseAssetRegistry {
     function test_spotPrices_fail_whenOraclePriceIsInvalid() public {
-        OracleMock oracle = new OracleMock(6);
-        oracle.setLatestAnswer(0);
-        assets[nonNumeraireId].oracle =
-            AggregatorV2V3Interface(address(oracle));
-
-        assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
-        assetRegistry.addAsset(assets[nonNumeraireId]);
+        deployCodeTo(
+            "OracleMock.sol",
+            abi.encode(6),
+            address(assets[nonNumeraireId].oracle)
+        );
+        OracleMock(address(assets[nonNumeraireId].oracle)).setLatestAnswer(0);
 
         vm.expectRevert(
             abi.encodeWithSelector(
