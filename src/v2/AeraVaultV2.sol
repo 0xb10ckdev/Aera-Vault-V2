@@ -121,6 +121,9 @@ contract AeraVaultV2 is
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
+        if (owner_ == address(0)) {
+            revert("Initial owner_ is the zero address");
+        }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
@@ -129,7 +132,7 @@ contract AeraVaultV2 is
         description = description_;
         lastFeeCheckpoint = block.timestamp;
 
-        transferOwnership(owner_);
+        _transferOwnership(owner_);
         _pause();
 
         emit SetAssetRegistry(assetRegistry_);
