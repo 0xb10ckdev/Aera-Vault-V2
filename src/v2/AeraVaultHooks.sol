@@ -81,8 +81,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
-        for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
+        for (uint256 i = 0; i < numTargetSighashAllowlist; ) {
             targetSighashAllowed[targetSighashAllowlist[i]] = true;
+            unchecked { i++; }
         }
 
         custody = ICustody(custody_);
@@ -154,9 +155,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 numOperations = operations.length;
         bytes4 selector;
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
+                unchecked { i++; }
                 continue;
             }
 
@@ -167,6 +169,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
             if (!targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
+            unchecked { i++; }
         }
     }
 
@@ -205,13 +208,14 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 amount;
         IERC20 asset;
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
                 (spender, amount) =
                     abi.decode(operations[i].data[4:], (address, uint256));
 
                 if (amount == 0) {
+                    unchecked {i++;}
                     continue;
                 }
 
@@ -221,6 +225,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                     revert Aera__AllowanceIsNotZero(address(asset), spender);
                 }
             }
+            unchecked {i++;}
         }
     }
 
