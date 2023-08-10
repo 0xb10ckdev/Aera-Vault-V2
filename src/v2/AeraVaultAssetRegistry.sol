@@ -4,13 +4,13 @@ pragma solidity 0.8.19;
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC20Metadata.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
-contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable {
+contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 

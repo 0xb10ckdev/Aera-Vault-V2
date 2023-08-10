@@ -5,7 +5,7 @@ import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Math.sol";
-import "@openzeppelin/Ownable.sol";
+import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/Pausable.sol";
 import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
@@ -17,7 +17,7 @@ import {ONE} from "./Constants.sol";
 contract AeraVaultV2 is
     ICustody,
     ERC165,
-    Ownable,
+    Ownable2Step,
     Pausable,
     ReentrancyGuard
 {
