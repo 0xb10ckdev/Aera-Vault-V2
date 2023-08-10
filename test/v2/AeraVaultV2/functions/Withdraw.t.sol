@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultV2.sol";
 import "lib/forge-std/src/StdStorage.sol";

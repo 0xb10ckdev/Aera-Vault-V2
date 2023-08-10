@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import {stdJson} from "forge-std/Script.sol";
 import "@openzeppelin/IERC4626.sol";
