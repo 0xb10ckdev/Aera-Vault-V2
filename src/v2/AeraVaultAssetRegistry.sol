@@ -110,7 +110,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 revert Aera__AssetOrderIsIncorrect(i);
             }
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -127,7 +127,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
             _insertAsset(assets_[i], i);
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -157,7 +157,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 revert Aera__AssetIsAlreadyRegistered(i);
             }
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -200,7 +200,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             nextIndex = i + 1;
             _assets[i] = _assets[nextIndex];
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -266,7 +266,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
                 unchecked {
-                    i++;
+                    i++; // gas savings
                 }
                 continue;
             }
@@ -299,6 +299,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
 
             unchecked {
+                // gas savings
                 index++;
                 i++;
             }

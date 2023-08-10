@@ -81,9 +81,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
-        for (uint256 i = 0; i < numTargetSighashAllowlist; ) {
+        for (uint256 i = 0; i < numTargetSighashAllowlist;) {
             targetSighashAllowed[targetSighashAllowlist[i]] = true;
-            unchecked { i++; }
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         custody = ICustody(custody_);
@@ -158,7 +160,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
-                unchecked { i++; }
+                unchecked {
+                    i++;
+                } // gas savings
                 continue;
             }
 
@@ -169,7 +173,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
             if (!targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
-            unchecked { i++; }
+            unchecked {
+                i++;
+            } // gas savings
         }
     }
 
@@ -215,7 +221,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                     abi.decode(operations[i].data[4:], (address, uint256));
 
                 if (amount == 0) {
-                    unchecked {i++;}
+                    unchecked {
+                        i++;
+                    } // gas savings
                     continue;
                 }
 
@@ -225,7 +233,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                     revert Aera__AllowanceIsNotZero(address(asset), spender);
                 }
             }
-            unchecked {i++;}
+            unchecked {
+                i++;
+            } // gas savings
         }
     }
 

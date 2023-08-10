@@ -169,7 +169,7 @@ contract AeraVaultV2 is
                     revert Aera__AssetIsDuplicated(assetValue.asset);
                 }
                 unchecked {
-                    j++;
+                    j++; // gas savings
                 }
             }
 
@@ -178,7 +178,7 @@ contract AeraVaultV2 is
             );
 
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -305,7 +305,7 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAssetAmounts;) {
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
 
@@ -523,7 +523,7 @@ contract AeraVaultV2 is
 
             vaultValue += (balance * spotPrices[i]) / assetUnits[i];
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
     }
@@ -557,7 +557,7 @@ contract AeraVaultV2 is
                     revert Aera__AssetIsDuplicated(assetValue.asset);
                 }
                 unchecked {
-                    j++;
+                    j++; // gas savings
                 }
             }
 
@@ -569,7 +569,7 @@ contract AeraVaultV2 is
                 );
             }
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
     }
@@ -609,7 +609,7 @@ contract AeraVaultV2 is
                         break;
                     }
                     unchecked {
-                        j++;
+                        j++; // gas savings
                     }
                 }
             } else {
@@ -619,7 +619,7 @@ contract AeraVaultV2 is
                         break;
                     }
                     unchecked {
-                        j++;
+                        j++; // gas savings
                     }
                 }
 
@@ -627,7 +627,7 @@ contract AeraVaultV2 is
                     10 ** IERC20Metadata(address(asset.asset)).decimals();
             }
             unchecked {
-                i++;
+                i++; // gas savings
             }
         }
     }
@@ -661,7 +661,7 @@ contract AeraVaultV2 is
                 }
             }
             unchecked {
-                i++;
+                i++; //gas savings
             }
         }
     }
