@@ -4,7 +4,9 @@ pragma solidity ^0.8.19;
 import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
-import {DeployScript} from "script/v2/deploy/DeployAeraContracts.s.sol";
+import {DeployAeraContractsBase} from
+    "script/v2/deploy/DeployAeraContracts.s.sol";
+import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/ICustody.sol";
@@ -20,7 +22,11 @@ struct OperationAlpha {
     uint256 value;
 }
 
-contract TestGuardian is Test, DeployScript {
+contract TestGuardian is
+    Test,
+    DeployScriptBase(false),
+    DeployAeraContractsBase
+{
     bytes4 internal constant _APPROVE_SELECTOR =
         bytes4(keccak256("approve(address,uint256)"));
 
@@ -57,6 +63,12 @@ contract TestGuardian is Test, DeployScript {
     }
 
     function test_submitSwapAndDeposit() public {
+        if (this.getChainID() != 137) {
+            return;
+        }
+        if (block.number < 46145721) {
+            return;
+        }
         assertEq(address(this), vault.owner());
         _loadSwapAndDepositOperations();
 
@@ -250,5 +262,13 @@ contract TestGuardian is Test, DeployScript {
         );
 
         vm.writeJson(json, aeraVaultHooksPath);
+    }
+
+    function getChainID() external view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
     }
 }
