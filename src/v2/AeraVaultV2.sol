@@ -129,6 +129,9 @@ contract AeraVaultV2 is
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
+        if (owner_ == address(0)) {
+            revert Aera__InitialOwnerIsZeroAddress();
+        }
 
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
