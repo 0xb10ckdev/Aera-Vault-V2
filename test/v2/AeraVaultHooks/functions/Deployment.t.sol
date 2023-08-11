@@ -59,7 +59,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
 
         for (uint256 i = 0; i < numERC20; i++) {
             targetSighashAllowlist[i] = TargetSighashLib.toTargetSighash(
-                address(erc20Assets[i]), _TRANSFER_SELECTOR
+                address(erc20Assets[i]), IERC20.transfer.selector
             );
         }
 

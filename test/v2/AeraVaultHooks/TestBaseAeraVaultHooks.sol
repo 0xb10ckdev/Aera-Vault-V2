@@ -8,8 +8,6 @@ import "src/v2/interfaces/IHooksEvents.sol";
 import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
 
 contract TestBaseAeraVaultHooks is TestBaseCustody, IHooksEvents {
-    bytes4 internal constant _TRANSFER_SELECTOR = IERC20.transfer.selector;
-
     function setUp() public virtual override {
         super.setUp();
 
