@@ -26,6 +26,25 @@ contract AddAssetTest is TestBaseAssetRegistry {
         assetRegistry.addAsset(newERC20Asset);
     }
 
+    function test_addAsset_fail_whenNumberOfAssetsExceedsMaximum() public {
+        for (uint256 i = numAssets; i < 50; i++) {
+            (, newERC20Asset) = _createAsset(false, address(0), 50 + i);
+            assetRegistry.addAsset(newERC20Asset);
+        }
+
+        (, newERC20Asset) = _createAsset(false, address(0), 100);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__NumberOfAssetsExceedsMaximum
+                    .selector,
+                50
+            )
+        );
+        assetRegistry.addAsset(newERC20Asset);
+    }
+
     function test_addAsset_fail_whenERC20OracleIsZeroAddress() public {
         newERC20Asset.oracle = AggregatorV2V3Interface(address(0));
 
