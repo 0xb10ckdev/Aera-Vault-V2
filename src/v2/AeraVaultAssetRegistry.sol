@@ -53,9 +53,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__UnderlyingAssetIsNotRegistered(
         address asset, address underlyingAsset
     );
-    error Aera__UnderlyingAssetIsRegistered(
-        address asset, address underlyingAsset
-    );
+    error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
     error Aera__NumeraireAssetIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
@@ -112,34 +110,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        address asset;
-        IERC20 underlyingAsset;
-        uint256 underlyingIndex;
-
         for (uint256 i = 0; i < numAssets; i++) {
             if (i != numeraireId_) {
                 _checkAssetOracle(assets_[i]);
 
                 if (assets_[i].isERC4626) {
-                    asset = address(assets_[i].asset);
-                    underlyingAsset = IERC20(IERC4626(asset).asset());
-                    underlyingIndex = 0;
-
-                    for (; underlyingIndex < numAssets; underlyingIndex++) {
-                        if (
-                            !assets_[underlyingIndex].isERC4626
-                                && underlyingAsset
-                                    == assets_[underlyingIndex].asset
-                        ) {
-                            break;
-                        }
-                    }
-
-                    if (underlyingIndex == numAssets) {
-                        revert Aera__UnderlyingAssetIsNotRegistered(
-                            asset, address(underlyingAsset)
-                        );
-                    }
+                    _checkUnderlyingAsset(assets_[i], assets_);
                 }
             }
 
@@ -174,13 +150,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
 
         if (asset.isERC4626) {
-            address underlyingAsset = IERC4626(address(asset.asset)).asset();
-
-            if (!_isUnderlyingAssetRegistered(IERC20(underlyingAsset))) {
-                revert Aera__UnderlyingAssetIsNotRegistered(
-                    address(asset.asset), underlyingAsset
-                );
-            }
+            _checkUnderlyingAsset(asset, _assets);
         }
 
         _insertAsset(asset, i);
@@ -212,16 +182,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
 
         if (_assets[oldAssetIndex].isERC4626) {
-            address erc4626Asset = address(_assets[oldAssetIndex].asset);
-            address underlyingAsset = IERC4626(erc4626Asset).asset();
-
-            if (_isUnderlyingAssetRegistered(IERC20(underlyingAsset))) {
-                revert Aera__UnderlyingAssetIsRegistered(
-                    erc4626Asset, underlyingAsset
-                );
-            }
-
             numYieldAssets--;
+        } else {
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (
+                    _assets[i].isERC4626
+                        && IERC4626(address(_assets[i].asset)).asset() == asset
+                ) {
+                    revert Aera__AssetIsUnderlyingAssetOfERC4626(
+                        address(_assets[i].asset)
+                    );
+                }
+            }
         }
 
         uint256 nextIndex;
@@ -357,26 +329,32 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
     }
 
-    /// @notice Check whether underlying asset is registered or not.
-    /// @param underlyingAsset Address of underlying asset.
-    /// @return True if underlying asset is registered.
-    function _isUnderlyingAssetRegistered(IERC20 underlyingAsset)
-        internal
-        view
-        returns (bool)
-    {
-        uint256 numAssets = _assets.length;
+    /// @notice Check whether underlying asset is listed or not.
+    /// @param asset ERC4626 asset to check underlying asset.
+    /// @param assets Array of assets.
+    function _checkUnderlyingAsset(
+        AssetInformation memory asset,
+        AssetInformation[] memory assets
+    ) internal view {
+        uint256 numAssets = assets.length;
 
-        for (uint256 i = 0; i < numAssets; i++) {
-            if (_assets[i].asset > underlyingAsset) {
+        address underlyingAsset = IERC4626(address(asset.asset)).asset();
+        uint256 underlyingIndex;
+
+        for (; underlyingIndex < numAssets; underlyingIndex++) {
+            if (
+                !assets[underlyingIndex].isERC4626
+                    && underlyingAsset == address(assets[underlyingIndex].asset)
+            ) {
                 break;
-            }
-            if (!_assets[i].isERC4626 && underlyingAsset == _assets[i].asset) {
-                return true;
             }
         }
 
-        return false;
+        if (underlyingIndex == numAssets) {
+            revert Aera__UnderlyingAssetIsNotRegistered(
+                address(asset.asset), underlyingAsset
+            );
+        }
     }
 
     /// @notice Insert asset at the given index in an array of assets.

@@ -73,46 +73,53 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         assetRegistry.removeAsset(assetAddress);
     }
 
-    function test_removeERC4626Asset_fail_whenUnderlyingAssetIsRegistered()
+    function test_removeAsset_fail_whenAssetIsUnderlyingAssetOfERC4626()
         public
     {
+        address underlyingAsset = IERC4626(nonNumeraireERC4626Asset).asset();
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry
-                    .Aera__UnderlyingAssetIsRegistered
+                    .Aera__AssetIsUnderlyingAssetOfERC4626
                     .selector,
-                nonNumeraireERC4626Asset,
-                IERC4626(nonNumeraireERC4626Asset).asset()
+                nonNumeraireERC4626Asset
             )
         );
-        assetRegistry.removeAsset(nonNumeraireERC4626Asset);
+
+        assetRegistry.removeAsset(underlyingAsset);
     }
 
     function test_removeERC20Asset_success() public {
-        _removeAsset_success(nonNumeraireId, false);
-    }
-
-    function test_removeERC4626Asset_success() public {
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = numAssets - 1; i >= 0; i--) {
             if (
-                assets[i].asset
-                    == IERC20(IERC4626(nonNumeraireERC4626Asset).asset())
+                assets[i].isERC4626
+                    && address(assets[nonNumeraireId].asset)
+                        == IERC4626(address(assets[i].asset)).asset()
             ) {
-                _removeAsset_success(i, false);
+                _removeAsset_success(i, true);
 
                 for (uint256 j = i; j < numAssets - 1; j++) {
                     assets[j] = assets[j + 1];
                 }
                 assets.pop();
 
-                numAssets = assets.length;
+                numAssets--;
 
-                if (i < nonNumeraireERC4626Id) {
-                    nonNumeraireERC4626Id--;
+                if (i < nonNumeraireId) {
+                    nonNumeraireId--;
                 }
+            }
+
+            if (i == 0) {
+                break;
             }
         }
 
+        _removeAsset_success(nonNumeraireId, false);
+    }
+
+    function test_removeERC4626Asset_success() public {
         _removeAsset_success(nonNumeraireERC4626Id, true);
     }
 
