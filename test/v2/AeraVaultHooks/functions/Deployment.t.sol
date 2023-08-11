@@ -16,6 +16,20 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         );
     }
 
+    function test_aeraVaultHooksDeployment_fail_whenOwnerIsZeroAddress()
+        public
+    {
+        vm.expectRevert(
+            AeraVaultHooks.Aera__HooksInitialOwnerIsZeroAddress.selector
+        );
+        new AeraVaultHooks(
+            address(0),
+            address(1),
+            _MAX_DAILY_EXECUTION_LOSS,
+            new TargetSighash[](0)
+        );
+    }
+
     function test_aeraVaultHooksDeployment_fail_whenCustodyIsNotValid()
         public
     {

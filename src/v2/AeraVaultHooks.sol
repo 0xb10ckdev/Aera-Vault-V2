@@ -48,6 +48,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     error Aera__CallIsNotAllowed(Operation operation);
     error Aera__ExceedsMaxDailyExecutionLoss();
     error Aera__AllowanceIsNotZero(address asset, address spender);
+    error Aera__HooksInitialOwnerIsZeroAddress();
 
     /// MODIFIERS ///
 
@@ -76,6 +77,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     ) {
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
+        }
+        if (owner_ == address(0)) {
+            revert Aera__HooksInitialOwnerIsZeroAddress();
         }
         if (
             !ERC165Checker.supportsInterface(

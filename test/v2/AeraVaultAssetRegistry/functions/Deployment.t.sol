@@ -24,6 +24,24 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
+    function test_assetRegistryDeployment_fail_whenInitialOwnerIsZeroAddress()
+        public
+    {
+        _createAssets(1, 0);
+
+        vm.expectRevert(
+            AeraVaultAssetRegistry
+                .Aera__AssetRegistryInitialOwnerIsZeroAddress
+                .selector
+        );
+        new AeraVaultAssetRegistry(
+            address(0),
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_assetRegistryDeployment_fail_whenFeeTokenIsNotRegistered()
         public
     {
