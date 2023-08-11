@@ -177,12 +177,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
         for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
-            if (_isAllowanceSelector(selector)) {
-                unchecked {
-                    i++;
-                } // gas savings
-                continue;
-            }
 
             TargetSighash sigHash = TargetSighashLib.toTargetSighash(
                 operations[i].target, selector
