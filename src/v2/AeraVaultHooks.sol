@@ -43,6 +43,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
 
+    /// @notice ETH amount in vault before submission.
+    uint256 internal _beforeBalance;
+
     /// ERRORS ///
 
     error Aera__CallerIsNotCustody();
@@ -171,12 +174,14 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         onlyCustody
     {
         _beforeValue = custody.value();
+        _beforeBalance = address(custody).balance;
 
         uint256 numOperations = operations.length;
         bytes4 selector;
 
         for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
+
             if (_isAllowanceSelector(selector)) {
                 unchecked {
                     i++;
@@ -205,6 +210,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     {
         uint256 day = block.timestamp / 1 days;
 
+        if (address(custody).balance < _beforeBalance) {
+            revert Aera__ETHBalanceIsDecreased();
+        }
+
         if (_beforeValue > 0) {
             uint256 submitMultiplier = (custody.value() * ONE) / _beforeValue;
 
@@ -224,6 +233,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         }
 
         currentDay = day;
+        _beforeBalance = 0;
         _beforeValue = 0;
 
         uint256 numOperations = operations.length;
