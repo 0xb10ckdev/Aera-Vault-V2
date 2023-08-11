@@ -13,7 +13,8 @@ import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
 
-/// @title Aera Vault V2 Custody contract.
+/// @title AeraVaultV2.
+/// @notice Aera Vault V2 Custody contract.
 contract AeraVaultV2 is
     ICustody,
     ERC165,
@@ -31,7 +32,7 @@ contract AeraVaultV2 is
     /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
-    /// @notice The address of asset registry.
+    /// @notice Asset registry adress.
     IAssetRegistry public immutable assetRegistry;
 
     /// @notice The address of WETH.
@@ -41,34 +42,34 @@ contract AeraVaultV2 is
 
     /// @notice Describes vault purpose and modelling assumptions for
     ///         differentiating between vaults.
-    /// @dev string cannot be immutable bytecode but only set in constructor
+    /// @dev String cannot be immutable bytecode but only set in constructor
     string public description;
 
-    /// @notice The address of hooks module.
+    /// @notice Hooks module address.
     IHooks public hooks;
 
-    /// @notice The address of guardian.
+    /// @notice Guardian address.
     address public guardian;
 
-    /// @notice The address of management fee recipient.
+    /// @notice Fee recipient address.
     address public feeRecipient;
 
-    /// @notice Indicates that the Vault has been finalized.
+    /// @notice True if vault has been finalized.
     bool public finalized;
 
-    /// @notice Last total value of assets in vault.
+    /// @notice Last measured value of assets in vault.
     uint256 public lastValue;
 
     /// @notice Last spot price of fee token.
     uint256 public lastFeeTokenPrice;
 
-    /// @notice Fee earned amount for each guardian.
+    /// @notice Fee earned amount for each prior fee recipient.
     mapping(address => uint256) public fees;
 
-    /// @notice Total fee earned amount.
+    /// @notice Total fee earned and unclaimed amount by all fee recipients.
     uint256 public feeTotal;
 
-    /// @notice Last timestamp where fee index was reserved.
+    /// @notice Last timestamp when fee index was reserved.
     uint256 public lastFeeCheckpoint = type(uint256).max;
 
     /// MODIFIERS ///
@@ -107,12 +108,10 @@ contract AeraVaultV2 is
 
     /// FUNCTIONS ///
 
-    /// @notice Initialize the custody contract by providing references to
-    ///         asset registry, guardian and other parameters.
-    /// @param owner_ The address of initial owner.
-    /// @param assetRegistry_ The address of asset registry.
-    /// @param guardian_ The address of guardian.
-    /// @param feeRecipient_ The address of fee recipient.
+    /// @param owner_ Initial owner address.
+    /// @param assetRegistry_ Asset registry address.
+    /// @param guardian_ Guardian address.
+    /// @param feeRecipient_ Fee recipient address.
     /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
     /// @param weth_ The address of WETH.
     constructor(
@@ -124,16 +123,21 @@ contract AeraVaultV2 is
         string memory description_,
         address weth_
     ) {
+        // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
+        // Requirements: check that initial owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__InitialOwnerIsZeroAddress();
         }
+        // Requirements: check if fee is within bounds.
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
+
+        // Requirements: confirm that vault has a description.
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
@@ -141,6 +145,7 @@ contract AeraVaultV2 is
             revert Aera__WETHIsZeroAddress();
         }
 
+        // Effects: initialize vault state.
         weth = weth_;
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
@@ -149,10 +154,14 @@ contract AeraVaultV2 is
         description = description_;
         lastFeeCheckpoint = block.timestamp;
 
+        // Effects: initiate ownership transfer and pause vault.
         _transferOwnership(owner_);
         _pause();
 
+        // Log setting of asset registry.
         emit SetAssetRegistry(assetRegistry_);
+
+        // Log the current guardian and fee recipient.
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
     }
 
@@ -165,8 +174,10 @@ contract AeraVaultV2 is
         whenHooksSet
         whenNotFinalized
     {
+        // Effects: reserve fees for fee recipient.
         _reserveFees();
 
+        // Hooks: before transferring assets.
         hooks.beforeDeposit(amounts);
 
         IAssetRegistry.AssetInformation[] memory assets =
@@ -180,11 +191,13 @@ contract AeraVaultV2 is
             assetValue = amounts[i];
             (isRegistered,) = _isAssetRegistered(assetValue.asset, assets);
 
+            // Requirements: check that deposited assets are registered.
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
             }
 
             for (uint256 j = 0; j < numAmounts;) {
+                // Requirements: check that no duplicate assets are provided.
                 if (i != j && assetValue.asset == amounts[j].asset) {
                     revert Aera__AssetIsDuplicated(assetValue.asset);
                 }
@@ -193,6 +206,7 @@ contract AeraVaultV2 is
                 }
             }
 
+            // Interactions: transfer asset from owner to vault.
             assetValue.asset.safeTransferFrom(
                 owner(), address(this), assetValue.value
             );
@@ -202,8 +216,10 @@ contract AeraVaultV2 is
             }
         }
 
+        // Hooks: after transferring assets.
         hooks.afterDeposit(amounts);
 
+        // Log deposit.
         emit Deposit(owner(), amounts);
     }
 
@@ -216,14 +232,17 @@ contract AeraVaultV2 is
         whenHooksSet
         whenNotFinalized
     {
-        _reserveFees();
-
-        hooks.beforeWithdraw(amounts);
-
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
+        // Requirements: check the withdraw request.
         _checkWithdrawRequest(assets, amounts);
+
+        // Effects: reserve fees for fee recipient.
+        _reserveFees();
+
+        // Hooks: before transfering assets.
+        hooks.beforeWithdraw(amounts);
 
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
@@ -235,11 +254,14 @@ contract AeraVaultV2 is
                 continue;
             }
 
+            // Interactions: withdraw assets.
             assetValue.asset.safeTransfer(owner(), assetValue.value);
         }
 
+        // Hooks: after transferring assets.
         hooks.afterWithdraw(amounts);
 
+        // Log withdrawal.
         emit Withdraw(owner(), amounts);
     }
 
@@ -248,14 +270,18 @@ contract AeraVaultV2 is
         address newGuardian,
         address newFeeRecipient
     ) external override onlyOwner whenNotFinalized {
+        // Requirements: check guardian and fee recipient addresses.
         _checkGuardianAddress(newGuardian);
         _checkFeeRecipientAddress(newFeeRecipient);
 
+        // Effects: reserve fees for fee recipient before terminating tenure.
         _reserveFees();
 
+        // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
         feeRecipient = newFeeRecipient;
 
+        // Log new guardian and fee recipient addresses.
         emit SetGuardianAndFeeRecipient(newGuardian, newFeeRecipient);
     }
 
@@ -266,12 +292,16 @@ contract AeraVaultV2 is
         onlyOwner
         whenNotFinalized
     {
+        // Requirements: validate hooks address.
         _checkHooksAddress(newHooks);
 
+        // Effects: reserve fees for fee recipient as hook may interfere with fee collection in the future.
         _reserveFees();
 
+        // Effects: set new hooks address.
         hooks = IHooks(newHooks);
 
+        // Log new hooks address.
         emit SetHooks(newHooks);
     }
 
@@ -281,24 +311,30 @@ contract AeraVaultV2 is
         override
         onlyOwner
     {
+        // Requirements: check that the target contract is not hooks.
         if (operation.target == address(hooks)) {
             revert Aera__ExecuteTargetIsHooksAddress();
         }
 
+        // Effects: reserve fees for fee recipient in case execute will interfere with fee collection in the future.
         _reserveFees();
 
         uint256 prevFeeTokenBalance =
             assetRegistry.feeToken().balanceOf(address(this));
 
+        // Interactions: execute operation.
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
 
+        // Invariants: check that the operation was successful.
         if (!success) {
             revert Aera__ExecutionFailed(result);
         }
 
+        // Invariants: check that insolvency of fee token was not introduced or increased.
         _checkReservedFees(prevFeeTokenBalance);
 
+        // Log that the operation was executed.
         emit Executed(owner(), operation);
     }
 
@@ -311,10 +347,13 @@ contract AeraVaultV2 is
         whenHooksSet
         whenNotFinalized
     {
+        // Effects: snapshot fees as vault will not be active anymore.
         _reserveFees();
 
+        // Hooks: before finalizing.
         hooks.beforeFinalize();
 
+        // Effects: mark the vault as finalized.
         finalized = true;
 
         IAssetRegistry.AssetInformation[] memory assets =
@@ -323,14 +362,17 @@ contract AeraVaultV2 is
         uint256 numAssetAmounts = assetAmounts.length;
 
         for (uint256 i = 0; i < numAssetAmounts;) {
+            // Effects: transfer assets to owner.
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
             unchecked {
                 i++; // gas savings
             }
         }
 
+        // Hooks: after finalizing.
         hooks.afterFinalize();
 
+        // Log finalization.
         emit Finalized(owner(), assetAmounts);
     }
 
@@ -342,8 +384,10 @@ contract AeraVaultV2 is
         whenNotPaused
         whenNotFinalized
     {
+        // Effects: calculate fees up to the moment vault was paused.
         _reserveFees();
 
+        // Effects: pause the vault.
         _pause();
     }
 
@@ -356,8 +400,10 @@ contract AeraVaultV2 is
         whenHooksSet
         whenNotFinalized
     {
+        // Effects: start a new fee checkpoint.
         lastFeeCheckpoint = block.timestamp;
 
+        // Effects: unpause the vault.
         _unpause();
     }
 
@@ -370,8 +416,10 @@ contract AeraVaultV2 is
         whenNotFinalized
         whenNotPaused
     {
+        // Effects: reserve fees prior to possible vault value change.
         _reserveFees();
 
+        // Hooks: before executing operations.
         hooks.beforeSubmit(operations);
 
         uint256 prevFeeTokenBalance =
@@ -387,13 +435,16 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
 
+            // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
                 revert Aera__SubmitTargetIsHooksAddress();
             }
 
+            // Interactions: execute operation.
             (success, result) =
                 operation.target.call{value: operation.value}(operation.data);
 
+            // Invariants: confirm that operation succeeded.
             if (!success) {
                 revert Aera__SubmissionFailed(i, result);
             }
@@ -402,19 +453,24 @@ contract AeraVaultV2 is
             }
         }
 
+        // Invariants: check that insolvency of fee token was not introduced or increased.
         _checkReservedFees(prevFeeTokenBalance);
 
+        // Hooks: after executing operations.
         hooks.afterSubmit(operations);
 
+        // Log submission.
         emit Submitted(owner(), operations);
     }
 
     /// @inheritdoc ICustody
     function claim() external override nonReentrant {
+        // Effects: calculate up to date fees.
         _reserveFees();
 
         uint256 reservedFee = fees[msg.sender];
 
+        // Requirements: check that there are fees to claim. 
         if (reservedFee == 0) {
             revert Aera__NoAvailableFeeForCaller(msg.sender);
         }
@@ -427,10 +483,13 @@ contract AeraVaultV2 is
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
+        // Effects: update leftover fee.
         fees[msg.sender] = reservedFee;
 
+        // Interactions: transfer fee to caller.
         feeToken.safeTransfer(msg.sender, availableFee);
 
+        // Log the claim.
         emit Claimed(msg.sender, availableFee, unavailableFee);
     }
 
@@ -462,8 +521,9 @@ contract AeraVaultV2 is
             || super.supportsInterface(interfaceId);
     }
 
-    /// @notice Payable function to receive ETH from WETH when burn WETH.
+    /// @notice Only accept ETH from the WETH contract when burning WETH tokens.
     receive() external payable {
+        // Requirements: verify that the sender is WETH.
         if (msg.sender != weth) {
             revert Aera__NotWETHContract();
         }
@@ -483,12 +543,14 @@ contract AeraVaultV2 is
 
     /// @notice Calculate current guardian fees.
     function _reserveFees() internal {
+        // Requirements: check if fees are being accrued.
         if (fee == 0 || paused() || finalized) {
             return;
         }
 
         uint256 feeIndex = _getFeeIndex();
 
+        // Requirements: check if fees have been accruing.
         if (feeIndex == 0) {
             return;
         }
@@ -497,30 +559,34 @@ contract AeraVaultV2 is
 
         IERC20 feeToken = assetRegistry.feeToken();
 
+        // Calculate vault value using oracle or backup value if oracle is reverting.
         try assetRegistry.spotPrices() returns (
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
             (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
         } catch {}
 
+        // Requirements: check that fee token has a positive price.
         if (lastFeeTokenPrice == 0) {
             return;
         }
 
+        // Calculate new fee for current fee recipient.
         uint256 newFee = (
             ((lastValue * feeIndex * fee) / ONE)
                 * 10 ** IERC20Metadata(address(feeToken)).decimals()
         ) / lastFeeTokenPrice;
 
+        // Effects: accrue fee to fee recipient and remember new fee total.
         fees[feeRecipient] += newFee;
         feeTotal += newFee;
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
-    /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
-    /// @param feeToken Address of fee token.
+    /// @param erc20SpotPrices Spot prices of ERC20 assets.
+    /// @param feeToken Fee token address.
     /// @return vaultValue Current total value.
-    /// @return feeTokenPrice Price of fee token.
+    /// @return feeTokenPrice Fee token price.
     function _value(
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices,
         IERC20 feeToken
@@ -602,7 +668,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get spot prices and units of requested assets.
-    /// @param assets Struct details for registered assets in asset registry.
+    /// @param assets Registered assets in asset registry and their information.
     /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
     /// @return spotPrices Spot prices of assets.
     /// @return assetUnits Units of assets.
@@ -693,7 +759,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Check if balance of fee token gets worse.
+    /// @notice Check if balance of fee becomes insolvent or becomes more insolvent.
     /// @param prevFeeTokenBalance Balance of fee token before action.
     function _checkReservedFees(uint256 prevFeeTokenBalance) internal view {
         uint256 feeTokenBalance =

@@ -6,7 +6,9 @@ import "./IAssetRegistry.sol";
 import "./ICustodyEvents.sol";
 import "./IHooks.sol";
 
-/// @title Interface for custody module.
+/// @title ICustody
+/// @notice Interface for the custody module.
+/// @dev Any implementation MUST also implement Ownable2Step.
 interface ICustody is ICustodyEvents {
     /// ERRORS ///
 
@@ -41,52 +43,60 @@ interface ICustody is ICustodyEvents {
     /// FUNCTIONS ///
 
     /// @notice Deposit assets.
-    /// @param amounts Struct details for assets and amounts to deposit.
+    /// @param amounts Assets and amounts to deposit.
+    /// @dev MUST revert if not called by owner.
     function deposit(AssetValue[] memory amounts) external;
 
     /// @notice Withdraw assets.
-    /// @param amounts Struct details for assets and amounts to withdraw.
+    /// @param amounts Assets and amounts to withdraw.
+    /// @dev MUST revert if not called by owner.
     function withdraw(AssetValue[] memory amounts) external;
 
-    /// @notice Sets current vault guardian and fee recipient.
-    /// @param guardian Address of new guardian.
-    /// @param feeRecipient Address of new fee recipient.
+    /// @notice Set current guardian and fee recipient.
+    /// @param guardian New guardian address.
+    /// @param feeRecipient New fee recipient address.
+    /// @dev MUST revert if not called by owner.
     function setGuardianAndFeeRecipient(
         address guardian,
         address feeRecipient
     ) external;
 
-    /// @notice Sets current hooks module.
-    /// @param hooks Address of new hooks module.
+    /// @notice Sets the current hooks module.
+    /// @param hooks New hooks module address.
+    /// @dev MUST revert if not called by owner.
     function setHooks(address hooks) external;
 
-    /// @notice Execute a transaction as the vault.
-    /// @dev Execution still should work when vault is finalized.
-    ///      For example, it can be used for sweep functionality.
+    /// @notice Execute a transaction via the custody module.
+    /// @dev Execution still should work when custody module is finalized.
     /// @param operation Struct details for target and calldata to execute.
+    /// @dev MUST revert if not called by owner.
     function execute(Operation memory operation) external;
 
-    /// @notice Terminate the vault and return all funds to owner.
+    /// @notice Terminate the custody module and return all funds to owner.
+    /// @dev MUST revert if not called by owner.
     function finalize() external;
 
-    /// @notice Stops the guardian from submission.
+    /// @notice Stops the guardian from submission and halts fee accrual.
+    /// @dev MUST revert if not called by owner or guardian.
     function pause() external;
 
-    /// @notice Resumes vault operations.
+    /// @notice Resume fee accrual and guardian submissions.
+    /// @dev MUST revert if not called by owner.
     function resume() external;
 
-    /// @notice Submit a series of transactions.
-    /// @param operations Array of struct details for targets and calldatas to submit.
+    /// @notice Submit a series of transactions for execution via the custody module.
+    /// @param operations Sequence of operations to execute.
+    /// @dev MUST revert if not called by guardian.
     function submit(Operation[] memory operations) external;
 
-    /// @notice Claim fees on behalf of guardian.
+    /// @notice Claim fees on behalf of a current or previous fee recipient.
     function claim() external;
 
-    /// @notice Get the current vault guardian.
+    /// @notice Get the current guardian.
     /// @return guardian Address of guardian.
     function guardian() external view returns (address guardian);
 
-    /// @notice Get the current management fee recipient.
+    /// @notice Get the current fee recipient.
     /// @return feeRecipient Address of fee recipient.
     function feeRecipient() external view returns (address feeRecipient);
 
@@ -97,22 +107,22 @@ interface ICustody is ICustodyEvents {
         view
         returns (IAssetRegistry assetRegistry);
 
-    /// @notice Get the current hooks module.
+    /// @notice Get the current hooks module address.
     /// @return hooks Address of hooks module.
     function hooks() external view returns (IHooks hooks);
 
-    /// @notice Get guardian fee per second.
-    /// @return fee Guardian fee per second in 18 decimal fixed point format.
+    /// @notice Get fee per second.
+    /// @return fee Fee per second in 18 decimal fixed point format.
     function fee() external view returns (uint256 fee);
 
     /// @notice Get current balances of all assets.
-    /// @return assetAmounts Amounts of assets.
+    /// @return assetAmounts Amounts of registered assets.
     function holdings()
         external
         view
         returns (AssetValue[] memory assetAmounts);
 
-    /// @notice Get current total value of assets in vault.
+    /// @notice Get current total value of assets in custody module.
     /// @return value Current total value.
     function value() external view returns (uint256 value);
 }
