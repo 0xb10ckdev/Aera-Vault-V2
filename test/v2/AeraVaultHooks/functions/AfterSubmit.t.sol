@@ -10,6 +10,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         uint256 numAssets = assets.length;
 
         for (uint256 i = 0; i < numAssets; i++) {
+            hooks.addTargetSighash(address(assets[i]), _APPROVE_SELECTOR);
             hooks.addTargetSighash(address(assets[i]), _TRANSFER_SELECTOR);
 
             assets[i].approve(
