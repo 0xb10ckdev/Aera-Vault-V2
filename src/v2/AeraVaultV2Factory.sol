@@ -6,7 +6,11 @@ import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 
 /// @title Aera Vault V2 Factory contract.
+
 contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
+    /// @notice The address of WETH.
+    address public immutable weth;
+
     /// EVENTS ///
 
     /// @notice Emitted when the vault is created.
@@ -16,16 +20,32 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @param feeRecipient The address of fee recipient.
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
     /// @param description Vault description.
+    /// @param weth The address of WETH.
     event VaultCreated(
         address indexed vault,
         address assetRegistry,
         address guardian,
         address feeRecipient,
         uint256 fee,
-        string description
+        string description,
+        address weth
     );
 
+    /// ERRORS ///
+
+    error Aera__WETHIsZeroAddress();
+
     /// FUNCTIONS ///
+
+    /// @notice Initialize the factory contract.
+    /// @param weth_ The address of WETH.
+    constructor(address weth_) {
+        if (weth_ == address(0)) {
+            revert Aera__WETHIsZeroAddress();
+        }
+
+        weth = weth_;
+    }
 
     /// @inheritdoc IAeraVaultV2Factory
     function create(
@@ -44,12 +64,19 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
                 guardian,
                 feeRecipient,
                 fee,
-                description
+                description,
+                weth
             )
         );
 
         emit VaultCreated(
-            deployed, assetRegistry, guardian, feeRecipient, fee, description
+            deployed,
+            assetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description,
+            weth
         );
     }
 
@@ -66,7 +93,13 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         bytes memory bytecode = abi.encodePacked(
             type(AeraVaultV2).creationCode,
             abi.encode(
-                owner, assetRegistry, guardian, feeRecipient, fee, description
+                owner,
+                assetRegistry,
+                guardian,
+                feeRecipient,
+                fee,
+                description,
+                weth
             )
         );
 
