@@ -1,0 +1,22 @@
+{
+  "owner": "0x0000000000000000000000000000000000000000",
+  "assets": [
+    {
+      "asset": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "isERC4626": false,
+      "oracle": "0xfe4a8cc5b5b2366c1b58bea3858e81843581b2f7"
+    },
+    {
+      "asset": "0x5e5057b8D220eb8573Bc342136FdF1d869316D18",
+      "isERC4626": true,
+      "oracle": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "asset": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+      "isERC4626": false,
+      "oracle": "0x0000000000000000000000000000000000000000"
+    }
+  ],
+  "numeraireId": "2",
+  "feeToken": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619"
+}

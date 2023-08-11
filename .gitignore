@@ -21,3 +21,8 @@ lcov.info
 .env
 
 mnemonic.txt
+
+# ABI files
+AeraVaultAssetRegistry.json
+AeraVaultHooks.json
+AeraVaultV2.json

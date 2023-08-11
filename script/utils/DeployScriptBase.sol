@@ -11,7 +11,13 @@ contract DeployScriptBase is Script, Test {
     uint256 internal _deployerPrivateKey;
     address internal _deployerAddress;
 
-    constructor() {
+    constructor(bool loadDeployerAddressFromPrivateKey) {
+        if (loadDeployerAddressFromPrivateKey) {
+            _loadDeployerAddressFromPrivateKey();
+        }
+    }
+
+    function _loadDeployerAddressFromPrivateKey() internal {
         _deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
 
         if (_deployerPrivateKey == 0) {
