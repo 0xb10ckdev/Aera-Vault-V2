@@ -22,7 +22,7 @@ contract TestBaseAeraVaultHooks is TestBaseCustody, IHooksEvents {
             (,,, address deployedHooks) = _loadDeployedAddresses();
 
             hooks = AeraVaultHooks(deployedHooks);
-            vault = AeraVaultV2(address(hooks.custody()));
+            vault = AeraVaultV2(payable(address(hooks.custody())));
             assetRegistry =
                 AeraVaultAssetRegistry(address(vault.assetRegistry()));
 

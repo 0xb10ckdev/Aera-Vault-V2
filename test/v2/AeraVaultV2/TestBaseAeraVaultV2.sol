@@ -15,7 +15,7 @@ contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
         if (_testWithDeployedContracts()) {
             (,, address deployedCustody,) = _loadDeployedAddresses();
 
-            vault = AeraVaultV2(deployedCustody);
+            vault = AeraVaultV2(payable(deployedCustody));
             assetRegistry =
                 AeraVaultAssetRegistry(address(vault.assetRegistry()));
             hooks = AeraVaultHooks(address(vault.hooks()));

@@ -24,6 +24,13 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         }
     }
 
+    function test_aeraVaultV2FactoryDeployment_fail_whenWETHIsZeroAddress()
+        public
+    {
+        vm.expectRevert(AeraVaultV2Factory.Aera__WETHIsZeroAddress.selector);
+        new AeraVaultV2Factory(address(0));
+    }
+
     function test_createAeraVaultV2_fail_whenCallerIsNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
 
@@ -174,14 +181,16 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         );
 
         AeraVaultV2 vault = AeraVaultV2(
-            factory.create(
-                bytes32(0),
-                address(this),
-                address(assetRegistry),
-                _GUARDIAN,
-                _FEE_RECIPIENT,
-                _MAX_FEE,
-                "Test Vault"
+            payable(
+                factory.create(
+                    bytes32(0),
+                    address(this),
+                    address(assetRegistry),
+                    _GUARDIAN,
+                    _FEE_RECIPIENT,
+                    _MAX_FEE,
+                    "Test Vault"
+                )
             )
         );
 

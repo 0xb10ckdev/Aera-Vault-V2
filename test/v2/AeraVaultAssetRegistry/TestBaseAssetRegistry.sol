@@ -48,7 +48,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             factory = AeraVaultV2Factory(_loadDeployedFactory());
             assetRegistry =
                 AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
-            vault = AeraVaultV2(_loadDeployedCustody());
+            vault = AeraVaultV2(payable(_loadDeployedCustody()));
 
             vm.prank(assetRegistry.owner());
             assetRegistry.transferOwnership(address(this));
@@ -198,7 +198,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
 
         assetRegistry.setCustody(address(vault));
