@@ -70,7 +70,7 @@ contract AeraVaultV2 is
 
     /// MODIFIERS ///
 
-    /// @dev Throws if called by any account other than the owner and guardian.
+    /// @dev Throws if called by any account other than the owner or guardian.
     modifier onlyOwnerOrGuardian() {
         if (msg.sender != owner() && msg.sender != guardian) {
             revert Aera__CallerIsNotOwnerAndGuardian();
