@@ -6,16 +6,6 @@ import {AssetValue, Operation} from "../Types.sol";
 
 /// @title Interface for hooks module.
 interface IHooks is IHooksEvents {
-    /// @notice Add targetSighash pair to allowlist.
-    /// @param target Address of target.
-    /// @param selector Selector of function.
-    function addTargetSighash(address target, bytes4 selector) external;
-
-    /// @notice Remove targetSighash pair from allowlist.
-    /// @param target Address of target.
-    /// @param selector Selector of function.
-    function removeTargetSighash(address target, bytes4 selector) external;
-
     /// @notice Hook that runs before deposit.
     /// @param amounts Struct details for assets and amounts to deposit.
     function beforeDeposit(AssetValue[] memory amounts) external;

@@ -109,22 +109,26 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         _transferOwnership(owner_);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Add targetSighash pair to allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function addTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
+    ) external onlyOwner {
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
         emit TargetSighashAdded(target, selector);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Remove targetSighash pair from allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function removeTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
+    ) external onlyOwner {
         delete targetSighashAllowed[
             TargetSighashLib.toTargetSighash(target, selector)
         ];
