@@ -6,6 +6,7 @@ import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
+import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import "./TargetSighashLib.sol";
@@ -278,6 +279,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         returns (bool isAllowanceSelector)
     {
         return selector == IERC20.approve.selector
-            || selector == IERC20.increaseAllowance.selector;
+            || selector == IERC20IncreaseAllowance.increaseAllowance.selector;
     }
 }
