@@ -5,15 +5,16 @@ import "../AeraVaultHooks.sol";
 import "../AeraVaultV2.sol";
 import {TargetSighash} from "../Types.sol";
 
-/// @title Interface for v2 vault factory.
+/// @title IAeraVaultV2Factory
+/// @notice Interface for the V2 vault factory.
 interface IAeraVaultV2Factory {
-    /// @notice Create v2 vault.
+    /// @notice Create V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner The address of initial owner.
-    /// @param assetRegistry The address of asset registry.
-    /// @param guardian The address of guardian.
-    /// @param feeRecipient The address of fee recipient.
-    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param owner Initial owner address.
+    /// @param assetRegistry Asset registry address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function create(
@@ -26,16 +27,16 @@ interface IAeraVaultV2Factory {
         string memory description
     ) external returns (address deployed);
 
-    /// @notice Calculate deployment address of v2 vault.
+    /// @notice Calculate deployment address of V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner The address of initial owner.
-    /// @param assetRegistry The address of asset registry.
-    /// @param guardian The address of guardian.
-    /// @param feeRecipient The address of fee recipient.
-    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param owner Initial owner address.
+    /// @param assetRegistry Asset registry address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @return deployed The address of deployed vault.
-    function computeAddress(
+    function computeVaultAddress(
         bytes32 salt,
         address owner,
         address assetRegistry,
@@ -45,7 +46,7 @@ interface IAeraVaultV2Factory {
         string memory description
     ) external view returns (address deployed);
 
-    /// @notice Deploy contract with the given bytecode if it's not deployed yet.
+    /// @notice Deploy contract with the given bytecode if it is not deployed yet.
     /// @param salt The salt value to create contract.
     /// @param code Bytecode of contract to be deployed.
     function deploy(bytes32 salt, bytes memory code) external;

@@ -5,8 +5,9 @@ import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 
-/// @title Aera Vault V2 Factory contract.
-
+/// @title AeraVaultV2Factory
+/// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
+/// @dev Only one instance of the factory will be required per chain.
 contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @notice The address of WETH.
     address public immutable weth;
@@ -15,10 +16,10 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
 
     /// @notice Emitted when the vault is created.
     /// @param vault Vault address.
-    /// @param assetRegistry The address of asset registry.
-    /// @param guardian The address of guardian.
-    /// @param feeRecipient The address of fee recipient.
-    /// @param fee Guardian fee per second in 18 decimal fixed point format.
+    /// @param assetRegistry Asset registry address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @param weth The address of WETH.
     event VaultCreated(
@@ -57,6 +58,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         uint256 fee,
         string calldata description
     ) external override onlyOwner returns (address deployed) {
+        // Requirements, Effects and Interactions: deploy vault with create2.
         deployed = address(
             new AeraVaultV2{salt: salt}(
                 owner,
@@ -69,6 +71,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
             )
         );
 
+        // Log vault creation.
         emit VaultCreated(
             deployed,
             assetRegistry,
@@ -81,7 +84,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     }
 
     /// @inheritdoc IAeraVaultV2Factory
-    function computeAddress(
+    function computeVaultAddress(
         bytes32 salt,
         address owner,
         address assetRegistry,
@@ -90,7 +93,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         uint256 fee,
         string calldata description
     ) external view override returns (address) {
-        bytes memory bytecode = abi.encodePacked(
+        bytes memory creationBytecode = abi.encodePacked(
             type(AeraVaultV2).creationCode,
             abi.encode(
                 owner,
@@ -103,7 +106,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
             )
         );
 
-        return Create2.computeAddress(salt, keccak256(bytecode));
+        return Create2.computeAddress(salt, keccak256(creationBytecode));
     }
 
     /// @inheritdoc IAeraVaultV2Factory
@@ -111,6 +114,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         bytes32 salt,
         bytes calldata code
     ) external override onlyOwner {
+        // Amount is 0 as the asset registry and hooks contracts are not payable.
         Create2.deploy(0, salt, code);
     }
 
