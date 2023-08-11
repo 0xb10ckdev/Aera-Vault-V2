@@ -4,11 +4,24 @@ pragma solidity 0.8.21;
 import "../TestBaseAssetRegistry.sol";
 
 contract DeploymentTest is TestBaseAssetRegistry {
-    function setUp() public override {
-        _deployAeraVaultV2Factory();
-        _createAssets(4, 2);
+    function test_assetRegistryDeployment_fail_whenNumberOfAssetsExceedsMaximum(
+    ) public {
+        _createAssets(30, 20);
 
-        feeToken = assets[numeraireId].asset;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__NumberOfAssetsExceedsMaximum
+                    .selector,
+                50
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
     }
 
     function test_assetRegistryDeployment_fail_whenFeeTokenIsNotRegistered()

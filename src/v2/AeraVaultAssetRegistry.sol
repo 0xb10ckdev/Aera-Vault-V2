@@ -11,6 +11,9 @@ import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
+    /// @notice Maximum number of assets.
+    uint256 public constant MAX_ASSETS = 50;
+
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
@@ -56,6 +59,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// ERRORS ///
 
+    error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
@@ -89,6 +93,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         IERC20 feeToken_
     ) {
         uint256 numAssets = assets_.length;
+
+        if (numAssets > MAX_ASSETS) {
+            revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
+        }
 
         uint256 feeTokenIndex = 0;
         for (; feeTokenIndex < numAssets; feeTokenIndex++) {
@@ -144,8 +152,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         override
         onlyOwner
     {
-        _checkAssetOracle(asset);
         uint256 numAssets = _assets.length;
+
+        if (numAssets == MAX_ASSETS) {
+            revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
+        }
+
+        _checkAssetOracle(asset);
 
         uint256 i = 0;
         for (; i < numAssets;) {
