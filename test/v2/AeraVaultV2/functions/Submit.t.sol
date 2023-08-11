@@ -57,8 +57,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenOperationsFail() public {
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
         }
 
@@ -79,8 +78,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenUseLockedFees() public {
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
 
             if (operations[i].target == address(feeToken)) {
@@ -105,8 +103,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
         }
 

@@ -10,8 +10,10 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         uint256 numAssets = assets.length;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            hooks.addTargetSighash(address(assets[i]), _APPROVE_SELECTOR);
-            hooks.addTargetSighash(address(assets[i]), _TRANSFER_SELECTOR);
+            hooks.addTargetSighash(address(assets[i]), IERC20.approve.selector);
+            hooks.addTargetSighash(
+                address(assets[i]), IERC20.transfer.selector
+            );
 
             assets[i].approve(
                 address(vault), 1_000_000 * _getScaler(assets[i])

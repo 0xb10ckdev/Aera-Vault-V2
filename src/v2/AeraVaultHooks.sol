@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
+import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import "./TargetSighashLib.sol";
@@ -13,12 +15,6 @@ import {ONE} from "./Constants.sol";
 /// @title Aera Vault Hooks contract.
 contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
-
-    bytes4 internal constant _APPROVE_SELECTOR =
-        bytes4(keccak256("approve(address,uint256)"));
-
-    bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
-        bytes4(keccak256("increaseAllowance(address,uint256)"));
 
     /// @notice The address of the custody module.
     ICustody public immutable custody;
@@ -282,7 +278,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         pure
         returns (bool isAllowanceSelector)
     {
-        return selector == _APPROVE_SELECTOR
-            || selector == _INCREASE_ALLOWANCE_SELECTOR;
+        return selector == IERC20.approve.selector
+            || selector == IERC20IncreaseAllowance.increaseAllowance.selector;
     }
 }
