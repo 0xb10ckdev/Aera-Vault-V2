@@ -44,9 +44,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
             )
         );
 
-        Create2.deploy(0, salt, bytecode);
-
-        deployed = Create2.computeAddress(salt, keccak256(bytecode));
+        deployed = Create2.deploy(0, salt, bytecode);
 
         emit VaultCreated(
             deployed, assetRegistry, guardian, feeRecipient, fee, description
