@@ -48,6 +48,7 @@ contract BeforeSubmitTest is TestBaseAeraVaultHooks {
                 )
         });
 
+        hooks.addTargetSighash(address(erc20Assets[0]), _APPROVE_SELECTOR);
         hooks.addTargetSighash(address(erc20Assets[0]), _TRANSFER_SELECTOR);
 
         vm.prank(address(vault));
