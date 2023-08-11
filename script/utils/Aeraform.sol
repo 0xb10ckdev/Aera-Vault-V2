@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 import {IAeraVaultV2Factory} from "src/v2/interfaces/IAeraVaultV2Factory.sol";
 
