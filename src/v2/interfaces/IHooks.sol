@@ -6,18 +6,6 @@ import {AssetValue, Operation} from "../Types.sol";
 
 /// @title Interface for hooks module.
 interface IHooks is IHooksEvents {
-    /// ERRORS ///
-
-    error Aera__CallerIsNotCustody();
-    error Aera__CustodyIsZeroAddress();
-    error Aera__MaxDailyExecutionLossIsGreaterThanOne();
-    error Aera__CustodyIsNotValid(address custody);
-    error Aera__CallIsNotAllowed(Operation operation);
-    error Aera__ExceedsMaxDailyExecutionLoss();
-    error Aera__AllowanceIsNotZero(address asset, address spender);
-
-    /// FUNCTIONS ///
-
     /// @notice Add targetSighash pair to allowlist.
     /// @param target Address of target.
     /// @param selector Selector of function.

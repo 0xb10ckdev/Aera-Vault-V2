@@ -5,7 +5,7 @@ import "../TestBaseAeraVaultHooks.sol";
 
 contract BeforeSubmitTest is TestBaseAeraVaultHooks {
     function test_beforeSubmit_fail_whenCallerIsNotCustody() public {
-        vm.expectRevert(IHooks.Aera__CallerIsNotCustody.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotCustody.selector);
 
         vm.prank(_USER);
         hooks.beforeSubmit(new Operation[](0));
@@ -23,7 +23,7 @@ contract BeforeSubmitTest is TestBaseAeraVaultHooks {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__CallIsNotAllowed.selector, operations[0]
+                AeraVaultHooks.Aera__CallIsNotAllowed.selector, operations[0]
             )
         );
 

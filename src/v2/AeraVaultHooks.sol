@@ -43,6 +43,16 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
 
+    /// ERRORS ///
+
+    error Aera__CallerIsNotCustody();
+    error Aera__CustodyIsZeroAddress();
+    error Aera__MaxDailyExecutionLossIsGreaterThanOne();
+    error Aera__CustodyIsNotValid(address custody);
+    error Aera__CallIsNotAllowed(Operation operation);
+    error Aera__ExceedsMaxDailyExecutionLoss();
+    error Aera__AllowanceIsNotZero(address asset, address spender);
+
     /// MODIFIERS ///
 
     /// @dev Throws if called by any account other than the custody module.
