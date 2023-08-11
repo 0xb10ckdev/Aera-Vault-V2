@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.x;
 
-import {Math} from "./Math.sol";
+import {Math} from "@openzeppelin/Math.sol";
 import {SignedMath} from "./SignedMath.sol";
 
 /**
