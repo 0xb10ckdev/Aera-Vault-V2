@@ -33,7 +33,7 @@ contract DeployScriptBase is Script, Test {
         string memory json = vm.readFile(path);
 
         vaultAddress = json.readAddress(".vaultAddress");
-        vault = AeraVaultV2(vaultAddress);
+        vault = AeraVaultV2(payable(vaultAddress));
 
         bytes memory rawDepositAmounts = json.parseRaw(".depositAmounts");
         AssetValue[] memory depositAmounts =

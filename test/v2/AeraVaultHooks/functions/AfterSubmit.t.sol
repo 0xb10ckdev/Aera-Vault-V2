@@ -37,7 +37,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
 
         deal(address(vault), 1);
 
-        vm.expectRevert(IHooks.Aera__ETHBalanceIsDecreased.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__ETHBalanceIsDecreased.selector);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
