@@ -70,6 +70,14 @@ contract AeraVaultV2 is
 
     /// MODIFIERS ///
 
+    /// @dev Throws if called by any account other than the owner or guardian.
+    modifier onlyOwnerOrGuardian() {
+        if (msg.sender != owner() && msg.sender != guardian) {
+            revert Aera__CallerIsNotOwnerAndGuardian();
+        }
+        _;
+    }
+
     /// @dev Throws if called by any account other than the guardian.
     modifier onlyGuardian() {
         if (msg.sender != guardian) {
@@ -318,7 +326,7 @@ contract AeraVaultV2 is
     function pause()
         external
         override
-        onlyOwner
+        onlyOwnerOrGuardian
         whenNotPaused
         whenNotFinalized
     {
