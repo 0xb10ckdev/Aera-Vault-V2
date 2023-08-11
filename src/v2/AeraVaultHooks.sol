@@ -43,6 +43,16 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
 
+    /// ERRORS ///
+
+    error Aera__CallerIsNotCustody();
+    error Aera__CustodyIsZeroAddress();
+    error Aera__MaxDailyExecutionLossIsGreaterThanOne();
+    error Aera__CustodyIsNotValid(address custody);
+    error Aera__CallIsNotAllowed(Operation operation);
+    error Aera__ExceedsMaxDailyExecutionLoss();
+    error Aera__AllowanceIsNotZero(address asset, address spender);
+
     /// MODIFIERS ///
 
     /// @dev Throws if called by any account other than the custody module.
@@ -99,22 +109,26 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         _transferOwnership(owner_);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Add targetSighash pair to allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function addTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
+    ) external onlyOwner {
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
         emit TargetSighashAdded(target, selector);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Remove targetSighash pair from allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function removeTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
+    ) external onlyOwner {
         delete targetSighashAllowed[
             TargetSighashLib.toTargetSighash(target, selector)
         ];

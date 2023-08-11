@@ -7,7 +7,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     function test_aeraVaultHooksDeployment_fail_whenCustodyIsZeroAddress()
         public
     {
-        vm.expectRevert(IHooks.Aera__CustodyIsZeroAddress.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__CustodyIsZeroAddress.selector);
         new AeraVaultHooks(
             address(this),
             address(0),
@@ -21,7 +21,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__CustodyIsNotValid.selector, address(1)
+                AeraVaultHooks.Aera__CustodyIsNotValid.selector, address(1)
             )
         );
 
@@ -37,7 +37,9 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     ) public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__MaxDailyExecutionLossIsGreaterThanOne.selector
+                AeraVaultHooks
+                    .Aera__MaxDailyExecutionLossIsGreaterThanOne
+                    .selector
             )
         );
 

@@ -46,7 +46,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenOperationIsNotAllowed() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__CallIsNotAllowed.selector, operations[0]
+                AeraVaultHooks.Aera__CallIsNotAllowed.selector, operations[0]
             )
         );
 
