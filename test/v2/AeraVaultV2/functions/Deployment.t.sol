@@ -27,7 +27,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
