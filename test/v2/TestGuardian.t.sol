@@ -15,6 +15,8 @@ import "src/v2/TargetSighashLib.sol";
 import "@openzeppelintest/Strings.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC4626.sol";
+import "@openzeppelin/IERC20.sol";
+import "@openzeppelin/IERC20IncreaseAllowance.sol";
 
 struct OperationAlpha {
     bytes data;
@@ -27,11 +29,10 @@ contract TestGuardian is
     DeployScriptBase(false),
     DeployAeraContractsBase
 {
-    bytes4 internal constant _APPROVE_SELECTOR =
-        bytes4(keccak256("approve(address,uint256)"));
+    bytes4 internal constant _APPROVE_SELECTOR = IERC20.approve.selector;
 
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
-        bytes4(keccak256("increaseAllowance(address,uint256)"));
+        IERC20IncreaseAllowance.increaseAllowance.selector;
 
     using stdJson for string;
 

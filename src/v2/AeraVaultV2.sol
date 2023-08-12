@@ -128,6 +128,9 @@ contract AeraVaultV2 is
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
+        if (owner_ == address(0)) {
+            revert Aera__InitialOwnerIsZeroAddress();
+        }
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
