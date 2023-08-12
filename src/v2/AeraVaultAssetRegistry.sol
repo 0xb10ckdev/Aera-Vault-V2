@@ -117,7 +117,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         if (feeTokenIndex == numAssets) {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
         }
-
         if (numeraireId_ >= numAssets) {
             revert Aera__NumeraireIndexTooHigh(numAssets, numeraireId_);
         }
@@ -137,7 +136,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             if (i != numeraireId_) {
                 _checkAssetOracle(assets_[i]);
 
@@ -147,6 +146,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
 
             _insertAsset(assets_[i], i);
+
             unchecked {
                 i++; // gas savings
             }
@@ -156,6 +156,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         feeToken = feeToken_;
 
         _transferOwnership(owner_);
+
         emit Created(owner_, assets_, numeraireId_, address(feeToken_));
     }
 
