@@ -16,12 +16,14 @@ interface ICustody is ICustodyEvents {
     error Aera__HooksIsNotValid(address hooks);
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
+    error Aera__InitialOwnerIsZeroAddress();
     error Aera__FeeRecipientIsZeroAddress();
     error Aera__ExecuteTargetIsHooksAddress();
     error Aera__SubmitTargetIsHooksAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__DescriptionIsEmpty();
+    error Aera__CallerIsNotOwnerAndGuardian();
     error Aera__CallerIsNotGuardian();
     error Aera__AssetIsNotRegistered(IERC20 asset);
     error Aera__AmountExceedsAvailable(

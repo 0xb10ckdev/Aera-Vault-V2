@@ -7,10 +7,24 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     function test_aeraVaultHooksDeployment_fail_whenCustodyIsZeroAddress()
         public
     {
-        vm.expectRevert(IHooks.Aera__CustodyIsZeroAddress.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__CustodyIsZeroAddress.selector);
         new AeraVaultHooks(
             address(this),
             address(0),
+            _MAX_DAILY_EXECUTION_LOSS,
+            new TargetSighash[](0)
+        );
+    }
+
+    function test_aeraVaultHooksDeployment_fail_whenOwnerIsZeroAddress()
+        public
+    {
+        vm.expectRevert(
+            AeraVaultHooks.Aera__HooksInitialOwnerIsZeroAddress.selector
+        );
+        new AeraVaultHooks(
+            address(0),
+            address(1),
             _MAX_DAILY_EXECUTION_LOSS,
             new TargetSighash[](0)
         );
@@ -21,7 +35,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
     {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__CustodyIsNotValid.selector, address(1)
+                AeraVaultHooks.Aera__CustodyIsNotValid.selector, address(1)
             )
         );
 
@@ -29,6 +43,24 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(this),
             address(1),
             _MAX_DAILY_EXECUTION_LOSS,
+            new TargetSighash[](0)
+        );
+    }
+
+    function test_aeraVaultHooksDeployment_fail_whenMaxDailyExecutionLossIsGreaterThanOne(
+    ) public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultHooks
+                    .Aera__MaxDailyExecutionLossIsGreaterThanOne
+                    .selector
+            )
+        );
+
+        new AeraVaultHooks(
+            address(this),
+            address(vault),
+            1.1e18,
             new TargetSighash[](0)
         );
     }
@@ -41,7 +73,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
 
         for (uint256 i = 0; i < numERC20; i++) {
             targetSighashAllowlist[i] = TargetSighashLib.toTargetSighash(
-                address(erc20Assets[i]), _TRANSFER_SELECTOR
+                address(erc20Assets[i]), IERC20.transfer.selector
             );
         }
 

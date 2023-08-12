@@ -8,7 +8,7 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
 
     function test_finalize_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.finalize();
@@ -44,10 +44,11 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             })
         );
 
+        AssetValue[] memory withdrawnAmounts = vault.holdings();
         _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Finalized();
+        emit Finalized(address(this), withdrawnAmounts);
 
         vault.finalize();
     }
@@ -72,13 +73,20 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
 
         skip(1000);
 
+        uint256 expectedFeeTotal = 499999;
+        AssetValue[] memory expectedWithdrawnAssets = vault.holdings();
+        for (uint256 i = 0; i < holdings.length; i++) {
+            if (holdings[i].asset == assetRegistry.feeToken()) {
+                expectedWithdrawnAssets[i].value -= expectedFeeTotal;
+            }
+        }
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Finalized();
+        emit Finalized(address(this), expectedWithdrawnAssets);
 
         vault.finalize();
 
-        assertEq(vault.feeTotal(), 499999);
-        assertEq(vault.fees(_FEE_RECIPIENT), 499999);
+        assertEq(vault.feeTotal(), expectedFeeTotal);
+        assertEq(vault.fees(_FEE_RECIPIENT), expectedFeeTotal);
 
         for (uint256 i = 0; i < holdings.length; i++) {
             assertEq(

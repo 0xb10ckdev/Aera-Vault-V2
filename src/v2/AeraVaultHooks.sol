@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
+import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import "./TargetSighashLib.sol";
@@ -13,12 +15,6 @@ import {ONE} from "./Constants.sol";
 /// @title Aera Vault Hooks contract.
 contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
-
-    bytes4 internal constant _APPROVE_SELECTOR =
-        bytes4(keccak256("approve(address,uint256)"));
-
-    bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
-        bytes4(keccak256("increaseAllowance(address,uint256)"));
 
     /// @notice The address of the custody module.
     ICustody public immutable custody;
@@ -42,6 +38,17 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// @notice Total value of assets in vault before submission.
     uint256 internal _beforeValue;
+
+    /// ERRORS ///
+
+    error Aera__CallerIsNotCustody();
+    error Aera__CustodyIsZeroAddress();
+    error Aera__MaxDailyExecutionLossIsGreaterThanOne();
+    error Aera__CustodyIsNotValid(address custody);
+    error Aera__CallIsNotAllowed(Operation operation);
+    error Aera__ExceedsMaxDailyExecutionLoss();
+    error Aera__AllowanceIsNotZero(address asset, address spender);
+    error Aera__HooksInitialOwnerIsZeroAddress();
 
     /// MODIFIERS ///
 
@@ -71,6 +78,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
         }
+        if (owner_ == address(0)) {
+            revert Aera__HooksInitialOwnerIsZeroAddress();
+        }
         if (
             !ERC165Checker.supportsInterface(
                 custody_, type(ICustody).interfaceId
@@ -78,11 +88,17 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         ) {
             revert Aera__CustodyIsNotValid(custody_);
         }
+        if (maxDailyExecutionLoss_ > ONE) {
+            revert Aera__MaxDailyExecutionLossIsGreaterThanOne();
+        }
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
-        for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
+        for (uint256 i = 0; i < numTargetSighashAllowlist;) {
             targetSighashAllowed[targetSighashAllowlist[i]] = true;
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         custody = ICustody(custody_);
@@ -93,24 +109,29 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         _transferOwnership(owner_);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Add targetSighash pair to allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function addTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
+    ) external onlyOwner {
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
         emit TargetSighashAdded(target, selector);
     }
 
-    /// @inheritdoc IHooks
+    /// @notice Remove targetSighash pair from allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
     function removeTargetSighash(
         address target,
         bytes4 selector
-    ) external override onlyOwner {
-        targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
-        = false;
+    ) external onlyOwner {
+        delete targetSighashAllowed[
+            TargetSighashLib.toTargetSighash(target, selector)
+        ];
 
         emit TargetSighashRemoved(target, selector);
     }
@@ -154,11 +175,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 numOperations = operations.length;
         bytes4 selector;
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
-            if (_isAllowanceSelector(selector)) {
-                continue;
-            }
 
             TargetSighash sigHash = TargetSighashLib.toTargetSighash(
                 operations[i].target, selector
@@ -167,6 +185,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
             if (!targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
+            unchecked {
+                i++;
+            } // gas savings
         }
     }
 
@@ -179,11 +200,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 day = block.timestamp / 1 days;
 
         if (_beforeValue > 0) {
-            uint256 submitMultiplier = custody.value() * ONE / _beforeValue;
+            uint256 submitMultiplier = (custody.value() * ONE) / _beforeValue;
 
             if (currentDay == day) {
                 uint256 dailyMultiplier =
-                    cumulativeDailyMultiplier * submitMultiplier / ONE;
+                    (cumulativeDailyMultiplier * submitMultiplier) / ONE;
                 if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
                     revert Aera__ExceedsMaxDailyExecutionLoss();
                 }
@@ -205,13 +226,16 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 amount;
         IERC20 asset;
 
-        for (uint256 i = 0; i < numOperations; i++) {
+        for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
                 (spender, amount) =
                     abi.decode(operations[i].data[4:], (address, uint256));
 
                 if (amount == 0) {
+                    unchecked {
+                        i++;
+                    } // gas savings
                     continue;
                 }
 
@@ -221,6 +245,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                     revert Aera__AllowanceIsNotZero(address(asset), spender);
                 }
             }
+            unchecked {
+                i++;
+            } // gas savings
         }
     }
 
@@ -255,7 +282,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         pure
         returns (bool isAllowanceSelector)
     {
-        return selector == _APPROVE_SELECTOR
-            || selector == _INCREASE_ALLOWANCE_SELECTOR;
+        return selector == IERC20.approve.selector
+            || selector == IERC20IncreaseAllowance.increaseAllowance.selector;
     }
 }

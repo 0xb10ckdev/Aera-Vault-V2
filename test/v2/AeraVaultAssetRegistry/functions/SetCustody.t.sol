@@ -18,7 +18,7 @@ contract SetCustodyTest is TestBaseAssetRegistry {
     }
 
     function test_setCustody_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         assetRegistry.setCustody(address(vault));

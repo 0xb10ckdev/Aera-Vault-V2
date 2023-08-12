@@ -12,6 +12,9 @@ import {ONE} from "./Constants.sol";
 
 /// @title Aera Vault Asset Registry.
 contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
+    /// @notice Maximum number of assets.
+    uint256 public constant MAX_ASSETS = 50;
+
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
@@ -39,15 +42,29 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param asset Address of removed asset.
     event AssetRemoved(address asset);
 
+    /// @notice Emitted in constructor.
+    /// @param owner Address of owner.
+    /// @param assets Array of assets & associated info in the registry.
+    /// @param numeraireId Index of numeraire asset.
+    /// @param feeToken Address of fee token.
+    event Created(
+        address indexed owner,
+        AssetInformation[] assets,
+        uint256 numeraireId,
+        address feeToken
+    );
+
     /// @notice Emitted when custody is set.
     /// @param custody Address of new custody.
     event SetCustody(address custody);
 
     /// ERRORS ///
 
+    error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
+    error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
     error Aera__UnderlyingAssetIsNotRegistered(
@@ -81,7 +98,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 numeraireId_,
         IERC20 feeToken_
     ) {
+        if (owner_ == address(0)) {
+            revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
+        }
         uint256 numAssets = assets_.length;
+
+        if (numAssets > MAX_ASSETS) {
+            revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
+        }
 
         uint256 feeTokenIndex = 0;
         for (; feeTokenIndex < numAssets; feeTokenIndex++) {
@@ -104,9 +128,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__NumeraireOracleIsNotZeroAddress();
         }
 
-        for (uint256 i = 1; i < numAssets; i++) {
+        for (uint256 i = 1; i < numAssets;) {
             if (assets_[i - 1].asset >= assets_[i].asset) {
                 revert Aera__AssetOrderIsIncorrect(i);
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
 
@@ -120,12 +147,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
 
             _insertAsset(assets_[i], i);
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         numeraireId = numeraireId_;
         feeToken = feeToken_;
 
         _transferOwnership(owner_);
+        emit Created(owner_, assets_, numeraireId_, address(feeToken_));
     }
 
     /// @inheritdoc IAssetRegistry
@@ -134,18 +165,25 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         override
         onlyOwner
     {
-        _checkAssetOracle(asset);
-
         uint256 numAssets = _assets.length;
 
+        if (numAssets == MAX_ASSETS) {
+            revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
+        }
+
+        _checkAssetOracle(asset);
+
         uint256 i = 0;
-        for (; i < numAssets; i++) {
+        for (; i < numAssets;) {
             if (asset.asset < _assets[i].asset) {
                 break;
             }
 
             if (asset.asset == _assets[i].asset) {
                 revert Aera__AssetIsAlreadyRegistered(i);
+            }
+            unchecked {
+                i++; // gas savings
             }
         }
 
@@ -199,9 +237,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 nextIndex;
         uint256 lastIndex = numAssets - 1;
         // Slide all elements after oldAssetIndex left
-        for (uint256 i = oldAssetIndex; i < lastIndex; i++) {
+        for (uint256 i = oldAssetIndex; i < lastIndex;) {
             nextIndex = i + 1;
             _assets[i] = _assets[nextIndex];
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         _assets.pop();
@@ -263,8 +304,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 price;
         int256 answer;
         uint256 index;
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
+                unchecked {
+                    i++; // gas savings
+                }
                 continue;
             }
 
@@ -295,7 +339,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 });
             }
 
-            index++;
+            unchecked {
+                // gas savings
+                index++;
+                i++;
+            }
         }
 
         return prices;

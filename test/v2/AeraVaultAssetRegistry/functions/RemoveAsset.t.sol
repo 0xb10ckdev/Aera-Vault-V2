@@ -10,7 +10,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
     function test_removeAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);
 
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
         assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
     }
 

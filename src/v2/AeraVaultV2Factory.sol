@@ -17,7 +17,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @param fee Guardian fee per second in 18 decimal fixed point format.
     /// @param description Vault description.
     event VaultCreated(
-        address vault,
+        address indexed vault,
         address assetRegistry,
         address guardian,
         address feeRecipient,
@@ -37,16 +37,16 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         uint256 fee,
         string calldata description
     ) external override onlyOwner returns (address deployed) {
-        bytes memory bytecode = abi.encodePacked(
-            type(AeraVaultV2).creationCode,
-            abi.encode(
-                owner, assetRegistry, guardian, feeRecipient, fee, description
+        deployed = address(
+            new AeraVaultV2{salt: salt}(
+                owner,
+                assetRegistry,
+                guardian,
+                feeRecipient,
+                fee,
+                description
             )
         );
-
-        Create2.deploy(0, salt, bytecode);
-
-        deployed = Create2.computeAddress(salt, keccak256(bytecode));
 
         emit VaultCreated(
             deployed, assetRegistry, guardian, feeRecipient, fee, description

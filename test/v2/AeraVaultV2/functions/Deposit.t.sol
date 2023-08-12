@@ -22,7 +22,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
     }
 
     function test_deposit_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.deposit(depositAmounts);
@@ -79,7 +79,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         vm.warp(block.timestamp + 1000);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Deposit(depositAmounts);
+        emit Deposit(vault.owner(), depositAmounts);
 
         vault.deposit(depositAmounts);
     }
@@ -91,7 +91,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Deposit(depositAmounts);
+        emit Deposit(vault.owner(), depositAmounts);
 
         vault.deposit(depositAmounts);
 

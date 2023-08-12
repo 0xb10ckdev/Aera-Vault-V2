@@ -15,6 +15,13 @@ import {ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBaseFactory {
+    event Created(
+        address indexed owner,
+        IAssetRegistry.AssetInformation[] assets,
+        uint256 numeraireId,
+        address feeToken
+    );
+
     address internal constant _GUARDIAN = address(0x123456);
     address internal constant _FEE_RECIPIENT = address(0x7890ab);
     uint256 internal constant _MAX_FEE = 10 ** 9;
@@ -176,6 +183,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         _deployAeraVaultV2Factory();
         _createAssets(4, 2);
 
+        vm.expectEmit(true, false, false, true);
+        emit Created(address(this), assets, numeraireId, address(feeToken));
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
             assets,

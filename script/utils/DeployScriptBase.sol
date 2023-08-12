@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 import {stdJson} from "forge-std/Script.sol";
 import {Script} from "forge-std/Script.sol";
@@ -11,7 +11,13 @@ contract DeployScriptBase is Script, Test {
     uint256 internal _deployerPrivateKey;
     address internal _deployerAddress;
 
-    constructor() {
+    constructor(bool loadDeployerAddressFromPrivateKey) {
+        if (loadDeployerAddressFromPrivateKey) {
+            _loadDeployerAddressFromPrivateKey();
+        }
+    }
+
+    function _loadDeployerAddressFromPrivateKey() internal {
         _deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
 
         if (_deployerPrivateKey == 0) {

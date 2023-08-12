@@ -10,7 +10,10 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         uint256 numAssets = assets.length;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            hooks.addTargetSighash(address(assets[i]), _TRANSFER_SELECTOR);
+            hooks.addTargetSighash(address(assets[i]), IERC20.approve.selector);
+            hooks.addTargetSighash(
+                address(assets[i]), IERC20.transfer.selector
+            );
 
             assets[i].approve(
                 address(vault), 1_000_000 * _getScaler(assets[i])
@@ -22,7 +25,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
     }
 
     function test_afterSubmit_fail_whenCallerIsNotCustody() public {
-        vm.expectRevert(IHooks.Aera__CallerIsNotCustody.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotCustody.selector);
 
         vm.prank(_USER);
         hooks.afterSubmit(new Operation[](0));
@@ -46,7 +49,9 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
             });
         }
 
-        vm.expectRevert(IHooks.Aera__ExceedsMaxDailyExecutionLoss.selector);
+        vm.expectRevert(
+            AeraVaultHooks.Aera__ExceedsMaxDailyExecutionLoss.selector
+        );
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
@@ -73,7 +78,9 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
 
         vm.warp(block.timestamp + 1 days);
 
-        vm.expectRevert(IHooks.Aera__ExceedsMaxDailyExecutionLoss.selector);
+        vm.expectRevert(
+            AeraVaultHooks.Aera__ExceedsMaxDailyExecutionLoss.selector
+        );
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
@@ -98,7 +105,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__AllowanceIsNotZero.selector,
+                AeraVaultHooks.Aera__AllowanceIsNotZero.selector,
                 erc20Assets[0],
                 address(this)
             )

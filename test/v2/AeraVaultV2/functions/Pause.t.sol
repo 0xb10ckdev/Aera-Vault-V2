@@ -6,8 +6,8 @@ import "../TestBaseAeraVaultV2.sol";
 contract PauseTest is TestBaseAeraVaultV2 {
     event Paused(address);
 
-    function test_pause_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+    function test_pause_fail_whenCallerIsNotOwnerOrGuardian() public {
+        vm.expectRevert(ICustody.Aera__CallerIsNotOwnerAndGuardian.selector);
 
         vm.prank(_USER);
         vault.pause();
@@ -24,7 +24,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     function test_pause_fail_whenVaultIsPaused() public {
         vault.pause();
 
-        vm.expectRevert(bytes("Pausable: paused"));
+        vm.expectRevert("Pausable: paused");
 
         vault.pause();
     }
@@ -33,8 +33,9 @@ contract PauseTest is TestBaseAeraVaultV2 {
         _setInvalidOracle(nonNumeraireId);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Paused(address(this));
+        emit Paused(_GUARDIAN);
 
+        vm.prank(_GUARDIAN);
         vault.pause();
     }
 
@@ -45,7 +46,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
         vault.pause();
     }
 
-    function test_pause_increases_fees() public {
+    function test_pause_success_withIncreasingFees() public {
         address feeRecipient = address(1);
         vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
 
@@ -54,7 +55,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
 
         vm.warp(block.timestamp + 1000);
 
-        test_pause_success();
+        vault.pause();
 
         assertEq(vault.feeTotal(), 499999);
         assertEq(vault.fees(feeRecipient), 499999);

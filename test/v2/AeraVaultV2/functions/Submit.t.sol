@@ -46,7 +46,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenOperationIsNotAllowed() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IHooks.Aera__CallIsNotAllowed.selector, operations[0]
+                AeraVaultHooks.Aera__CallIsNotAllowed.selector, operations[0]
             )
         );
 
@@ -57,8 +57,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenOperationsFail() public {
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
         }
 
@@ -79,8 +78,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     function test_submit_fail_whenUseLockedFees() public {
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
 
             if (operations[i].target == address(feeToken)) {
@@ -105,8 +103,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
-                operations[i].target,
-                bytes4(keccak256("transfer(address,uint256)"))
+                operations[i].target, IERC20.transfer.selector
             );
         }
 
@@ -119,7 +116,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Submitted(operations);
+        emit Submitted(vault.owner(), operations);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);

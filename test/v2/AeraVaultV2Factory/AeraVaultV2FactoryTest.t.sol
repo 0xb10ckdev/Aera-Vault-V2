@@ -25,7 +25,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         factory.create(
@@ -42,7 +42,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenAssetRegistryIsZeroAddress()
         public
     {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
         factory.create(
             bytes32(0),
             address(this),
@@ -57,7 +57,11 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenAssetRegistryIsNotValid()
         public
     {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
+            )
+        );
         factory.create(
             bytes32(0),
             address(this),
@@ -70,7 +74,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsZeroAddress() public {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         factory.create(
             bytes32(0),
             address(this),
@@ -83,7 +87,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsFactory() public {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         factory.create(
             bytes32(0),
             address(this),
@@ -98,7 +102,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenFeeRecipientIsZeroAddress()
         public
     {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
         factory.create(
             bytes32(0),
             address(this),
@@ -111,7 +115,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         factory.create(
             bytes32(0),
             address(this),
@@ -124,7 +128,11 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenFeeIsAboveMax() public {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
+            )
+        );
         factory.create(
             bytes32(0),
             address(this),
@@ -137,7 +145,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert("Create2: Failed on deploy");
+        vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
         factory.create(
             bytes32(0),
             address(this),

@@ -21,7 +21,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
     }
 
     function test_execute_fail_whenCallerIsNotOwner() public {
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
         vault.execute(operation);
@@ -88,7 +88,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         uint256 balance = erc20Assets[0].balanceOf(address(this));
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Executed(operation);
+        emit Executed(vault.owner(), operation);
 
         vault.execute(operation);
 
