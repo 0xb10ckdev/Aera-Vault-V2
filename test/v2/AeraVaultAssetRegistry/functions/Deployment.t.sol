@@ -62,6 +62,29 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
+    function test_assetRegistryDeployment_fail_whenFeeTokenIsERC4626()
+        public
+    {
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (assets[i].asset == feeToken) {
+                assets[i].isERC4626 = true;
+                break;
+            }
+        }
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__FeeTokenIsERC4626.selector,
+                feeToken
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
         public
     {
@@ -105,7 +128,6 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenNumeraireAssetIsMarkedAsERC4626(
     ) public {
         assets[numeraireId].isERC4626 = true;
-
         vm.expectRevert(
             AeraVaultAssetRegistry
                 .Aera__NumeraireAssetIsMarkedAsERC4626

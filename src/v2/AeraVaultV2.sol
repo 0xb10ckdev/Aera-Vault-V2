@@ -470,7 +470,7 @@ contract AeraVaultV2 is
 
         uint256 reservedFee = fees[msg.sender];
 
-        // Requirements: check that there are fees to claim. 
+        // Requirements: check that there are fees to claim.
         if (reservedFee == 0) {
             revert Aera__NoAvailableFeeForCaller(msg.sender);
         }

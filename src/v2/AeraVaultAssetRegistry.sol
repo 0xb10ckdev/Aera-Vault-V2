@@ -63,6 +63,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
+    error Aera__FeeTokenIsERC4626(address feeToken);
     error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
@@ -119,6 +120,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         // Requirements: confirm that fee token is present.
         if (feeTokenIndex == numAssets) {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
+        }
+
+        // Requirements: check that fee token is not an ERC4626.
+        if (assets_[feeTokenIndex].isERC4626) {
+            revert Aera__FeeTokenIsERC4626(address(feeToken_));
         }
 
         // Requirements: confirm that numeraire index is in valid range.
@@ -442,7 +448,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         for (; underlyingIndex < numAssets; underlyingIndex++) {
             if (
                 !assetsToCheck[underlyingIndex].isERC4626
-                    && underlyingAsset == address(assetsToCheck[underlyingIndex].asset)
+                    && underlyingAsset
+                        == address(assetsToCheck[underlyingIndex].asset)
             ) {
                 break;
             }

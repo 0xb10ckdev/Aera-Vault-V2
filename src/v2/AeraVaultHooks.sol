@@ -209,7 +209,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         // Effects: remember current vault value and ETH balance for use in afterSubmit.
         _beforeValue = custody.value();
         _beforeBalance = address(custody).balance;
-
     }
 
     /// @inheritdoc IHooks
