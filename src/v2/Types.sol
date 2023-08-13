@@ -8,6 +8,8 @@ import "@openzeppelin/IERC20.sol";
 // This file defines the types used in V2.
 
 /// @notice Combination of contract address and sighash to be used in allowlist.
+/// @dev It's packed as follows:
+///      [<empty> 64 bits] [target 160 bits] [selector 32 bits]
 type TargetSighash is uint256;
 
 /// @notice Struct encapulating an asset and an associated value.

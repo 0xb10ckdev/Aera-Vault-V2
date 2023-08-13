@@ -12,7 +12,9 @@ import "./interfaces/ICustody.sol";
 import "./TargetSighashLib.sol";
 import {ONE} from "./Constants.sol";
 
-/// @title Aera Vault Hooks contract.
+/// @title AeraVaultHooks
+/// @notice Default hooks contract which implements several safeguards.
+/// @dev Connected custody module MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
 contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
@@ -33,10 +35,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     /// @notice Accumulated value multiplier during submit transactions.
     uint256 public cumulativeDailyMultiplier;
 
-    /// @notice Allowed target and sighash combinations.
+    /// @notice Allowed target contract and sighash combinations.
     mapping(TargetSighash => bool) public targetSighashAllowed;
 
     /// @notice Total value of assets in vault before submission.
+    /// @dev Assigned in `beforeSubmit` and used in `afterSubmit`.
     uint256 internal _beforeValue;
 
     /// @notice ETH amount in vault before submission.
@@ -66,19 +69,18 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// FUNCTIONS ///
 
-    /// @notice Initialize the hooks contract by providing references to
-    ///         custody module and other parameters.
-    /// @param owner_ The address of initial owner.
-    /// @param custody_ The address of custody module.
-    /// @param maxDailyExecutionLoss_  The fraction of value that the vault can
-    ///                                lose per day in the course of submissions.
-    /// @param targetSighashAllowlist Array of target sighash to allow.
+    /// @param owner_ Initial owner address.
+    /// @param custody_ Custody module address.
+    /// @param maxDailyExecutionLoss_ The fraction of value that the vault can
+    ///                               lose per day in the course of submissions.
+    /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     constructor(
         address owner_,
         address custody_,
         uint256 maxDailyExecutionLoss_,
         TargetSighash[] memory targetSighashAllowlist
     ) {
+        // Requirements: validate custody module.
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
         }
@@ -92,12 +94,15 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         ) {
             revert Aera__CustodyIsNotValid(custody_);
         }
+
+        // Requirements: check if max daily execution loss is bounded.
         if (maxDailyExecutionLoss_ > ONE) {
             revert Aera__MaxDailyExecutionLossIsGreaterThanOne();
         }
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
+        // Effects: initialize target sighash allowlist.
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
             targetSighashAllowed[targetSighashAllowlist[i]] = true;
             unchecked {
@@ -105,11 +110,13 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
             }
         }
 
+        // Effects: initialize state variables.
         custody = ICustody(custody_);
         maxDailyExecutionLoss = maxDailyExecutionLoss_;
         currentDay = block.timestamp / 1 days;
         cumulativeDailyMultiplier = ONE;
 
+        // Effects: create a pending ownership transfer.
         _transferOwnership(owner_);
     }
 
@@ -120,9 +127,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
+        // Effects: add target sighash combination to the allowlist.
         targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
+        // Log the addition.
         emit TargetSighashAdded(target, selector);
     }
 
@@ -133,10 +142,12 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
+        // Effects: remove target sighash combination from the allowlist.
         delete targetSighashAllowed[
             TargetSighashLib.toTargetSighash(target, selector)
         ];
 
+        // Log the removal.
         emit TargetSighashRemoved(target, selector);
     }
 
@@ -174,12 +185,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         override
         onlyCustody
     {
-        _beforeValue = custody.value();
-        _beforeBalance = address(custody).balance;
-
         uint256 numOperations = operations.length;
         bytes4 selector;
 
+        // Requirements: validate that all operations are allowed.
         for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
 
@@ -187,13 +196,20 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                 operations[i].target, selector
             );
 
+            // Requirements: validate that the target sighash combination is allowed.
             if (!targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
+
             unchecked {
                 i++;
             } // gas savings
         }
+
+        // Effects: remember current vault value and ETH balance for use in afterSubmit.
+        _beforeValue = custody.value();
+        _beforeBalance = address(custody).balance;
+
     }
 
     /// @inheritdoc IHooks
@@ -209,23 +225,25 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         }
 
         if (_beforeValue > 0) {
-            uint256 submitMultiplier = (custody.value() * ONE) / _beforeValue;
+            // Initialize new cumulative multiplier with the current submit multiplier.
+            uint256 newMultiplier = (custody.value() * ONE) / _beforeValue;
 
             if (currentDay == day) {
-                uint256 dailyMultiplier =
-                    (cumulativeDailyMultiplier * submitMultiplier) / ONE;
-                if (dailyMultiplier < ONE - maxDailyExecutionLoss) {
-                    revert Aera__ExceedsMaxDailyExecutionLoss();
-                }
-                cumulativeDailyMultiplier = dailyMultiplier;
-            } else {
-                if (submitMultiplier < ONE - maxDailyExecutionLoss) {
-                    revert Aera__ExceedsMaxDailyExecutionLoss();
-                }
-                cumulativeDailyMultiplier = submitMultiplier;
+                // Calculate total multiplier for today.
+                newMultiplier =
+                    (cumulativeDailyMultiplier * newMultiplier) / ONE;
             }
+
+            // Requirements: check that daily execution loss is within bounds.
+            if (newMultiplier < ONE - maxDailyExecutionLoss) {
+                revert Aera__ExceedsMaxDailyExecutionLoss();
+            }
+
+            // Effects: update the daily multiplier.
+            cumulativeDailyMultiplier = newMultiplier;
         }
 
+        // Effects: reset day and prior vault value for the next submission.
         currentDay = day;
         _beforeBalance = 0;
         _beforeValue = 0;
@@ -234,14 +252,17 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         bytes4 selector;
         address spender;
         uint256 amount;
-        IERC20 asset;
+        IERC20 token;
 
+        // Requirements: check that there are no outgoing allowances that were introduced.
         for (uint256 i = 0; i < numOperations;) {
             selector = bytes4(operations[i].data[0:4]);
             if (_isAllowanceSelector(selector)) {
+                // Extract spender and amount from the allowance transaction.
                 (spender, amount) =
                     abi.decode(operations[i].data[4:], (address, uint256));
 
+                // If amount is 0 then allowance hasn't been increased.
                 if (amount == 0) {
                     unchecked {
                         i++;
@@ -249,10 +270,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                     continue;
                 }
 
-                asset = IERC20(operations[i].target);
+                token = IERC20(operations[i].target);
 
-                if (asset.allowance(address(custody), spender) > 0) {
-                    revert Aera__AllowanceIsNotZero(address(asset), spender);
+                // Requirements: check that the current outgoing allowance for this token is zero.
+                if (token.allowance(address(custody), spender) > 0) {
+                    revert Aera__AllowanceIsNotZero(address(token), spender);
                 }
             }
             unchecked {
@@ -266,6 +288,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// @inheritdoc IHooks
     function afterFinalize() external override onlyCustody {
+        // Effects: release storage
         maxDailyExecutionLoss = 0;
         currentDay = 0;
         cumulativeDailyMultiplier = 0;

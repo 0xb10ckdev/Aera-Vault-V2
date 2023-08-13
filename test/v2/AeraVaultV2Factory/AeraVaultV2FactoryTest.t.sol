@@ -170,7 +170,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         vm.expectEmit(true, true, true, true);
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
-        address predict = factory.computeAddress(
+        address predict = factory.computeVaultAddress(
             bytes32(0),
             address(this),
             address(assetRegistry),
