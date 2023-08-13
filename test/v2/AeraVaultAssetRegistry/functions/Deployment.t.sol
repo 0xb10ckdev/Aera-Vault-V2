@@ -97,7 +97,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         new AeraVaultAssetRegistry(
             address(this),
             assets,
-            1 - numeraireId,
+            numeraireId,
             feeToken
         );
     }
