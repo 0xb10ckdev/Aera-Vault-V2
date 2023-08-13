@@ -5,7 +5,7 @@ import "@openzeppelin/IERC4626.sol";
 import "../TestBaseAssetRegistry.sol";
 
 contract RemoveAssetTest is TestBaseAssetRegistry {
-    event AssetRemoved(address asset);
+    event AssetRemoved(address indexed asset);
 
     function test_removeAsset_fail_whenCallerIsNotOwner() public {
         hoax(_USER);

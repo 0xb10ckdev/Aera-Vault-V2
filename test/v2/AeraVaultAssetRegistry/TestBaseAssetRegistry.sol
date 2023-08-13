@@ -294,25 +294,4 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             oracle: AggregatorV2V3Interface(oracleAddress)
         });
     }
-
-    function _generateValidWeights()
-        internal
-        view
-        returns (IAssetRegistry.AssetWeight[] memory weights)
-    {
-        IAssetRegistry.AssetInformation[] memory registryAssets =
-            assetRegistry.assets();
-        weights = new IAssetRegistry.AssetWeight[](numAssets);
-
-        uint256 weightSum;
-        for (uint256 i = 0; i < numAssets; i++) {
-            weights[i] = IAssetRegistry.AssetWeight({
-                asset: registryAssets[i].asset,
-                weight: _ONE / numAssets
-            });
-            weightSum += _ONE / numAssets;
-        }
-
-        weights[numAssets - 1].weight += _ONE - weightSum;
-    }
 }
