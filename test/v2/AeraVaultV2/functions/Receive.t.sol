@@ -11,7 +11,8 @@ contract ReceiveTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(ICustody.Aera__NotWETHContract.selector);
 
-        address(vault).call{value: 1}("");
+        (bool success, ) = address(vault).call{value: 1}("");
+        require(success, "Call failed!");
 
         assertEq(address(vault).balance, balance);
     }
@@ -22,7 +23,8 @@ contract ReceiveTest is TestBaseAeraVaultV2 {
         uint256 balance = address(vault).balance;
 
         vm.prank(_WETH_ADDRESS);
-        address(vault).call{value: 1}("");
+        (bool success, ) = address(vault).call{value: 1}("");
+        require(success, "Call failed!");
 
         assertEq(address(vault).balance, balance + 1);
     }
