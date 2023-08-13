@@ -12,11 +12,11 @@ import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/ICustody.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/TargetSighashLib.sol";
-import "@openzeppelintest/Strings.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/IERC20IncreaseAllowance.sol";
+import "forge-std/console.sol";
 
 struct OperationAlpha {
     bytes data;
@@ -54,7 +54,17 @@ contract TestGuardian is
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
 
-    function setUp() public virtual {
+    modifier whenValidNetwork() {
+        if (this.getChainID() != 137) {
+            return;
+        }
+        if (block.number < minBlockNumber) {
+            return;
+        }
+        _;
+    }
+
+    function setUp() public virtual whenValidNetwork {
         _deployerAddress = address(this);
         vm.label(weth, "WETH");
         vm.label(waPolWETH, "WAPOLWETH");
@@ -65,13 +75,7 @@ contract TestGuardian is
         _deployContracts();
     }
 
-    function test_submitSwapAndDeposit() public {
-        if (this.getChainID() != 137) {
-            return;
-        }
-        if (block.number < minBlockNumber) {
-            return;
-        }
+    function test_submitSwapAndDeposit() public whenValidNetwork {
         assertEq(address(this), vault.owner());
         _loadSwapAndDepositOperations();
 

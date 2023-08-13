@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import "@openzeppelin/IERC4626.sol";
 import "../TestBaseAssetRegistry.sol";
 
 contract RemoveAssetTest is TestBaseAssetRegistry {
@@ -72,7 +73,49 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         assetRegistry.removeAsset(assetAddress);
     }
 
+    function test_removeAsset_fail_whenAssetIsUnderlyingAssetOfERC4626()
+        public
+    {
+        address underlyingAsset = IERC4626(nonNumeraireERC4626Asset).asset();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__AssetIsUnderlyingAssetOfERC4626
+                    .selector,
+                nonNumeraireERC4626Asset
+            )
+        );
+
+        assetRegistry.removeAsset(underlyingAsset);
+    }
+
     function test_removeERC20Asset_success() public {
+        for (uint256 i = numAssets - 1; i >= 0; i--) {
+            if (
+                assets[i].isERC4626
+                    && address(assets[nonNumeraireId].asset)
+                        == IERC4626(address(assets[i].asset)).asset()
+            ) {
+                _removeAsset_success(i, true);
+
+                for (uint256 j = i; j < numAssets - 1; j++) {
+                    assets[j] = assets[j + 1];
+                }
+                assets.pop();
+
+                numAssets--;
+
+                if (i < nonNumeraireId) {
+                    nonNumeraireId--;
+                }
+            }
+
+            if (i == 0) {
+                break;
+            }
+        }
+
         _removeAsset_success(nonNumeraireId, false);
     }
 

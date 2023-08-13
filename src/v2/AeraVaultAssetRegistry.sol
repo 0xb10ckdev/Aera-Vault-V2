@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC20Metadata.sol";
+import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/ICustody.sol";
@@ -66,6 +67,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
+    error Aera__UnderlyingAssetIsNotRegistered(
+        address asset, address underlyingAsset
+    );
+    error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
     error Aera__NumeraireAssetIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
@@ -112,9 +117,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         if (feeTokenIndex == numAssets) {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
         }
-
         if (numeraireId_ >= numAssets) {
             revert Aera__NumeraireIndexTooHigh(numAssets, numeraireId_);
+        }
+        if (assets_[numeraireId_].isERC4626) {
+            revert Aera__NumeraireAssetIsMarkedAsERC4626();
+        }
+        if (address(assets_[numeraireId_].oracle) != address(0)) {
+            revert Aera__NumeraireOracleIsNotZeroAddress();
         }
 
         for (uint256 i = 1; i < numAssets;) {
@@ -127,17 +137,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
 
         for (uint256 i = 0; i < numAssets;) {
-            if (i == numeraireId_) {
-                if (assets_[i].isERC4626) {
-                    revert Aera__NumeraireAssetIsMarkedAsERC4626();
-                }
-                if (address(assets_[i].oracle) != address(0)) {
-                    revert Aera__NumeraireOracleIsNotZeroAddress();
-                }
-            } else {
+            if (i != numeraireId_) {
                 _checkAssetOracle(assets_[i]);
+
+                if (assets_[i].isERC4626) {
+                    _checkUnderlyingAsset(assets_[i], assets_);
+                }
             }
+
             _insertAsset(assets_[i], i);
+
             unchecked {
                 i++; // gas savings
             }
@@ -147,6 +156,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         feeToken = feeToken_;
 
         _transferOwnership(owner_);
+
         emit Created(owner_, assets_, numeraireId_, address(feeToken_));
     }
 
@@ -176,6 +186,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             unchecked {
                 i++; // gas savings
             }
+        }
+
+        if (asset.isERC4626) {
+            _checkUnderlyingAsset(asset, _assets);
         }
 
         _insertAsset(asset, i);
@@ -208,6 +222,17 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         if (_assets[oldAssetIndex].isERC4626) {
             numYieldAssets--;
+        } else {
+            for (uint256 i = 0; i < numAssets; i++) {
+                if (
+                    _assets[i].isERC4626
+                        && IERC4626(address(_assets[i].asset)).asset() == asset
+                ) {
+                    revert Aera__AssetIsUnderlyingAssetOfERC4626(
+                        address(_assets[i].asset)
+                    );
+                }
+            }
         }
 
         uint256 nextIndex;
@@ -350,6 +375,34 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         } else if (address(asset.oracle) == address(0)) {
             revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
+        }
+    }
+
+    /// @notice Check whether underlying asset is listed or not.
+    /// @param asset ERC4626 asset to check underlying asset.
+    /// @param assets Array of assets.
+    function _checkUnderlyingAsset(
+        AssetInformation memory asset,
+        AssetInformation[] memory assets
+    ) internal view {
+        uint256 numAssets = assets.length;
+
+        address underlyingAsset = IERC4626(address(asset.asset)).asset();
+        uint256 underlyingIndex;
+
+        for (; underlyingIndex < numAssets; underlyingIndex++) {
+            if (
+                !assets[underlyingIndex].isERC4626
+                    && underlyingAsset == address(assets[underlyingIndex].asset)
+            ) {
+                break;
+            }
+        }
+
+        if (underlyingIndex == numAssets) {
+            revert Aera__UnderlyingAssetIsNotRegistered(
+                address(asset.asset), underlyingAsset
+            );
         }
     }
 

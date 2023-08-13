@@ -6,8 +6,8 @@ import "../TestBaseAssetRegistry.sol";
 contract AddAssetTest is TestBaseAssetRegistry {
     event AssetAdded(IAssetRegistry.AssetInformation asset);
 
-    IAssetRegistry.AssetInformation newERC20Asset;
-    IAssetRegistry.AssetInformation newERC4626Asset;
+    IAssetRegistry.AssetInformation public newERC20Asset;
+    IAssetRegistry.AssetInformation public newERC4626Asset;
 
     function setUp() public virtual override {
         _deploy();
@@ -15,8 +15,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
         // this high number (50) is just to make sure we didn't already
         // create this asset previously, and so ensures the address is different
         (, newERC20Asset) = _createAsset(false, address(0), 50);
-        (, newERC4626Asset) =
-            _createAsset(true, address(newERC20Asset.asset), 50);
+        (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, 50);
     }
 
     function test_addAsset_fail_whenCallerIsNotOwner() public {
@@ -79,6 +78,22 @@ contract AddAssetTest is TestBaseAssetRegistry {
             )
         );
         assetRegistry.addAsset(assets[nonNumeraireId]);
+    }
+
+    function test_addAsset_fail_whenUnderlyingAssetIsNotRegistered() public {
+        (, newERC4626Asset) =
+            _createAsset(true, address(newERC20Asset.asset), 50);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__UnderlyingAssetIsNotRegistered
+                    .selector,
+                newERC4626Asset.asset,
+                newERC20Asset.asset
+            )
+        );
+        assetRegistry.addAsset(newERC4626Asset);
     }
 
     function test_addERC20Asset_success() public {
