@@ -154,7 +154,7 @@ abstract contract DeployAeraContractsBase is DeployScriptBase {
             string memory description
         ) = _getAeraVaultV2Params(paramsRelFilePath);
 
-        deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeAddress(
+        deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeVaultAddress(
             _salt,
             owner == address(0) ? _deployerAddress : owner,
             assetRegistry,
