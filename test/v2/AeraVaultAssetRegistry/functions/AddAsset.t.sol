@@ -4,7 +4,9 @@ pragma solidity 0.8.21;
 import "../TestBaseAssetRegistry.sol";
 
 contract AddAssetTest is TestBaseAssetRegistry {
-    event AssetAdded(address indexed asset, IAssetRegistry.AssetInformation assetInfo);
+    event AssetAdded(
+        address indexed asset, IAssetRegistry.AssetInformation assetInfo
+    );
 
     IAssetRegistry.AssetInformation public newERC20Asset;
     IAssetRegistry.AssetInformation public newERC4626Asset;
