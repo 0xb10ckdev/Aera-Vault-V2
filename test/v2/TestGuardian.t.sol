@@ -107,7 +107,7 @@ contract TestGuardian is
     }
 
     function _deployFactory() internal {
-        AeraVaultV2Factory factory = new AeraVaultV2Factory();
+        AeraVaultV2Factory factory = new AeraVaultV2Factory(weth);
         factoryAddress = address(factory);
         vm.label(factoryAddress, "Factory");
     }
@@ -142,7 +142,7 @@ contract TestGuardian is
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
         vm.label(assetRegistryAddress, "ASSET_REGISTRY");
-        vault = AeraVaultV2(vaultAddress);
+        vault = AeraVaultV2(payable(vaultAddress));
     }
 
     function _loadSwapAndDepositOperations() internal {

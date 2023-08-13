@@ -34,6 +34,9 @@ contract AeraVaultV2 is
     /// @notice The address of asset registry.
     IAssetRegistry public immutable assetRegistry;
 
+    /// @notice The address of WETH.
+    address public immutable weth;
+
     /// STORAGE ///
 
     /// @notice Describes vault purpose and modelling assumptions for
@@ -111,28 +114,34 @@ contract AeraVaultV2 is
     /// @param guardian_ The address of guardian.
     /// @param feeRecipient_ The address of fee recipient.
     /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
+    /// @param weth_ The address of WETH.
     constructor(
         address owner_,
         address assetRegistry_,
         address guardian_,
         address feeRecipient_,
         uint256 fee_,
-        string memory description_
+        string memory description_,
+        address weth_
     ) {
         _checkAssetRegistryAddress(assetRegistry_);
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
+        if (owner_ == address(0)) {
+            revert Aera__InitialOwnerIsZeroAddress();
+        }
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
-        if (owner_ == address(0)) {
-            revert Aera__InitialOwnerIsZeroAddress();
+        if (weth_ == address(0)) {
+            revert Aera__WETHIsZeroAddress();
         }
 
+        weth = weth_;
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
@@ -451,6 +460,13 @@ contract AeraVaultV2 is
     {
         return interfaceId == type(ICustody).interfaceId
             || super.supportsInterface(interfaceId);
+    }
+
+    /// @notice Payable function to receive ETH from WETH when burn WETH.
+    receive() external payable {
+        if (msg.sender != weth) {
+            revert Aera__NotWETHContract();
+        }
     }
 
     /// INTERNAL FUNCTIONS ///

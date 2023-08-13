@@ -35,6 +35,8 @@ interface ICustody is ICustodyEvents {
     error Aera__CanNotUseReservedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoAvailableFeeForCaller(address caller);
+    error Aera__WETHIsZeroAddress();
+    error Aera__NotWETHContract();
 
     /// FUNCTIONS ///
 

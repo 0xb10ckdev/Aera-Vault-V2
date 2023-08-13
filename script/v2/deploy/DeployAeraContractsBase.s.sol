@@ -235,7 +235,7 @@ abstract contract DeployAeraContractsBase is DeployScriptBase {
         address deployedCustody,
         address deployedHooks
     ) internal {
-        AeraVaultV2 vault = AeraVaultV2(deployedCustody);
+        AeraVaultV2 vault = AeraVaultV2(payable(deployedCustody));
         AeraVaultAssetRegistry assetRegistry =
             AeraVaultAssetRegistry(deployedAssetRegistry);
 
@@ -352,7 +352,7 @@ abstract contract DeployAeraContractsBase is DeployScriptBase {
     ) internal {
         console.log("Checking Aera Vault V2 Integrity");
 
-        AeraVaultV2 vault = AeraVaultV2(deployedAeraVault);
+        AeraVaultV2 vault = AeraVaultV2(payable(deployedAeraVault));
 
         assertEq(address(vault.assetRegistry()), address(assetRegistry));
         assertEq(vault.guardian(), guardian);

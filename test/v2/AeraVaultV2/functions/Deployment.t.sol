@@ -14,7 +14,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -26,7 +27,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -45,7 +47,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -59,7 +62,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(0),
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -71,7 +75,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(this),
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -85,7 +90,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             address(0),
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -99,7 +105,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             address(this),
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -115,7 +122,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE + 1,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
     }
 
@@ -127,7 +135,21 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            ""
+            "",
+            _WETH_ADDRESS
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenWETHIsZeroAddress() public {
+        vm.expectRevert(ICustody.Aera__WETHIsZeroAddress.selector);
+        new AeraVaultV2(
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault",
+            address(0)
         );
     }
 
@@ -143,7 +165,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            _WETH_ADDRESS
         );
 
         assertTrue(vault.paused());
@@ -152,6 +175,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
         assertEq(vault.description(), "Test Vault");
+        assertEq(vault.weth(), _WETH_ADDRESS);
 
         _setInvalidOracle(nonNumeraireId);
 
