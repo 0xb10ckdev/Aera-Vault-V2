@@ -5,6 +5,7 @@ import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/IERC20.sol";
 
 /// @title Interface for vault asset registry.
+/// @dev Any implementation MUST also implement Ownable2Step and ERC165.
 interface IAssetRegistry {
     /// @param asset Address of an asset.
     /// @param isERC4626 True if yield-bearing asset, false if plain ERC20 asset.
