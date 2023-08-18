@@ -5,6 +5,9 @@ import "./TestBaseAeraVaultHooks.sol";
 import "./handlers/AeraVaultHooksHandler.sol";
 
 contract AeraVaultHooksInvariantTest is TestBaseAeraVaultHooks {
+    bytes32 internal constant _BEFORE_VALUE_SLOT = bytes32(uint256(6));
+    bytes32 internal constant _BEFORE_BALANCE_SLOT = bytes32(uint256(7));
+
     AeraVaultHooksHandler public handler;
 
     function setUp() public override {
@@ -35,14 +38,14 @@ contract AeraVaultHooksInvariantTest is TestBaseAeraVaultHooks {
 
     function invariant_beforeValue() public {
         assertEq(
-            uint256(vm.load(address(hooks), bytes32(uint256(6)))),
+            uint256(vm.load(address(hooks), _BEFORE_VALUE_SLOT)),
             handler.beforeValue()
         );
     }
 
     function invariant_beforeBalance() public {
         assertEq(
-            uint256(vm.load(address(hooks), bytes32(uint256(7)))),
+            uint256(vm.load(address(hooks), _BEFORE_BALANCE_SLOT)),
             handler.beforeBalance()
         );
     }
