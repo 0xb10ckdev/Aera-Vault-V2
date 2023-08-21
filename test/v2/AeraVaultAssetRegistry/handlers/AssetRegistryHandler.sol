@@ -13,8 +13,8 @@ contract AssetRegistryHandler is TestBase {
 
     uint256 public assetCount;
 
-    constructor(AeraVaultAssetRegistry _assetRegistry) {
-        assetRegistry = _assetRegistry;
+    constructor(AeraVaultAssetRegistry assetRegistry_) {
+        assetRegistry = assetRegistry_;
         assetCount = assetRegistry.assets().length;
     }
 
