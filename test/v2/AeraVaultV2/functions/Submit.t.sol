@@ -92,7 +92,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         vm.warp(block.timestamp + 1000);
 
-        vm.expectRevert(ICustody.Aera__CanNotUseReservedFees.selector);
+        vm.expectRevert(ICustody.Aera__CannotUseReservedFees.selector);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);

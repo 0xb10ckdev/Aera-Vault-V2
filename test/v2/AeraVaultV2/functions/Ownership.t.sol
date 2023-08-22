@@ -71,7 +71,7 @@ contract OwnershipTest is TestBaseAeraVaultV2 {
     function test_renounceOwnership_fail() public {
         vm.prank(vault.owner());
 
-        vm.expectRevert(ICustody.Aera__CanNotRenounceOwnership.selector);
+        vm.expectRevert(ICustody.Aera__CannotRenounceOwnership.selector);
         vault.renounceOwnership();
     }
 }

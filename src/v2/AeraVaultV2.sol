@@ -523,7 +523,7 @@ contract AeraVaultV2 is
 
     /// @inheritdoc Ownable
     function renounceOwnership() public view override onlyOwner {
-        revert Aera__CanNotRenounceOwnership();
+        revert Aera__CannotRenounceOwnership();
     }
 
     /// @notice Only accept ETH from the WETH contract when burning WETH tokens.
@@ -773,7 +773,7 @@ contract AeraVaultV2 is
         if (
             feeTokenBalance < feeTotal && feeTokenBalance < prevFeeTokenBalance
         ) {
-            revert Aera__CanNotUseReservedFees();
+            revert Aera__CannotUseReservedFees();
         }
     }
 
