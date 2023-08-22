@@ -39,6 +39,7 @@ interface ICustody is ICustodyEvents {
     error Aera__NoAvailableFeeForCaller(address caller);
     error Aera__WETHIsZeroAddress();
     error Aera__NotWETHContract();
+    error Aera__CanNotRenounceOwnership();
 
     /// FUNCTIONS ///
 
