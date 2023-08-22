@@ -8,25 +8,8 @@ import {Test} from "forge-std/Test.sol";
 contract DeployScriptBase is Script, Test {
     using stdJson for string;
 
-    uint256 internal _deployerPrivateKey;
+    // subclasses need to set this to msg.sender
     address internal _deployerAddress;
-
-    constructor(bool loadDeployerAddressFromPrivateKey) {
-        if (loadDeployerAddressFromPrivateKey) {
-            _loadDeployerAddressFromPrivateKey();
-        }
-    }
-
-    function _loadDeployerAddressFromPrivateKey() internal {
-        _deployerPrivateKey = uint256(vm.envOr("PRIVATE_KEY", bytes32(0)));
-
-        if (_deployerPrivateKey == 0) {
-            string memory mnemonic = vm.envString("MNEMONIC");
-            _deployerPrivateKey = vm.deriveKey(mnemonic, 0);
-        }
-
-        _deployerAddress = vm.addr(_deployerPrivateKey);
-    }
 
     function _storeDeployedAddress(
         string memory key,
