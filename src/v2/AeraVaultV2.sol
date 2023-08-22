@@ -106,6 +106,12 @@ contract AeraVaultV2 is
         _;
     }
 
+    /// @dev Calculate current guardian fees.
+    modifier reserveFees() {
+        _reserveFees();
+        _;
+    }
+
     /// FUNCTIONS ///
 
     /// @param owner_ Initial owner address.
@@ -173,10 +179,8 @@ contract AeraVaultV2 is
         onlyOwner
         whenHooksSet
         whenNotFinalized
+        reserveFees
     {
-        // Effects: reserve fees for fee recipient.
-        _reserveFees();
-
         // Hooks: before transferring assets.
         hooks.beforeDeposit(amounts);
 
@@ -231,15 +235,13 @@ contract AeraVaultV2 is
         onlyOwner
         whenHooksSet
         whenNotFinalized
+        reserveFees
     {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
         // Requirements: check the withdraw request.
         _checkWithdrawRequest(assets, amounts);
-
-        // Effects: reserve fees for fee recipient.
-        _reserveFees();
 
         // Hooks: before transfering assets.
         hooks.beforeWithdraw(amounts);
@@ -269,13 +271,10 @@ contract AeraVaultV2 is
     function setGuardianAndFeeRecipient(
         address newGuardian,
         address newFeeRecipient
-    ) external override onlyOwner whenNotFinalized {
+    ) external override onlyOwner whenNotFinalized reserveFees {
         // Requirements: check guardian and fee recipient addresses.
         _checkGuardianAddress(newGuardian);
         _checkFeeRecipientAddress(newFeeRecipient);
-
-        // Effects: reserve fees for fee recipient before terminating tenure.
-        _reserveFees();
 
         // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
@@ -291,12 +290,10 @@ contract AeraVaultV2 is
         override
         onlyOwner
         whenNotFinalized
+        reserveFees
     {
         // Requirements: validate hooks address.
         _checkHooksAddress(newHooks);
-
-        // Effects: reserve fees for fee recipient as hook may interfere with fee collection in the future.
-        _reserveFees();
 
         // Effects: set new hooks address.
         hooks = IHooks(newHooks);
@@ -310,14 +307,12 @@ contract AeraVaultV2 is
         external
         override
         onlyOwner
+        reserveFees
     {
         // Requirements: check that the target contract is not hooks.
         if (operation.target == address(hooks)) {
             revert Aera__ExecuteTargetIsHooksAddress();
         }
-
-        // Effects: reserve fees for fee recipient in case execute will interfere with fee collection in the future.
-        _reserveFees();
 
         uint256 prevFeeTokenBalance =
             assetRegistry.feeToken().balanceOf(address(this));
@@ -346,10 +341,8 @@ contract AeraVaultV2 is
         onlyOwner
         whenHooksSet
         whenNotFinalized
+        reserveFees
     {
-        // Effects: snapshot fees as vault will not be active anymore.
-        _reserveFees();
-
         // Hooks: before finalizing.
         hooks.beforeFinalize();
 
@@ -383,10 +376,8 @@ contract AeraVaultV2 is
         onlyOwnerOrGuardian
         whenNotPaused
         whenNotFinalized
+        reserveFees
     {
-        // Effects: calculate fees up to the moment vault was paused.
-        _reserveFees();
-
         // Effects: pause the vault.
         _pause();
     }
@@ -415,10 +406,8 @@ contract AeraVaultV2 is
         onlyGuardian
         whenNotFinalized
         whenNotPaused
+        reserveFees
     {
-        // Effects: reserve fees prior to possible vault value change.
-        _reserveFees();
-
         // Hooks: before executing operations.
         hooks.beforeSubmit(operations);
 
@@ -464,10 +453,7 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc ICustody
-    function claim() external override nonReentrant {
-        // Effects: calculate up to date fees.
-        _reserveFees();
-
+    function claim() external override nonReentrant reserveFees {
         uint256 reservedFee = fees[msg.sender];
 
         // Requirements: check that there are fees to claim.
