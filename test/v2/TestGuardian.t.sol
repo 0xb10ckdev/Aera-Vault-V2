@@ -4,8 +4,7 @@ pragma solidity ^0.8.21;
 import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
-import {DeployAeraContractsBase} from
-    "script/v2/deploy/DeployAeraContracts.s.sol";
+import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
@@ -24,11 +23,7 @@ struct OperationAlpha {
     uint256 value;
 }
 
-contract TestGuardian is
-    Test,
-    DeployScriptBase(false),
-    DeployAeraContractsBase
-{
+contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     bytes4 internal constant _APPROVE_SELECTOR = IERC20.approve.selector;
 
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
