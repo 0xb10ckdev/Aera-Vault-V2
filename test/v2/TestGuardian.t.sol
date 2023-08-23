@@ -4,8 +4,7 @@ pragma solidity ^0.8.21;
 import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
-import {DeployAeraContractsBase} from
-    "script/v2/deploy/DeployAeraContracts.s.sol";
+import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
@@ -24,11 +23,7 @@ struct OperationAlpha {
     uint256 value;
 }
 
-contract TestGuardian is
-    Test,
-    DeployScriptBase(false),
-    DeployAeraContractsBase
-{
+contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     bytes4 internal constant _APPROVE_SELECTOR = IERC20.approve.selector;
 
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
@@ -47,6 +42,7 @@ contract TestGuardian is
     address weth = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
     address usdc = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
     address waPolWETH = 0x5e5057b8D220eb8573Bc342136FdF1d869316D18;
+    address wsteth = 0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD;
     address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 1000000000;
     uint256 maxDailyExecutionLoss = 100000000000000000;
@@ -213,7 +209,16 @@ contract TestGuardian is
     }
 
     function _writeHooksParams() internal {
-        uint256[8] memory sighashes = [
+        uint256[11] memory sighashes = [
+            TargetSighash.unwrap(
+                TargetSighashLib.toTargetSighash(usdc, IERC20.approve.selector)
+            ),
+            TargetSighash.unwrap(
+                TargetSighashLib.toTargetSighash(weth, IERC20.approve.selector)
+            ),
+            TargetSighash.unwrap(
+                TargetSighashLib.toTargetSighash(wsteth, IERC20.approve.selector)
+            ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
                     swapRouterAddress, ISwapRouter.exactInput.selector
@@ -253,8 +258,8 @@ contract TestGuardian is
                 )
             )
         ];
-        uint256[] memory dynamicSighashArray = new uint256[](8);
-        for (uint256 i = 0; i < 8; i++) {
+        uint256[] memory dynamicSighashArray = new uint256[](11);
+        for (uint256 i = 0; i < sighashes.length; i++) {
             dynamicSighashArray[i] = sighashes[i];
         }
 
