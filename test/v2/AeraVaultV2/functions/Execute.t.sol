@@ -79,7 +79,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
                 )
         });
 
-        vm.expectRevert(ICustody.Aera__CanNotUseReservedFees.selector);
+        vm.expectRevert(ICustody.Aera__CannotUseReservedFees.selector);
         vault.execute(operation);
     }
 

@@ -34,11 +34,12 @@ interface ICustody is ICustodyEvents {
     error Aera__ExecutionFailed(bytes result);
     error Aera__VaultIsFinalized();
     error Aera__SubmissionFailed(uint256 index, bytes result);
-    error Aera__CanNotUseReservedFees();
+    error Aera__CannotUseReservedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoAvailableFeeForCaller(address caller);
     error Aera__WETHIsZeroAddress();
     error Aera__NotWETHContract();
+    error Aera__CannotRenounceOwnership();
 
     /// FUNCTIONS ///
 
