@@ -24,6 +24,10 @@ interface IAssetRegistry {
         uint256 spotPrice;
     }
 
+    /// @notice Get address of custody module.
+    /// @return custody Address of custody module.
+    function custody() external view returns (address custody);
+
     /// @notice Get a list of all registered assets.
     /// @return assets List of assets.
     /// @dev MUST return assets in an order sorted by address.
