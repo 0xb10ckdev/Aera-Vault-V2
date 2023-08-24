@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "../AeraVaultHooks.sol";
-import "../AeraVaultV2.sol";
 import {TargetSighash} from "../Types.sol";
 
 /// @title IAeraVaultV2Factory
@@ -29,22 +27,10 @@ interface IAeraVaultV2Factory {
 
     /// @notice Calculate deployment address of V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner Initial owner address.
-    /// @param assetRegistry Asset registry address.
-    /// @param guardian Guardian address.
-    /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
-    /// @param description Vault description.
-    /// @return deployed The address of deployed vault.
-    function computeVaultAddress(
-        bytes32 salt,
-        address owner,
-        address assetRegistry,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string memory description
-    ) external view returns (address deployed);
+    function computeVaultAddress(bytes32 salt)
+        external
+        view
+        returns (address deployed);
 
     /// @notice Deploy contract with the given bytecode if it is not deployed yet.
     /// @param salt The salt value to create contract.
@@ -58,4 +44,26 @@ interface IAeraVaultV2Factory {
         bytes32 salt,
         bytes calldata code
     ) external view returns (address);
+
+    /// @notice Returns the address of WETH.
+    function weth() external view returns (address);
+
+    /// @notice Returns vault parameters for vault deployment.
+    /// @return owner Initial owner address.
+    /// @return assetRegistry Asset registry address.
+    /// @return guardian Guardian address.
+    /// @return feeRecipient Fee recipient address.
+    /// @return fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @return description Vault description.
+    function parameters()
+        external
+        view
+        returns (
+            address owner,
+            address assetRegistry,
+            address guardian,
+            address feeRecipient,
+            uint256 fee,
+            string memory description
+        );
 }
