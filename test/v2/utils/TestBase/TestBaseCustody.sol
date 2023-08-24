@@ -287,6 +287,7 @@ contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
     function _deployAssetRegistry() internal {
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
+            factory.computeVaultAddress(bytes32(0)),
             assetsInformation,
             numeraireId,
             feeToken
@@ -305,14 +306,18 @@ contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
     }
 
     function _deployAeraVaultV2() internal {
-        vault = new AeraVaultV2(
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+        vault = AeraVaultV2(
+            payable(
+                factory.create(
+                    "",
+                    address(this),
+                    address(assetRegistry),
+                    _GUARDIAN,
+                    _FEE_RECIPIENT,
+                    _MAX_FEE,
+                    "Test Vault"
+                )
+            )
         );
     }
 

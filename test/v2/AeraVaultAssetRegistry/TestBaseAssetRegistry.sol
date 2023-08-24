@@ -17,6 +17,7 @@ import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 contract TestBaseAssetRegistry is TestBaseFactory {
     event Created(
         address indexed owner,
+        address indexed custody,
         IAssetRegistry.AssetInformation[] assets,
         uint256 numeraireId,
         address feeToken
@@ -184,25 +185,34 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         _createAssets(4, 2);
 
         vm.expectEmit(true, false, false, true);
-        emit Created(address(this), assets, numeraireId, address(feeToken));
+        emit Created(
+            address(this),
+            factory.computeVaultAddress(bytes32(0)),
+            assets,
+            numeraireId,
+            address(feeToken)
+        );
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
+            factory.computeVaultAddress(bytes32(0)),
             assets,
             numeraireId,
             feeToken
         );
 
-        vault = new AeraVaultV2(
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+        vault = AeraVaultV2(
+            payable(
+                factory.create(
+                    bytes32(0),
+                    address(this),
+                    address(assetRegistry),
+                    _GUARDIAN,
+                    _FEE_RECIPIENT,
+                    _MAX_FEE,
+                    "Test Vault"
+                )
+            )
         );
-
-        assetRegistry.setCustody(address(vault));
     }
 
     function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
