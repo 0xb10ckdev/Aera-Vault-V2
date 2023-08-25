@@ -45,7 +45,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice Emitted in constructor.
     /// @param owner Owner address.
-    /// @param custody Address of custody module.
+    /// @param custody Custody module address.
     /// @param assets Initial list of registered assets.
     /// @param numeraireId The index of the numeraire asset in the assets array.
     /// @param feeToken Fee token address.
@@ -85,7 +85,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// FUNCTIONS ///
 
     /// @param owner_ Initial owner address.
-    /// @param custody_ Address of custody module.
+    /// @param custody_ Custody module address.
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireId_ The index of the numeraire asset in the assets array.
     /// @param feeToken_ Fee token address.
@@ -101,7 +101,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
         }
 
-        // Requirements: check that there is an ICustody contract at the new address.
+        // Requirements: check that an address has been provided.
         if (custody_ == address(0)) {
             revert Aera__CustodyIsZeroAddress();
         }
