@@ -15,6 +15,7 @@ config/Deployments.json
 config/AeraVaultDeposit.json
 config/AeraVaultWithdraw.json
 config/AeraVaultAddTargetSighashes.json
+config/AeraVaultOperations.json
 
 coverage*
 lcov.info
