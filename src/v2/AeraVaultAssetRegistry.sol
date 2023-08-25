@@ -16,6 +16,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
+    /// @notice Custody module address.
+    address public immutable custody;
+
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
@@ -23,9 +26,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice List of currently registered assets.
     AssetInformation[] internal _assets;
-
-    /// @notice Custody module address.
-    address public custody;
 
     /// @notice The index of the numeraire asset in the assets array.
     uint256 public numeraireId;
@@ -45,19 +45,17 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice Emitted in constructor.
     /// @param owner Owner address.
+    /// @param custody Custody module address.
     /// @param assets Initial list of registered assets.
     /// @param numeraireId The index of the numeraire asset in the assets array.
     /// @param feeToken Fee token address.
     event Created(
         address indexed owner,
+        address indexed custody,
         AssetInformation[] assets,
         uint256 numeraireId,
         address feeToken
     );
-
-    /// @notice Emitted when custody module is set.
-    /// @param custody New custody module address.
-    event SetCustody(address custody);
 
     /// ERRORS ///
 
@@ -81,19 +79,19 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__AssetBalanceIsNotZero(address asset);
-    error Aera__CustodyIsAlreadySet();
     error Aera__CustodyIsZeroAddress();
-    error Aera__CustodyIsNotValid(address custody);
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
 
     /// FUNCTIONS ///
 
     /// @param owner_ Initial owner address.
+    /// @param custody_ Custody module address.
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireId_ The index of the numeraire asset in the assets array.
     /// @param feeToken_ Fee token address.
     constructor(
         address owner_,
+        address custody_,
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
         IERC20 feeToken_
@@ -102,6 +100,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         if (owner_ == address(0)) {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
         }
+
+        // Requirements: check that an address has been provided.
+        if (custody_ == address(0)) {
+            revert Aera__CustodyIsZeroAddress();
+        }
+
         uint256 numAssets = assets_.length;
 
         // Requirements: confirm that number of assets is within bounds.
@@ -171,7 +175,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        // Effects: set numeraire and fee token.
+        // Effects: set custody, numeraire and fee token.
+        custody = custody_;
         numeraireId = numeraireId_;
         feeToken = feeToken_;
 
@@ -179,7 +184,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         _transferOwnership(owner_);
 
         // Log asset registry creation.
-        emit Created(owner_, assets_, numeraireId_, address(feeToken_));
+        emit Created(
+            owner_, custody_, assets_, numeraireId_, address(feeToken_)
+        );
     }
 
     /// @inheritdoc IAssetRegistry
@@ -297,33 +304,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         emit AssetRemoved(asset);
     }
 
-    /// @notice Sets current custody module.
-    /// @param newCustody Address of new custody module.
-    function setCustody(address newCustody) external onlyOwner {
-        // Requirements: check that custody is not already set.
-        if (custody != address(0)) {
-            revert Aera__CustodyIsAlreadySet();
-        }
-
-        // Requirements: check that there is an ICustody contract at the new address.
-        if (newCustody == address(0)) {
-            revert Aera__CustodyIsZeroAddress();
-        }
-        if (
-            !ERC165Checker.supportsInterface(
-                newCustody, type(ICustody).interfaceId
-            )
-        ) {
-            revert Aera__CustodyIsNotValid(newCustody);
-        }
-
-        // Effects: set custody address.
-        custody = newCustody;
-
-        // Log that custody is set.
-        emit SetCustody(newCustody);
-    }
-
     /// @inheritdoc IAssetRegistry
     function assets()
         external
@@ -380,9 +360,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (numeraireDecimals > oracleDecimals) {
-                    price = price * (10 ** (numeraireDecimals - oracleDecimals));
+                    price =
+                        price * (10 ** (numeraireDecimals - oracleDecimals));
                 } else if (numeraireDecimals < oracleDecimals) {
-                    price = price / (10 ** (oracleDecimals - numeraireDecimals));
+                    price =
+                        price / (10 ** (oracleDecimals - numeraireDecimals));
                 }
 
                 prices[index] = AssetPriceReading({

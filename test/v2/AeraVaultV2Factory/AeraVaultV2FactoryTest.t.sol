@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "@openzeppelin/Create2.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultV2Factory.sol";
@@ -13,15 +12,21 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         super.setUp();
 
         if (_testWithDeployedContracts()) {
-            (address deployedAssetRegistry, address deployedFactory,,) =
-                _loadDeployedAddresses();
+            (, address deployedFactory,,) = _loadDeployedAddresses();
 
-            assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
             factory = AeraVaultV2Factory(deployedFactory);
 
             _updateOwnership();
             _loadParameters();
         }
+
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            factory.computeVaultAddress(bytes32(_ONE)),
+            assetsInformation,
+            numeraireId,
+            feeToken
+        );
     }
 
     function test_aeraVaultV2FactoryDeployment_fail_whenWETHIsZeroAddress()
@@ -36,7 +41,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
 
         vm.prank(_USER);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(0),
             _GUARDIAN,
@@ -51,7 +56,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     {
         vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(0),
             _GUARDIAN,
@@ -70,9 +75,32 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             )
         );
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(1),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+    }
+
+    function test_createAeraVaultV2_fail_whenRegisteredCustodyIsNotValid()
+        public
+    {
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            factory.computeVaultAddress(bytes32(_ONE + 1)),
+            assetsInformation,
+            numeraireId,
+            feeToken
+        );
+
+        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
+        factory.create(
+            bytes32(_ONE),
+            address(this),
+            address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
@@ -83,7 +111,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenGuardianIsZeroAddress() public {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             address(0),
@@ -96,10 +124,23 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenGuardianIsFactory() public {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             address(factory),
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+    }
+
+    function test_createAeraVaultV2_fail_whenOwnerIsZeroAddress() public {
+        vm.expectRevert(ICustody.Aera__InitialOwnerIsZeroAddress.selector);
+        factory.create(
+            bytes32(_ONE),
+            address(0),
+            address(assetRegistry),
+            _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
             "Test Vault"
@@ -111,7 +152,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             _GUARDIAN,
@@ -124,7 +165,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             _GUARDIAN,
@@ -141,7 +182,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             )
         );
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             _GUARDIAN,
@@ -154,7 +195,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
         vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
         factory.create(
-            bytes32(0),
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             _GUARDIAN,
@@ -165,25 +206,17 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_success() public {
+        address predict = factory.computeVaultAddress(bytes32(_ONE));
+
         vm.expectEmit(true, true, true, true);
         emit SetAssetRegistry(address(assetRegistry));
         vm.expectEmit(true, true, true, true);
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
-        address predict = factory.computeVaultAddress(
-            bytes32(0),
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
-        );
-
         AeraVaultV2 vault = AeraVaultV2(
             payable(
                 factory.create(
-                    bytes32(0),
+                    bytes32(_ONE),
                     address(this),
                     address(assetRegistry),
                     _GUARDIAN,

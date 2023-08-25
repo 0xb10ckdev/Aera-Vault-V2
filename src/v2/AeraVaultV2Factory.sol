@@ -3,7 +3,9 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
+import "./AeraVaultV2.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
+import {VaultParameters} from "./Types.sol";
 
 /// @title AeraVaultV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
@@ -11,6 +13,11 @@ import "./interfaces/IAeraVaultV2Factory.sol";
 contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @notice The address of WETH.
     address public immutable weth;
+
+    /// STORAGE ///
+
+    /// @notice Vault parameters for vault deployment.
+    VaultParameters public override parameters;
 
     /// EVENTS ///
 
@@ -58,18 +65,19 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         uint256 fee,
         string calldata description
     ) external override onlyOwner returns (address deployed) {
+        parameters = VaultParameters({
+            owner: owner,
+            assetRegistry: assetRegistry,
+            guardian: guardian,
+            feeRecipient: feeRecipient,
+            fee: fee,
+            description: description
+        });
+
         // Requirements, Effects and Interactions: deploy vault with create2.
-        deployed = address(
-            new AeraVaultV2{salt: salt}(
-                owner,
-                assetRegistry,
-                guardian,
-                feeRecipient,
-                fee,
-                description,
-                weth
-            )
-        );
+        deployed = address(new AeraVaultV2{salt: salt}());
+
+        delete parameters;
 
         // Log vault creation.
         emit VaultCreated(
@@ -84,29 +92,15 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     }
 
     /// @inheritdoc IAeraVaultV2Factory
-    function computeVaultAddress(
-        bytes32 salt,
-        address owner,
-        address assetRegistry,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
-    ) external view override returns (address) {
-        bytes memory creationBytecode = abi.encodePacked(
-            type(AeraVaultV2).creationCode,
-            abi.encode(
-                owner,
-                assetRegistry,
-                guardian,
-                feeRecipient,
-                fee,
-                description,
-                weth
-            )
+    function computeVaultAddress(bytes32 salt)
+        external
+        view
+        override
+        returns (address)
+    {
+        return Create2.computeAddress(
+            salt, keccak256(type(AeraVaultV2).creationCode)
         );
-
-        return Create2.computeAddress(salt, keccak256(creationBytecode));
     }
 
     /// @inheritdoc IAeraVaultV2Factory

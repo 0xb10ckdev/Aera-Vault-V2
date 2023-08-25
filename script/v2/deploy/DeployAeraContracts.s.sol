@@ -100,7 +100,7 @@ contract DeployAeraContracts is DeployScriptBase {
         );
 
         // Link modules
-        _linkModules(deployedAssetRegistry, deployedCustody, deployedHooks);
+        _linkModules(deployedCustody, deployedHooks);
 
         if (broadcast) {
             vm.stopBroadcast();
@@ -124,6 +124,9 @@ contract DeployAeraContracts is DeployScriptBase {
             type(AeraVaultAssetRegistry).creationCode,
             abi.encode(
                 owner == address(0) ? _deployerAddress : owner,
+                AeraVaultV2Factory(aeraVaultV2Factory).computeVaultAddress(
+                    _salt
+                ),
                 assets,
                 numeraireId,
                 feeToken
@@ -157,15 +160,8 @@ contract DeployAeraContracts is DeployScriptBase {
             string memory description
         ) = _getAeraVaultV2Params(paramsRelFilePath);
 
-        deployed = AeraVaultV2Factory(aeraVaultV2Factory).computeVaultAddress(
-            _salt,
-            owner == address(0) ? _deployerAddress : owner,
-            assetRegistry,
-            guardian,
-            feeRecipient,
-            fee,
-            description
-        );
+        deployed =
+            AeraVaultV2Factory(aeraVaultV2Factory).computeVaultAddress(_salt);
 
         uint256 size;
         assembly {
@@ -234,19 +230,13 @@ contract DeployAeraContracts is DeployScriptBase {
     }
 
     function _linkModules(
-        address deployedAssetRegistry,
         address deployedCustody,
         address deployedHooks
     ) internal {
         AeraVaultV2 vault = AeraVaultV2(payable(deployedCustody));
-        AeraVaultAssetRegistry assetRegistry =
-            AeraVaultAssetRegistry(deployedAssetRegistry);
 
         if (address(vault.hooks()) != deployedHooks) {
             vault.setHooks(deployedHooks);
-        }
-        if (address(assetRegistry.custody()) != deployedCustody) {
-            assetRegistry.setCustody(deployedCustody);
         }
     }
 

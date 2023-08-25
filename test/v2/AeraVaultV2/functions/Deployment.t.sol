@@ -2,33 +2,41 @@
 pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultV2.sol";
+import "lib/forge-std/src/StdStorage.sol";
+import "@openzeppelin/Create2.sol";
+import {VaultParameters} from "src/v2/Types.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
+    using stdStorage for StdStorage;
+
+    address public weth = _WETH_ADDRESS;
+    VaultParameters public parameters;
+
+    function setUp() public override {
+        super.setUp();
+
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            Create2.computeAddress(
+                bytes32(_ONE), keccak256(type(AeraVaultV2).creationCode)
+            ),
+            assetsInformation,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
         vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenOwnerIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__InitialOwnerIsZeroAddress.selector);
-        new AeraVaultV2(
-            address(0),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
     }
 
@@ -40,15 +48,37 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
                 ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
-
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenRegisteredCustodyIsNotValid()
+        public
+    {
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            Create2.computeAddress(
+                bytes32(_ONE + 1), keccak256(type(AeraVaultV2).creationCode)
+            ),
+            assetsInformation,
+            numeraireId,
+            feeToken
+        );
+
+        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
+        _deployVault(
+            address(this),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -56,27 +86,25 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         public
     {
         vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             address(0),
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
     }
 
     function test_aeraVaultV2Deployment_fail_whenGuardianIsOwner() public {
         vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             address(this),
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
     }
 
@@ -84,14 +112,13 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         public
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             address(0),
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
     }
 
@@ -99,14 +126,25 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         public
     {
         vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             address(this),
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
+        );
+    }
+
+    function test_aeraVaultV2Deployment_fail_whenOwnerIsZeroAddress() public {
+        vm.expectRevert(ICustody.Aera__InitialOwnerIsZeroAddress.selector);
+        _deployVault(
+            address(0),
+            address(assetRegistry),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -116,40 +154,39 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
                 ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE + 1,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
     }
 
     function test_aeraVaultV2Deployment_fail_whenDescriptionIsEmpty() public {
         vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "",
-            _WETH_ADDRESS
+            ""
         );
     }
 
     function test_aeraVaultV2Deployment_fail_whenWETHIsZeroAddress() public {
+        weth = address(0);
+
         vm.expectRevert(ICustody.Aera__WETHIsZeroAddress.selector);
-        new AeraVaultV2(
+        _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            address(0)
+            "Test Vault"
         );
     }
 
@@ -159,14 +196,13 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vm.expectEmit(true, true, true, true);
         emit SetGuardianAndFeeRecipient(_GUARDIAN, _FEE_RECIPIENT);
 
-        vault = new AeraVaultV2(
+        vault = _deployVault(
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
 
         assertTrue(vault.paused());
@@ -176,6 +212,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.fee(), _MAX_FEE);
         assertEq(vault.description(), "Test Vault");
         assertEq(vault.weth(), _WETH_ADDRESS);
+        assertEq(assetRegistry.custody(), address(vault));
 
         _setInvalidOracle(nonNumeraireId);
 
@@ -185,5 +222,27 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
 
         assertEq(address(vault.hooks()), address(hooks));
         assertEq(vault.feeTotal(), 0);
+    }
+
+    function _deployVault(
+        address owner,
+        address assetRegistry,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string memory description
+    ) internal returns (AeraVaultV2 deployed) {
+        parameters = VaultParameters({
+            owner: owner,
+            assetRegistry: assetRegistry,
+            guardian: guardian,
+            feeRecipient: feeRecipient,
+            fee: fee,
+            description: description
+        });
+
+        deployed = new AeraVaultV2{salt: bytes32(_ONE)}();
+
+        delete parameters;
     }
 }

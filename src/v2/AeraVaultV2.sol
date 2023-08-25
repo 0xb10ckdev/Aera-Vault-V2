@@ -9,6 +9,7 @@ import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/Pausable.sol";
 import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
+import "./interfaces/IAeraVaultV2Factory.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/ICustody.sol";
 import {ONE} from "./Constants.sol";
@@ -114,21 +115,17 @@ contract AeraVaultV2 is
 
     /// FUNCTIONS ///
 
-    /// @param owner_ Initial owner address.
-    /// @param assetRegistry_ Asset registry address.
-    /// @param guardian_ Guardian address.
-    /// @param feeRecipient_ Fee recipient address.
-    /// @param fee_ Guardian fee per second in 18 decimal fixed point format.
-    /// @param weth_ The address of WETH.
-    constructor(
-        address owner_,
-        address assetRegistry_,
-        address guardian_,
-        address feeRecipient_,
-        uint256 fee_,
-        string memory description_,
-        address weth_
-    ) {
+    constructor() {
+        (
+            address owner_,
+            address assetRegistry_,
+            address guardian_,
+            address feeRecipient_,
+            uint256 fee_,
+            string memory description_
+        ) = IAeraVaultV2Factory(msg.sender).parameters();
+        address weth_ = IAeraVaultV2Factory(msg.sender).weth();
+
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
         _checkGuardianAddress(guardian_);
@@ -142,7 +139,6 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
-
         // Requirements: confirm that vault has a description.
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
@@ -803,6 +799,9 @@ contract AeraVaultV2 is
             )
         ) {
             revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
+        }
+        if (IAssetRegistry(newAssetRegistry).custody() != address(this)) {
+            revert Aera__AssetRegistryHasInvalidCustody();
         }
     }
 

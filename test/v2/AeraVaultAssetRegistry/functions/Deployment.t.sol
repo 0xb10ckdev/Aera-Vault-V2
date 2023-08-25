@@ -4,6 +4,14 @@ pragma solidity 0.8.21;
 import "../TestBaseAssetRegistry.sol";
 
 contract DeploymentTest is TestBaseAssetRegistry {
+    address public vaultAddress;
+
+    function setUp() public override {
+        super.setUp();
+
+        vaultAddress = factory.computeVaultAddress(bytes32(0));
+    }
+
     function test_assetRegistryDeployment_fail_whenNumberOfAssetsExceedsMaximum(
     ) public {
         _createAssets(30, 20);
@@ -18,6 +26,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -35,6 +44,22 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 .selector
         );
         new AeraVaultAssetRegistry(
+            address(0),
+            vaultAddress,
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenCustodyIsZeroAddress()
+        public
+    {
+        vm.expectRevert(
+            AeraVaultAssetRegistry.Aera__CustodyIsZeroAddress.selector
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
             address(0),
             assets,
             numeraireId,
@@ -56,6 +81,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -79,6 +105,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -99,6 +126,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             invalidNumeraire,
             feeToken
@@ -112,6 +140,12 @@ contract DeploymentTest is TestBaseAssetRegistry {
         assets[0] = assets[1];
         assets[1] = temp;
 
+        for (numeraireId = 0; numeraireId < assets.length; numeraireId++) {
+            if (address(assets[numeraireId].asset) == numeraireAsset) {
+                break;
+            }
+        }
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector, 1
@@ -119,6 +153,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -135,6 +170,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -152,6 +188,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -170,6 +207,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -189,7 +227,13 @@ contract DeploymentTest is TestBaseAssetRegistry {
                         assets[i].asset
                     )
                 );
-                new AeraVaultAssetRegistry(address(this), assets, numeraireId, feeToken);
+                new AeraVaultAssetRegistry(
+                    address(this), 
+                    vaultAddress,
+                    assets, 
+                    numeraireId, 
+                    feeToken
+                );
                 assets[i].oracle = AggregatorV2V3Interface(address(0));
             }
         }
@@ -224,6 +268,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
         new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
@@ -233,10 +278,13 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_success() public {
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
+            vaultAddress,
             assets,
             numeraireId,
             feeToken
         );
+
+        assertEq(assetRegistry.custody(), vaultAddress);
 
         propNumeraire();
         propFeeToken();
