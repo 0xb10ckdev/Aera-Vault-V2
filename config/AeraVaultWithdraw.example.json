@@ -1,0 +1,9 @@
+{
+    "vaultAddress": "0xF6FED76539951Db10D17761D581A0Ad91571A320",
+    "withdrawAmounts": [
+        {
+            "asset": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+            "value": 5000000
+        }
+    ]
+}
