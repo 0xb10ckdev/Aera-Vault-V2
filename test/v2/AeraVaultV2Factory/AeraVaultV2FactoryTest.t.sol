@@ -96,7 +96,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             feeToken
         );
 
-        vm.expectRevert(ICustody.Aera__RegisteredCustodyIsNotValid.selector);
+        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
         factory.create(
             bytes32(_ONE),
             address(this),

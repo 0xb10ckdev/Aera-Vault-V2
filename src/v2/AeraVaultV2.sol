@@ -801,7 +801,7 @@ contract AeraVaultV2 is
             revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
         }
         if (IAssetRegistry(newAssetRegistry).custody() != address(this)) {
-            revert Aera__RegisteredCustodyIsNotValid();
+            revert Aera__AssetRegistryHasInvalidCustody();
         }
     }
 

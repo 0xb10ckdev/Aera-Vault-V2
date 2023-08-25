@@ -71,7 +71,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             feeToken
         );
 
-        vm.expectRevert(ICustody.Aera__RegisteredCustodyIsNotValid.selector);
+        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
