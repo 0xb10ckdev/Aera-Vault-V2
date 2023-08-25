@@ -8,7 +8,7 @@ import {AssetValue, Operation} from "../Types.sol";
 /// @notice Interface for the hooks module.
 interface IHooks is IHooksEvents {
     /// @notice Get address of custody module.
-    /// @return custody Address of custody module.
+    /// @return custody Custody module address.
     function custody() external view returns (address custody);
 
     /// @notice Hook that runs before deposit.
