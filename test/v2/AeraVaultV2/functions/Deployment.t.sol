@@ -218,6 +218,13 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
 
         skip(1000);
 
+        hooks = new AeraVaultHooks(
+            address(this),
+            address(vault),
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
+        );
+
         vault.setHooks(address(hooks));
 
         assertEq(address(vault.hooks()), address(hooks));

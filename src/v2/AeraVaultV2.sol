@@ -816,6 +816,9 @@ contract AeraVaultV2 is
         ) {
             revert Aera__HooksIsNotValid(newHooks);
         }
+        if (IHooks(newHooks).custody() != address(this)) {
+            revert Aera__HooksHasInvalidCustody();
+        }
     }
 
     /// @notice Check whether asset is registered to asset registry or not.

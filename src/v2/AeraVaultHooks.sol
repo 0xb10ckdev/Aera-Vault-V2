@@ -19,7 +19,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
     /// @notice The address of the custody module.
-    ICustody public immutable custody;
+    address public immutable custody;
 
     /// STORAGE ///
 
@@ -61,7 +61,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// @dev Throws if called by any account other than the custody module.
     modifier onlyCustody() {
-        if (msg.sender != address(custody)) {
+        if (msg.sender != custody) {
             revert Aera__CallerIsNotCustody();
         }
         _;
@@ -111,7 +111,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         }
 
         // Effects: initialize state variables.
-        custody = ICustody(custody_);
+        custody = custody_;
         maxDailyExecutionLoss = maxDailyExecutionLoss_;
         currentDay = block.timestamp / 1 days;
         cumulativeDailyMultiplier = ONE;
@@ -207,8 +207,8 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         }
 
         // Effects: remember current vault value and ETH balance for use in afterSubmit.
-        _beforeValue = custody.value();
-        _beforeBalance = address(custody).balance;
+        _beforeValue = ICustody(custody).value();
+        _beforeBalance = custody.balance;
     }
 
     /// @inheritdoc IHooks
@@ -219,13 +219,14 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     {
         uint256 day = block.timestamp / 1 days;
 
-        if (address(custody).balance < _beforeBalance) {
+        if (custody.balance < _beforeBalance) {
             revert Aera__ETHBalanceIsDecreased();
         }
 
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
-            uint256 newMultiplier = (custody.value() * ONE) / _beforeValue;
+            uint256 newMultiplier =
+                (ICustody(custody).value() * ONE) / _beforeValue;
 
             if (currentDay == day) {
                 // Calculate total multiplier for today.
@@ -272,7 +273,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
                 token = IERC20(operations[i].target);
 
                 // Requirements: check that the current outgoing allowance for this token is zero.
-                if (token.allowance(address(custody), spender) > 0) {
+                if (token.allowance(custody, spender) > 0) {
                     revert Aera__AllowanceIsNotZero(address(token), spender);
                 }
             }
