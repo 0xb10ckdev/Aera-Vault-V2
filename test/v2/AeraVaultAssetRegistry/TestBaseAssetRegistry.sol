@@ -10,8 +10,7 @@ import "src/v2/AeraVaultV2Factory.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC20MockFactory} from "test/utils/ERC20Mock.sol";
-import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
-import {ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
+import {ERC4626Mock, ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBaseFactory {
