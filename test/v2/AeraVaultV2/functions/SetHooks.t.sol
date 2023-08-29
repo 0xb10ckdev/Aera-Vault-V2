@@ -50,18 +50,27 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     }
 
     function test_setHooks_fail_whenHooksHasInvalidCustody() public {
-        AeraVaultV2 newVault = new AeraVaultV2(
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            factory.computeVaultAddress(bytes32(_ONE)),
+            assetsInformation,
+            numeraireId,
+            feeToken
+        );
+
+        address newVault = factory.create(
+            bytes32(_ONE),
             address(this),
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE,
-            "Test Vault",
-            _WETH_ADDRESS
+            "Test Vault"
         );
+
         newHooks = new AeraVaultHooks(
             address(this),
-            address(newVault),
+            newVault,
             _MAX_DAILY_EXECUTION_LOSS,
             targetSighashAllowlist
         );
