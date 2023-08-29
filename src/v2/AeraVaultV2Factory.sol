@@ -32,8 +32,8 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     event VaultCreated(
         address indexed vault,
         address assetRegistry,
-        address guardian,
-        address feeRecipient,
+        address indexed guardian,
+        address indexed feeRecipient,
         uint256 fee,
         string description,
         address weth
