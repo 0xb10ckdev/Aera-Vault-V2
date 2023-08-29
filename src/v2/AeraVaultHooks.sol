@@ -116,7 +116,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         currentDay = block.timestamp / 1 days;
         cumulativeDailyMultiplier = ONE;
 
-        // Effects: create a pending ownership transfer.
+        // Effects: set new owner.
         _transferOwnership(owner_);
     }
 
