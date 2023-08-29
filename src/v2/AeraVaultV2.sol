@@ -303,7 +303,6 @@ contract AeraVaultV2 is
         external
         override
         onlyOwner
-        reserveFees
     {
         // Requirements: check that the target contract is not hooks.
         if (operation.target == address(hooks)) {
