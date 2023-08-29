@@ -89,15 +89,18 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     }
 
     function test_setHooks_success() public {
+        assertEq(hooks.custody(), address(vault));
+
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetHooks(address(newHooks));
 
         vault.setHooks(address(newHooks));
 
         assertEq(address(vault.hooks()), address(newHooks));
+        assertEq(hooks.custody(), address(0));
     }
 
-    function test_setHooks_increases_fees() public {
+    function test_setHooks_success_increases_fees() public {
         address feeRecipient = address(1);
         vault.setGuardianAndFeeRecipient(_USER, feeRecipient);
 
