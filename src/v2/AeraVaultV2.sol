@@ -33,7 +33,7 @@ contract AeraVaultV2 is
     /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
-    /// @notice Asset registry adress.
+    /// @notice Asset registry address.
     IAssetRegistry public immutable assetRegistry;
 
     /// @notice The address of WETH.
@@ -239,7 +239,7 @@ contract AeraVaultV2 is
         // Requirements: check the withdraw request.
         _checkWithdrawRequest(assets, amounts);
 
-        // Hooks: before transfering assets.
+        // Hooks: before transferring assets.
         hooks.beforeWithdraw(amounts);
 
         uint256 numAmounts = amounts.length;
