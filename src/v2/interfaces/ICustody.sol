@@ -23,6 +23,7 @@ interface ICustody is ICustodyEvents {
     error Aera__InitialOwnerIsZeroAddress();
     error Aera__FeeRecipientIsZeroAddress();
     error Aera__ExecuteTargetIsHooksAddress();
+    error Aera__SubmitTransfersAssetFromOwner();
     error Aera__SubmitTargetIsHooksAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
