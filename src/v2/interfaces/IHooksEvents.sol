@@ -16,4 +16,7 @@ interface IHooksEvents {
     event TargetSighashRemoved(
         address indexed target, bytes4 indexed selector
     );
+
+    /// @notice Emitted when Hooks is decommissioned.
+    event Decommissioned();
 }
