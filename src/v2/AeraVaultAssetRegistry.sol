@@ -327,9 +327,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             numAssets - numYieldAssets
         );
 
-        uint256 numeraireDecimals =
-            IERC20Metadata(address(_assets[numeraireId].asset)).decimals();
-
         uint256 oracleDecimals;
         uint256 price;
         int256 answer;
@@ -346,7 +343,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 // Numeraire has price 1 by definition.
                 prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
-                    spotPrice: 10 ** numeraireDecimals
+                    spotPrice: ONE
                 });
             } else {
                 (, answer,,,) = _assets[i].oracle.latestRoundData();
@@ -359,12 +356,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 price = uint256(answer);
                 oracleDecimals = _assets[i].oracle.decimals();
 
-                if (numeraireDecimals > oracleDecimals) {
-                    price =
-                        price * (10 ** (numeraireDecimals - oracleDecimals));
-                } else if (numeraireDecimals < oracleDecimals) {
-                    price =
-                        price / (10 ** (oracleDecimals - numeraireDecimals));
+                if (18 > oracleDecimals) {
+                    price = price * (10 ** (18 - oracleDecimals));
+                } else if (18 < oracleDecimals) {
+                    price = price / (10 ** (oracleDecimals - 18));
                 }
 
                 prices[index] = AssetPriceReading({
