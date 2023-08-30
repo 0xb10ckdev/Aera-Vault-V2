@@ -94,7 +94,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         // fails with no fees available when no vm.warp
         vm.expectRevert(
             abi.encodePacked(
-                ICustody.Aera__NoAvailableFeeForCaller.selector,
+                ICustody.Aera__NoClaimableFeesForCaller.selector,
                 abi.encode(vault.guardian())
             )
         );

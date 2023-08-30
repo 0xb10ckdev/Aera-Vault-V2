@@ -461,7 +461,7 @@ contract AeraVaultV2 is
 
         // Requirements: check that there are fees to claim.
         if (reservedFee == 0) {
-            revert Aera__NoAvailableFeeForCaller(msg.sender);
+            revert Aera__NoClaimableFeesForCaller(msg.sender);
         }
 
         IERC20 feeToken = assetRegistry.feeToken();
