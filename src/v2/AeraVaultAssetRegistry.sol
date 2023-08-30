@@ -358,7 +358,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
                 if (oracleDecimals < 18) {
                     price = price * (10 ** (18 - oracleDecimals));
-                } else if (18 < oracleDecimals) {
+                } else if (oracleDecimals > 18) {
                     price = price / (10 ** (oracleDecimals - 18));
                 }
 
