@@ -412,13 +412,21 @@ contract AeraVaultV2 is
 
         uint256 numOperations = operations.length;
 
-        Operation memory operation;
+        Operation calldata operation;
         bool success;
         bytes memory result;
         address hooksAddress = address(hooks);
 
         for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
+
+            // Requirements: validate that it doesn't transfer asset from owner.
+            if (
+                bytes4(operation.data[0:4]) == IERC20.transferFrom.selector
+                    && abi.decode(operation.data[4:], (address)) == owner()
+            ) {
+                revert Aera__SubmitTransfersAssetFromOwner();
+            }
 
             // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
