@@ -7,7 +7,7 @@ contract ClaimTest is TestBaseAeraVaultV2 {
     function test_claim_fail_whenNoAvailableFeeForCaller() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__NoAvailableFeeForCaller.selector, _USER
+                ICustody.Aera__NoClaimableFeesForCaller.selector, _USER
             )
         );
 
