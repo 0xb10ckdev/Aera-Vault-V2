@@ -209,7 +209,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     }
 
     function _writeHooksParams() internal {
-        uint256[11] memory sighashes = [
+        bytes32[11] memory sighashes = [
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(usdc, IERC20.approve.selector)
             ),
@@ -258,7 +258,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                 )
             )
         ];
-        uint256[] memory dynamicSighashArray = new uint256[](11);
+        bytes32[] memory dynamicSighashArray = new bytes32[](11);
         for (uint256 i = 0; i < sighashes.length; i++) {
             dynamicSighashArray[i] = sighashes[i];
         }
@@ -271,7 +271,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
             "Deployments", "maxDailyExecutionLoss", maxDailyExecutionLoss
         );
         string memory json;
-        json = vm.serializeUint(
+        json = vm.serializeBytes32(
             "Deployments", "targetSighashAllowlist", dynamicSighashArray
         );
 
