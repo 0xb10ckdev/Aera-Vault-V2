@@ -17,15 +17,12 @@ contract ClaimTest is TestBaseAeraVaultV2 {
 
     function test_claim_success_whenLowFeeBalance() public {
         vm.warp(block.timestamp + 1000);
-        vault.execute(
-            Operation({
-                target: address(feeToken),
-                value: 0,
-                data: abi.encodeWithSignature(
-                    "transfer(address,uint256)", address(this), 99999500001
-                    )
-            })
-        );
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        amounts[0] = AssetValue({asset: feeToken, value: 99999500001});
+
+        vault.withdraw(amounts);
+
         vm.warp(block.timestamp + 1000);
 
         AssetValue[] memory holdings = vault.holdings();
@@ -69,15 +66,10 @@ contract ClaimTest is TestBaseAeraVaultV2 {
     function test_claim_success_whenEnoughFees() public {
         vm.warp(block.timestamp + 1000);
 
-        vault.execute(
-            Operation({
-                target: address(erc20Assets[0]),
-                value: 0,
-                data: abi.encodeWithSignature(
-                    "transfer(address,uint256)", address(this), 1
-                    )
-            })
-        );
+        AssetValue[] memory amounts = new AssetValue[](1);
+        amounts[0] = AssetValue({asset: feeToken, value: 1});
+
+        vault.deposit(amounts);
 
         AssetValue[] memory holdings = vault.holdings();
         uint256 fee = vault.fees(_FEE_RECIPIENT);
