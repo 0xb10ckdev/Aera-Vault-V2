@@ -156,8 +156,10 @@ contract AeraVaultV2 is
         description = description_;
         lastFeeCheckpoint = block.timestamp;
 
-        // Effects: initiate ownership transfer and pause vault.
+        // Effects: set new owner.
         _transferOwnership(owner_);
+
+        // Effects: pause vault.
         _pause();
 
         // Log setting of asset registry.

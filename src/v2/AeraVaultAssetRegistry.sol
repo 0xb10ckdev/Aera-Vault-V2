@@ -180,7 +180,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         numeraireId = numeraireId_;
         feeToken = feeToken_;
 
-        // Effects: initiate ownership transfer to initial owner.
+        // Effects: set new owner.
         _transferOwnership(owner_);
 
         // Log asset registry creation.
