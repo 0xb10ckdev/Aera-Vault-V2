@@ -58,20 +58,20 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @inheritdoc IAeraVaultV2Factory
     function create(
         bytes32 salt,
-        address owner,
-        address assetRegistry,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        address owner_,
+        address assetRegistry_,
+        address guardian_,
+        address feeRecipient_,
+        uint256 fee_,
+        string calldata description_
     ) external override onlyOwner returns (address deployed) {
         parameters = VaultParameters({
-            owner: owner,
-            assetRegistry: assetRegistry,
-            guardian: guardian,
-            feeRecipient: feeRecipient,
-            fee: fee,
-            description: description
+            owner: owner_,
+            assetRegistry: assetRegistry_,
+            guardian: guardian_,
+            feeRecipient: feeRecipient_,
+            fee: fee_,
+            description: description_
         });
 
         // Requirements, Effects and Interactions: deploy vault with create2.
@@ -82,11 +82,11 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         // Log vault creation.
         emit VaultCreated(
             deployed,
-            assetRegistry,
-            guardian,
-            feeRecipient,
-            fee,
-            description,
+            assetRegistry_,
+            guardian_,
+            feeRecipient_,
+            fee_,
+            description_,
             wrappedNativeToken
         );
     }
