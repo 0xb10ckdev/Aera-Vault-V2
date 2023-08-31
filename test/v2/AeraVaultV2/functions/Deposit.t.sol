@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 import "../TestBaseAeraVaultV2.sol";
 import "lib/forge-std/src/StdStorage.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import "src/v2/interfaces/ICustodyEvents.sol";
+import "src/v2/interfaces/IVaultEvents.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
@@ -34,14 +34,14 @@ contract DepositTest is TestBaseAeraVaultV2 {
             bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
             bytes32(uint256(0))
         );
-        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__HooksIsZeroAddress.selector);
         vault.deposit(depositAmounts);
     }
 
     function test_deposit_fail_whenFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.deposit(depositAmounts);
     }
@@ -53,7 +53,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsNotRegistered.selector, erc20
+                IVault.Aera__AssetIsNotRegistered.selector, erc20
             )
         );
 
@@ -65,7 +65,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsDuplicated.selector,
+                IVault.Aera__AssetIsDuplicated.selector,
                 depositAmounts[0].asset
             )
         );

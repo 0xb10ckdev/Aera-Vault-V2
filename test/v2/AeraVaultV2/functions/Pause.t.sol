@@ -7,7 +7,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     event Paused(address);
 
     function test_pause_fail_whenCallerIsNotOwnerOrGuardian() public {
-        vm.expectRevert(ICustody.Aera__CallerIsNotOwnerAndGuardian.selector);
+        vm.expectRevert(IVault.Aera__CallerIsNotOwnerAndGuardian.selector);
 
         vm.prank(_USER);
         vault.pause();
@@ -16,7 +16,7 @@ contract PauseTest is TestBaseAeraVaultV2 {
     function test_pause_fail_whenFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.pause();
     }

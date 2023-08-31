@@ -12,7 +12,7 @@ import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
+contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     using stdJson for string;
 
     address internal constant _WBTC_ADDRESS =
@@ -132,7 +132,7 @@ contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
         returns (
             address deployedAssetRegistry,
             address deployedFactory,
-            address deployedCustody,
+            address deployedVault,
             address deployedHooks
         )
     {
@@ -147,8 +147,8 @@ contract TestBaseCustody is TestBaseFactory, TestBaseVariables {
         try vm.parseJsonAddress(json, ".factory") returns (address addr) {
             deployedFactory = addr;
         } catch {}
-        try vm.parseJsonAddress(json, ".custody") returns (address addr) {
-            deployedCustody = addr;
+        try vm.parseJsonAddress(json, ".vault") returns (address addr) {
+            deployedVault = addr;
         } catch {}
         try vm.parseJsonAddress(json, ".hooks") returns (address addr) {
             deployedHooks = addr;

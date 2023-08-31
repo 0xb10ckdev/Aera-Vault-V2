@@ -4,10 +4,10 @@ pragma solidity 0.8.21;
 import "../TestBaseAeraVaultHooks.sol";
 
 contract DeploymentTest is TestBaseAeraVaultHooks {
-    function test_aeraVaultHooksDeployment_fail_whenCustodyIsZeroAddress()
+    function test_aeraVaultHooksDeployment_fail_whenVaultIsZeroAddress()
         public
     {
-        vm.expectRevert(AeraVaultHooks.Aera__CustodyIsZeroAddress.selector);
+        vm.expectRevert(AeraVaultHooks.Aera__VaultIsZeroAddress.selector);
         new AeraVaultHooks(
             address(this),
             address(0),
@@ -30,12 +30,10 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         );
     }
 
-    function test_aeraVaultHooksDeployment_fail_whenCustodyIsNotValid()
-        public
-    {
+    function test_aeraVaultHooksDeployment_fail_whenVaultIsNotValid() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultHooks.Aera__CustodyIsNotValid.selector, address(1)
+                AeraVaultHooks.Aera__VaultIsNotValid.selector, address(1)
             )
         );
 
@@ -84,7 +82,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             targetSighashAllowlist
         );
 
-        assertEq(address(hooks.custody()), address(vault));
+        assertEq(address(hooks.vault()), address(vault));
         assertEq(hooks.maxDailyExecutionLoss(), _MAX_DAILY_EXECUTION_LOSS);
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), _ONE);

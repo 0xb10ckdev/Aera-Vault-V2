@@ -29,7 +29,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__AssetRegistryIsZeroAddress.selector);
         _deployVault(
             address(this),
             address(0),
@@ -45,7 +45,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
+                IVault.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
         _deployVault(
@@ -58,7 +58,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenRegisteredCustodyIsNotValid()
+    function test_aeraVaultV2Deployment_fail_whenRegisteredVaultIsNotValid()
         public
     {
         assetRegistry = new AeraVaultAssetRegistry(
@@ -71,7 +71,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             feeToken
         );
 
-        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
+        vm.expectRevert(IVault.Aera__AssetRegistryHasInvalidVault.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -85,7 +85,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenGuardianIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsZeroAddress.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -97,7 +97,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     }
 
     function test_aeraVaultV2Deployment_fail_whenGuardianIsOwner() public {
-        vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -111,7 +111,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenFeeRecipientIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsZeroAddress.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -125,7 +125,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenFeeRecipientIsOwner()
         public
     {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -137,7 +137,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     }
 
     function test_aeraVaultV2Deployment_fail_whenOwnerIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__InitialOwnerIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__InitialOwnerIsZeroAddress.selector);
         _deployVault(
             address(0),
             address(assetRegistry),
@@ -151,7 +151,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenFeeIsAboveMax() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
+                IVault.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
         _deployVault(
@@ -165,7 +165,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     }
 
     function test_aeraVaultV2Deployment_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
+        vm.expectRevert(IVault.Aera__DescriptionIsEmpty.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -179,7 +179,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function test_aeraVaultV2Deployment_fail_whenWETHIsZeroAddress() public {
         weth = address(0);
 
-        vm.expectRevert(ICustody.Aera__WETHIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__WETHIsZeroAddress.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -212,7 +212,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.fee(), _MAX_FEE);
         assertEq(vault.description(), "Test Vault");
         assertEq(vault.weth(), _WETH_ADDRESS);
-        assertEq(assetRegistry.custody(), address(vault));
+        assertEq(assetRegistry.vault(), address(vault));
 
         _setInvalidOracle(nonNumeraireId);
 

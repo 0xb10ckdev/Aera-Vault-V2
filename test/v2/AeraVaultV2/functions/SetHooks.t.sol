@@ -28,13 +28,13 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     function test_setHooks_fail_whenFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.setHooks(address(newHooks));
     }
 
     function test_setHooks_fail_whenHooksIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__HooksIsZeroAddress.selector);
 
         vault.setHooks(address(0));
     }
@@ -42,14 +42,14 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     function test_setHooks_fail_whenHooksIsNotValid() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__HooksIsNotValid.selector, address(1)
+                IVault.Aera__HooksIsNotValid.selector, address(1)
             )
         );
 
         vault.setHooks(address(1));
     }
 
-    function test_setHooks_fail_whenHooksHasInvalidCustody() public {
+    function test_setHooks_fail_whenHooksHasInvalidVault() public {
         assetRegistry = new AeraVaultAssetRegistry(
             address(this),
             factory.computeVaultAddress(bytes32(_ONE)),
@@ -75,7 +75,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
             targetSighashAllowlist
         );
 
-        vm.expectRevert(ICustody.Aera__HooksHasInvalidCustody.selector);
+        vm.expectRevert(IVault.Aera__HooksHasInvalidVault.selector);
         vault.setHooks(address(newHooks));
     }
 

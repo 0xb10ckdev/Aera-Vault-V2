@@ -34,7 +34,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
             value: 0,
             data: abi.encodeWithSelector(IHooks.beforeDeposit.selector, amounts)
         });
-        vm.expectRevert(ICustody.Aera__ExecuteTargetIsHooksAddress.selector);
+        vm.expectRevert(IVault.Aera__ExecuteTargetIsHooksAddress.selector);
         vault.execute(hooksOp);
     }
 
@@ -42,7 +42,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         operation.target = address(this);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ICustody.Aera__ExecutionFailed.selector, "")
+            abi.encodeWithSelector(IVault.Aera__ExecutionFailed.selector, "")
         );
         vault.execute(operation);
     }
@@ -79,7 +79,7 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
                 )
         });
 
-        vm.expectRevert(ICustody.Aera__CannotUseReservedFees.selector);
+        vm.expectRevert(IVault.Aera__CannotUseReservedFees.selector);
         vault.execute(operation);
     }
 

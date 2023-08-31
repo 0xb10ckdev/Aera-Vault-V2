@@ -8,7 +8,7 @@ import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/interfaces/ICustody.sol";
+import "src/v2/interfaces/IVault.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/TargetSighashLib.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -94,7 +94,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         // fails with no fees available when no vm.warp
         vm.expectRevert(
             abi.encodePacked(
-                ICustody.Aera__NoClaimableFeesForCaller.selector,
+                IVault.Aera__NoClaimableFeesForCaller.selector,
                 abi.encode(vault.guardian())
             )
         );

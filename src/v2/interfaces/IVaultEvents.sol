@@ -3,8 +3,8 @@ pragma solidity 0.8.21;
 
 import {AssetValue, Operation} from "../Types.sol";
 
-/// @title Interface for custody module events.
-interface ICustodyEvents {
+/// @title Interface for vault module events.
+interface IVaultEvents {
     /// @notice Emitted when deposit is called.
     /// @param owner Owner address.
     /// @param amounts Struct details for deposited assets and amounts.

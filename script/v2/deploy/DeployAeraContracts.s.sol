@@ -22,13 +22,13 @@ contract DeployAeraContracts is DeployScriptBase {
     ///         deployed yet.
     /// @dev It uses 0x00 for salt value.
     /// @return deployedAssetRegistry The address of deployed AssetRegistry.
-    /// @return deployedCustody The address of deployed AeraVaultV2.
+    /// @return deployedVault The address of deployed AeraVaultV2.
     /// @return deployedHooks The address of deployed Hooks.
     function run()
         public
         returns (
             address deployedAssetRegistry,
-            address deployedCustody,
+            address deployedVault,
             address deployedHooks
         )
     {
@@ -39,13 +39,13 @@ contract DeployAeraContracts is DeployScriptBase {
     ///         if they were not deployed yet.
     /// @param salt The salt value to create contract.
     /// @return deployedAssetRegistry The address of deployed AssetRegistry.
-    /// @return deployedCustody The address of deployed AeraVaultV2.
+    /// @return deployedVault The address of deployed AeraVaultV2.
     /// @return deployedHooks The address of deployed Hooks.
     function run(bytes32 salt)
         public
         returns (
             address deployedAssetRegistry,
-            address deployedCustody,
+            address deployedVault,
             address deployedHooks
         )
     {
@@ -68,7 +68,7 @@ contract DeployAeraContracts is DeployScriptBase {
         public
         returns (
             address deployedAssetRegistry,
-            address deployedCustody,
+            address deployedVault,
             address deployedHooks
         )
     {
@@ -91,16 +91,16 @@ contract DeployAeraContracts is DeployScriptBase {
             _deployAssetRegistry(aeraVaultV2Factory, assetRegistryPath);
 
         // Deploy AeraVaultV2
-        deployedCustody =
+        deployedVault =
             _deployAeraVaultV2(deployedAssetRegistry, aeraVaultV2Path);
 
         // Deploy AeraVaultHooks
         deployedHooks = _deployAeraVaultHooks(
-            aeraVaultV2Factory, deployedCustody, aeraVaultHooksPath
+            aeraVaultV2Factory, deployedVault, aeraVaultHooksPath
         );
 
         // Link modules
-        _linkModules(deployedCustody, deployedHooks);
+        _linkModules(deployedVault, deployedHooks);
 
         if (broadcast) {
             vm.stopBroadcast();
@@ -187,12 +187,12 @@ contract DeployAeraContracts is DeployScriptBase {
         );
 
         // Store deployed address
-        _storeDeployedAddress("custody", deployed);
+        _storeDeployedAddress("vault", deployed);
     }
 
     function _deployAeraVaultHooks(
         address aeraVaultV2Factory,
-        address custody,
+        address vault,
         string memory paramsRelFilePath
     ) internal returns (address deployed) {
         // Get parameters for AeraVaultHooks
@@ -207,7 +207,7 @@ contract DeployAeraContracts is DeployScriptBase {
             type(AeraVaultHooks).creationCode,
             abi.encode(
                 owner == address(0) ? _deployerAddress : owner,
-                custody,
+                vault,
                 maxDailyExecutionLoss,
                 targetSighashAllowlist
             )
@@ -220,7 +220,7 @@ contract DeployAeraContracts is DeployScriptBase {
         // Check deployed AeraVaultHooks
         _checkAeraVaultHooksIntegrity(
             AeraVaultHooks(deployed),
-            custody,
+            vault,
             maxDailyExecutionLoss,
             targetSighashAllowlist
         );
@@ -230,10 +230,10 @@ contract DeployAeraContracts is DeployScriptBase {
     }
 
     function _linkModules(
-        address deployedCustody,
+        address deployedVault,
         address deployedHooks
     ) internal {
-        AeraVaultV2 vault = AeraVaultV2(payable(deployedCustody));
+        AeraVaultV2 vault = AeraVaultV2(payable(deployedVault));
 
         if (address(vault.hooks()) != deployedHooks) {
             vault.setHooks(deployedHooks);
@@ -358,13 +358,13 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _checkAeraVaultHooksIntegrity(
         AeraVaultHooks hooks,
-        address custody,
+        address vault,
         uint256 maxDailyExecutionLoss,
         TargetSighash[] memory targetSighashAllowlist
     ) internal {
         console.log("Checking Hooks Integrity");
 
-        assertEq(address(hooks.custody()), custody);
+        assertEq(address(hooks.vault()), vault);
         assertEq(hooks.maxDailyExecutionLoss(), maxDailyExecutionLoss);
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), 1e18);

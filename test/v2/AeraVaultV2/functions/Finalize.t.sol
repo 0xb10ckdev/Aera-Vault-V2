@@ -21,14 +21,14 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
             bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
             bytes32(uint256(0))
         );
-        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__HooksIsZeroAddress.selector);
         vault.finalize();
     }
 
     function test_finalize_fail_whenAlreadyFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.finalize();
     }

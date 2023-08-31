@@ -23,7 +23,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     }
 
     function test_submit_fail_whenCallerIsNotGuardian() public {
-        vm.expectRevert(ICustody.Aera__CallerIsNotGuardian.selector);
+        vm.expectRevert(IVault.Aera__CallerIsNotGuardian.selector);
 
         vm.prank(_USER);
         vault.submit(operations);
@@ -42,7 +42,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         vm.prank(_GUARDIAN);
 
-        vm.expectRevert(ICustody.Aera__SubmitTransfersAssetFromOwner.selector);
+        vm.expectRevert(IVault.Aera__SubmitTransfersAssetFromOwner.selector);
         vault.submit(hookOperations);
     }
 
@@ -56,7 +56,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
             data: abi.encodeWithSelector(IHooks.beforeDeposit.selector, amounts)
         });
         vm.prank(_GUARDIAN);
-        vm.expectRevert(ICustody.Aera__SubmitTargetIsHooksAddress.selector);
+        vm.expectRevert(IVault.Aera__SubmitTargetIsHooksAddress.selector);
         vault.submit(hookOperations);
     }
 
@@ -84,7 +84,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__SubmissionFailed.selector, 0, ""
+                IVault.Aera__SubmissionFailed.selector, 0, ""
             )
         );
 
@@ -109,7 +109,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         vm.warp(block.timestamp + 1000);
 
-        vm.expectRevert(ICustody.Aera__CannotUseReservedFees.selector);
+        vm.expectRevert(IVault.Aera__CannotUseReservedFees.selector);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
