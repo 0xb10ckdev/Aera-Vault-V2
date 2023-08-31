@@ -565,6 +565,7 @@ contract AeraVaultV2 is
             return;
         }
 
+        // Move fee checkpoint only if fee is nonzero
         lastFeeCheckpoint = block.timestamp;
 
         // Effects: accrue fee to fee recipient and remember new fee total.
