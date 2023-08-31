@@ -296,7 +296,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// @inheritdoc IHooks
     function decommission() external override onlyCustody {
+        // Effects: release storage
         custody = address(0);
+        maxDailyExecutionLoss = 0;
+        currentDay = 0;
+        cumulativeDailyMultiplier = 0;
 
         emit Decommissioned();
     }
