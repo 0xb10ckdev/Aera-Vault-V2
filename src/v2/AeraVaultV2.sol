@@ -558,11 +558,14 @@ contract AeraVaultV2 is
             return;
         }
 
+        IERC20 numeraireAsset =
+            assetRegistry.assets()[assetRegistry.numeraireId()].asset;
+
         // Calculate new fee for current fee recipient.
-        uint256 newFee = (
-            ((lastValue * feeIndex * fee) / ONE)
-                * 10 ** IERC20Metadata(address(feeToken)).decimals()
-        ) / lastFeeTokenPrice;
+        uint256 newFee = lastValue * feeIndex * fee
+            * 10 ** IERC20Metadata(address(feeToken)).decimals()
+            / lastFeeTokenPrice
+            / 10 ** IERC20Metadata(address(numeraireAsset)).decimals();
 
         // Effects: accrue fee to fee recipient and remember new fee total.
         fees[feeRecipient] += newFee;
@@ -605,6 +608,12 @@ contract AeraVaultV2 is
             unchecked {
                 i++; // gas savings
             }
+        }
+
+        uint256 numeraireUnit = assetUnits[assetRegistry.numeraireId()];
+
+        if (numeraireUnit != ONE) {
+            vaultValue = vaultValue * numeraireUnit / ONE;
         }
     }
 
