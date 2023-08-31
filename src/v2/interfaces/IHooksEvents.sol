@@ -17,6 +17,6 @@ interface IHooksEvents {
         address indexed target, bytes4 indexed selector
     );
 
-    /// @notice Emitted when Hooks is decommissioned.
+    /// @notice Emitted when hooks contract is decommissioned.
     event Decommissioned();
 }

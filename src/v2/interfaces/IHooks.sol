@@ -49,6 +49,6 @@ interface IHooks is IHooksEvents {
     /// @dev MUST revert if not called by custody.
     function afterFinalize() external;
 
-    /// @notice Take Hooks out of use.
+    /// @notice Take hooks out of use.
     function decommission() external;
 }
