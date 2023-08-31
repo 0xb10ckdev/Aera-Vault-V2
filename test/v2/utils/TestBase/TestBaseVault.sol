@@ -38,7 +38,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     uint256[] public oraclePrices;
     uint256 public numeraireId;
     uint256 public nonNumeraireId;
-    TargetSighash[] public targetSighashAllowlist;
+    TargetSighashData[] public targetSighashAllowlist;
 
     function setUp() public virtual override {
         if (_testWithDeployedContracts()) {

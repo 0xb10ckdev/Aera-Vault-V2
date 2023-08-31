@@ -10,6 +10,7 @@ import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/IVault.sol";
 import "./TargetSighashLib.sol";
+import "./Types.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultHooks
@@ -36,7 +37,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     uint256 public cumulativeDailyMultiplier;
 
     /// @notice Allowed target contract and sighash combinations.
-    mapping(TargetSighash => bool) public targetSighashAllowed;
+    mapping(TargetSighash => bool) internal _targetSighashAllowed;
 
     /// @notice Total value of assets in vault before submission.
     /// @dev Assigned in `beforeSubmit` and used in `afterSubmit`.
@@ -78,7 +79,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address owner_,
         address vault_,
         uint256 maxDailyExecutionLoss_,
-        TargetSighash[] memory targetSighashAllowlist
+        TargetSighashData[] memory targetSighashAllowlist
     ) {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
@@ -100,8 +101,10 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
         // Effects: initialize target sighash allowlist.
+        TargetSighashData memory targetSighash;
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
-            targetSighashAllowed[targetSighashAllowlist[i]] = true;
+            targetSighash = targetSighashAllowlist[i];
+            _targetSighashAllowed[TargetSighashLib.toTargetSighash(targetSighash.target, targetSighash.selector)] = true;
             unchecked {
                 i++; // gas savings
             }
@@ -125,7 +128,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         bytes4 selector
     ) external onlyOwner {
         // Effects: add target sighash combination to the allowlist.
-        targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
+        _targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
 
         // Log the addition.
@@ -140,7 +143,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         bytes4 selector
     ) external onlyOwner {
         // Effects: remove target sighash combination from the allowlist.
-        delete targetSighashAllowed[
+        delete _targetSighashAllowed[
             TargetSighashLib.toTargetSighash(target, selector)
         ];
 
@@ -194,7 +197,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
             );
 
             // Requirements: validate that the target sighash combination is allowed.
-            if (!targetSighashAllowed[sigHash]) {
+            if (!_targetSighashAllowed[sigHash]) {
                 revert Aera__CallIsNotAllowed(operations[i]);
             }
 
@@ -314,6 +317,12 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     {
         return interfaceId == type(IHooks).interfaceId
             || super.supportsInterface(interfaceId);
+    }
+
+    /// @notice Check whether target and sighash combination is allowed.
+    /// @param key Struct containing target contract and sighash.
+    function targetSighashAllowed(TargetSighashData calldata key) public view returns (bool) {
+        return _targetSighashAllowed[TargetSighashLib.toTargetSighash(key.target, key.selector)];
     }
 
     /// INTERNAL FUNCTIONS ///
