@@ -78,7 +78,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
-    error Aera__AssetBalanceIsNotZero(address asset);
     error Aera__VaultIsZeroAddress();
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
 
@@ -240,11 +239,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         // Requirements: check that asset to remove is not fee token.
         if (address(feeToken) == asset) {
             revert Aera__CannotRemoveFeeToken(asset);
-        }
-
-        // Requirements: check that asset is currently not held in vault.
-        if (IERC20(asset).balanceOf(vault) > 0) {
-            revert Aera__AssetBalanceIsNotZero(asset);
         }
 
         uint256 numAssets = _assets.length;
