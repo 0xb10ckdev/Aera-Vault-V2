@@ -294,6 +294,11 @@ contract AeraVaultV2 is
         // Requirements: validate hooks address.
         _checkHooksAddress(newHooks);
 
+        // Effects: decommission old hooks contract.
+        if (address(hooks) != address(0)) {
+            hooks.decommission();
+        }
+
         // Effects: set new hooks address.
         hooks = IHooks(newHooks);
 

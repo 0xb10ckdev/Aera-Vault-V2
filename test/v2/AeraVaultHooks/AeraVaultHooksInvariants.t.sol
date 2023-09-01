@@ -5,8 +5,8 @@ import "./TestBaseAeraVaultHooks.sol";
 import "./handlers/AeraVaultHooksHandler.sol";
 
 contract AeraVaultHooksInvariantTest is TestBaseAeraVaultHooks {
-    bytes32 internal constant _BEFORE_VALUE_SLOT = bytes32(uint256(6));
-    bytes32 internal constant _BEFORE_BALANCE_SLOT = bytes32(uint256(7));
+    bytes32 internal constant _BEFORE_VALUE_SLOT = bytes32(uint256(7));
+    bytes32 internal constant _BEFORE_BALANCE_SLOT = bytes32(uint256(8));
 
     AeraVaultHooksHandler public handler;
 

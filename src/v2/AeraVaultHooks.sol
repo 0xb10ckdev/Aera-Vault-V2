@@ -18,10 +18,10 @@ import {ONE} from "./Constants.sol";
 contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
-    /// @notice The address of the vault module.
-    address public immutable vault;
-
     /// STORAGE ///
+
+    /// @notice The address of the vault.
+    address public vault;
 
     /// @notice The maximum fraction of value that the vault can lose per day
     ///         during submit transactions.
@@ -289,6 +289,20 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         maxDailyExecutionLoss = 0;
         currentDay = 0;
         cumulativeDailyMultiplier = 0;
+    }
+
+    /// @inheritdoc IHooks
+    function decommission() external override onlyVault {
+        // Effects: reset vault address.
+        vault = address(0);
+
+        // Effects: release storage
+        maxDailyExecutionLoss = 0;
+        currentDay = 0;
+        cumulativeDailyMultiplier = 0;
+
+        // Log decommissioning.
+        emit Decommissioned();
     }
 
     /// @inheritdoc IERC165
