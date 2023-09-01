@@ -4,10 +4,10 @@ pragma solidity 0.8.21;
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultV2Factory.sol";
-import "src/v2/interfaces/ICustodyEvents.sol";
-import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
+import "src/v2/interfaces/IVaultEvents.sol";
+import {TestBaseVault} from "test/v2/utils/TestBase/TestBaseVault.sol";
 
-contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
+contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
     function setUp() public override {
         super.setUp();
 
@@ -54,7 +54,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenAssetRegistryIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__AssetRegistryIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__AssetRegistryIsZeroAddress.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -71,7 +71,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetRegistryIsNotValid.selector, address(1)
+                IVault.Aera__AssetRegistryIsNotValid.selector, address(1)
             )
         );
         factory.create(
@@ -85,7 +85,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
         );
     }
 
-    function test_createAeraVaultV2_fail_whenRegisteredCustodyIsNotValid()
+    function test_createAeraVaultV2_fail_whenRegisteredVaultIsNotValid()
         public
     {
         assetRegistry = new AeraVaultAssetRegistry(
@@ -96,7 +96,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
             feeToken
         );
 
-        vm.expectRevert(ICustody.Aera__AssetRegistryHasInvalidCustody.selector);
+        vm.expectRevert(IVault.Aera__AssetRegistryHasInvalidVault.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -109,7 +109,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsZeroAddress.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -122,7 +122,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenGuardianIsFactory() public {
-        vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -135,7 +135,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenOwnerIsZeroAddress() public {
-        vm.expectRevert(ICustody.Aera__InitialOwnerIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__InitialOwnerIsZeroAddress.selector);
         factory.create(
             bytes32(_ONE),
             address(0),
@@ -150,7 +150,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenFeeRecipientIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsZeroAddress.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -163,7 +163,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenFeeRecipientIsFactory() public {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -178,7 +178,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     function test_createAeraVaultV2_fail_whenFeeIsAboveMax() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
+                IVault.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
         factory.create(
@@ -193,7 +193,7 @@ contract AeraVaultV2FactoryTest is TestBaseCustody, ICustodyEvents {
     }
 
     function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(ICustody.Aera__DescriptionIsEmpty.selector);
+        vm.expectRevert(IVault.Aera__DescriptionIsEmpty.selector);
         factory.create(
             bytes32(_ONE),
             address(this),

@@ -35,14 +35,14 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
             bytes32(stdstore.target(address(vault)).sig("hooks()").find()),
             bytes32(uint256(0))
         );
-        vm.expectRevert(ICustody.Aera__HooksIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__HooksIsZeroAddress.selector);
         vault.withdraw(withdrawAmounts);
     }
 
     function test_withdraw_fail_whenFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.withdraw(withdrawAmounts);
     }
@@ -54,7 +54,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsNotRegistered.selector, erc20
+                IVault.Aera__AssetIsNotRegistered.selector, erc20
             )
         );
 
@@ -66,7 +66,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AssetIsDuplicated.selector,
+                IVault.Aera__AssetIsDuplicated.selector,
                 withdrawAmounts[0].asset
             )
         );
@@ -90,7 +90,7 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICustody.Aera__AmountExceedsAvailable.selector,
+                IVault.Aera__AmountExceedsAvailable.selector,
                 withdrawAmounts[0].asset,
                 withdrawAmounts[0].value,
                 withdrawAmounts[0].value - 1

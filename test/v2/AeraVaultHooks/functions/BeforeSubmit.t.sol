@@ -4,8 +4,8 @@ pragma solidity 0.8.21;
 import "../TestBaseAeraVaultHooks.sol";
 
 contract BeforeSubmitTest is TestBaseAeraVaultHooks {
-    function test_beforeSubmit_fail_whenCallerIsNotCustody() public {
-        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotCustody.selector);
+    function test_beforeSubmit_fail_whenCallerIsNotVault() public {
+        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotVault.selector);
 
         vm.prank(_USER);
         hooks.beforeSubmit(new Operation[](0));

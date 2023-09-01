@@ -39,7 +39,7 @@ contract WriteHooksJson is Script, Test {
     address[] internal whitelistedERC20Targets;
     address[] internal whitelistedERC4626Targets;
     address[] internal whitelistedSwapRouters;
-    uint256[] targetSighashes = new uint256[](
+    bytes32[] targetSighashes = new bytes32[](
         whitelistedERC20Targets.length +
         whitelistedERC4626Targets.length +
         whitelistedSwapRouters.length
@@ -155,7 +155,7 @@ contract WriteHooksJson is Script, Test {
             "Hooks", "maxDailyExecutionLoss", maxDailyExecutionLoss
         );
         vm.writeJson(
-            vm.serializeUint(
+            vm.serializeBytes32(
                 "Hooks", "targetSighashAllowlist", targetSighashes
             ),
             path

@@ -52,11 +52,11 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenCustodyIsZeroAddress()
+    function test_assetRegistryDeployment_fail_whenVaultIsZeroAddress()
         public
     {
         vm.expectRevert(
-            AeraVaultAssetRegistry.Aera__CustodyIsZeroAddress.selector
+            AeraVaultAssetRegistry.Aera__VaultIsZeroAddress.selector
         );
         new AeraVaultAssetRegistry(
             address(this),
@@ -284,7 +284,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             feeToken
         );
 
-        assertEq(assetRegistry.custody(), vaultAddress);
+        assertEq(assetRegistry.vault(), vaultAddress);
 
         propNumeraire();
         propFeeToken();

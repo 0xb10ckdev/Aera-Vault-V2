@@ -16,7 +16,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_fail_whenFinalized() public {
         vault.finalize();
 
-        vm.expectRevert(ICustody.Aera__VaultIsFinalized.selector);
+        vm.expectRevert(IVault.Aera__VaultIsFinalized.selector);
 
         vault.setGuardianAndFeeRecipient(_USER, _FEE_RECIPIENT);
     }
@@ -24,7 +24,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_fail_whenGuardianIsZeroAddress()
         public
     {
-        vm.expectRevert(ICustody.Aera__GuardianIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsZeroAddress.selector);
 
         vault.setGuardianAndFeeRecipient(address(0), _FEE_RECIPIENT);
     }
@@ -32,14 +32,14 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_fail_whenGuardianIsOwner()
         public
     {
-        vm.expectRevert(ICustody.Aera__GuardianIsOwner.selector);
+        vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
 
         vault.setGuardianAndFeeRecipient(address(this), _FEE_RECIPIENT);
     }
 
     function test_setGuardianAndFeeRecipient_fail_whenFeeRecipientIsZeroAddress(
     ) public {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsZeroAddress.selector);
 
         vault.setGuardianAndFeeRecipient(_GUARDIAN, address(0));
     }
@@ -47,7 +47,7 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     function test_setGuardianAndFeeRecipient_fail_whenFeeRecipientIsOwner()
         public
     {
-        vm.expectRevert(ICustody.Aera__FeeRecipientIsOwner.selector);
+        vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
 
         vault.setGuardianAndFeeRecipient(_GUARDIAN, address(this));
     }

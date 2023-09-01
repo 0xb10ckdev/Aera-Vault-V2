@@ -8,7 +8,7 @@ import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraVaultV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/interfaces/ICustody.sol";
+import "src/v2/interfaces/IVault.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/TargetSighashLib.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -94,7 +94,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         // fails with no fees available when no vm.warp
         vm.expectRevert(
             abi.encodePacked(
-                ICustody.Aera__NoAvailableFeeForCaller.selector,
+                IVault.Aera__NoClaimableFeesForCaller.selector,
                 abi.encode(vault.guardian())
             )
         );
@@ -209,7 +209,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     }
 
     function _writeHooksParams() internal {
-        uint256[11] memory sighashes = [
+        bytes32[11] memory sighashes = [
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(usdc, IERC20.approve.selector)
             ),
@@ -258,7 +258,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                 )
             )
         ];
-        uint256[] memory dynamicSighashArray = new uint256[](11);
+        bytes32[] memory dynamicSighashArray = new bytes32[](11);
         for (uint256 i = 0; i < sighashes.length; i++) {
             dynamicSighashArray[i] = sighashes[i];
         }
@@ -271,7 +271,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
             "Deployments", "maxDailyExecutionLoss", maxDailyExecutionLoss
         );
         string memory json;
-        json = vm.serializeUint(
+        json = vm.serializeBytes32(
             "Deployments", "targetSighashAllowlist", dynamicSighashArray
         );
 
