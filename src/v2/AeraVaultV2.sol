@@ -552,8 +552,6 @@ contract AeraVaultV2 is
             return;
         }
 
-        lastFeeCheckpoint = block.timestamp;
-
         IERC20 feeToken = assetRegistry.feeToken();
 
         // Calculate vault value using oracle or backup value if oracle is reverting.
@@ -576,6 +574,13 @@ contract AeraVaultV2 is
             * 10 ** IERC20Metadata(address(feeToken)).decimals()
             / lastFeeTokenPrice
             / 10 ** IERC20Metadata(address(numeraireAsset)).decimals();
+
+        if (newFee == 0) {
+            return;
+        }
+
+        // Move fee checkpoint only if fee is nonzero
+        lastFeeCheckpoint = block.timestamp;
 
         // Effects: accrue fee to fee recipient and remember new fee total.
         fees[feeRecipient] += newFee;
