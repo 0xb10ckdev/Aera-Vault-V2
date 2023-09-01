@@ -12,7 +12,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(this),
             address(0),
             _MAX_DAILY_EXECUTION_LOSS,
-            new TargetSighash[](0)
+            new TargetSighashData[](0)
         );
     }
 
@@ -26,7 +26,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(0),
             address(1),
             _MAX_DAILY_EXECUTION_LOSS,
-            new TargetSighash[](0)
+            new TargetSighashData[](0)
         );
     }
 
@@ -41,7 +41,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(this),
             address(1),
             _MAX_DAILY_EXECUTION_LOSS,
-            new TargetSighash[](0)
+            new TargetSighashData[](0)
         );
     }
 
@@ -59,20 +59,21 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(this),
             address(vault),
             1.1e18,
-            new TargetSighash[](0)
+            new TargetSighashData[](0)
         );
     }
 
     function test_aeraVaultHooksDeployment_success() public {
         uint256 numERC20 = erc20Assets.length;
 
-        TargetSighash[] memory targetSighashAllowlist =
-            new TargetSighash[](numERC20);
+        TargetSighashData[] memory targetSighashAllowlist =
+            new TargetSighashData[](numERC20);
 
         for (uint256 i = 0; i < numERC20; i++) {
-            targetSighashAllowlist[i] = TargetSighashLib.toTargetSighash(
-                address(erc20Assets[i]), IERC20.transfer.selector
-            );
+            targetSighashAllowlist[i] = TargetSighashData({
+                target: address(erc20Assets[i]),
+                selector: IERC20.transfer.selector
+            });
         }
 
         hooks = new AeraVaultHooks(

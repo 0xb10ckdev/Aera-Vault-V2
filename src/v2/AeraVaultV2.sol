@@ -41,11 +41,6 @@ contract AeraVaultV2 is
 
     /// STORAGE ///
 
-    /// @notice Describes vault purpose and modelling assumptions for
-    ///         differentiating between vaults.
-    /// @dev String cannot be immutable bytecode but only set in constructor
-    string public description;
-
     /// @notice Hooks module address.
     IHooks public hooks;
 
@@ -121,8 +116,7 @@ contract AeraVaultV2 is
             address assetRegistry_,
             address guardian_,
             address feeRecipient_,
-            uint256 fee_,
-            string memory description_
+            uint256 fee_
         ) = IAeraVaultV2Factory(msg.sender).parameters();
         address wrappedNativeToken_ =
             IAeraVaultV2Factory(msg.sender).wrappedNativeToken();
@@ -140,10 +134,6 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
-        // Requirements: confirm that vault has a description.
-        if (bytes(description_).length == 0) {
-            revert Aera__DescriptionIsEmpty();
-        }
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }
@@ -154,7 +144,6 @@ contract AeraVaultV2 is
         guardian = guardian_;
         feeRecipient = feeRecipient_;
         fee = fee_;
-        description = description_;
         lastFeeCheckpoint = block.timestamp;
 
         // Effects: set new owner.

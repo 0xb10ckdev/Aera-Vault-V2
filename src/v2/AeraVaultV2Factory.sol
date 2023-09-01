@@ -41,6 +41,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
 
     /// ERRORS ///
 
+    error Aera__DescriptionIsEmpty();
     error Aera__WrappedNativeTokenIsZeroAddress();
 
     /// FUNCTIONS ///
@@ -65,13 +66,17 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         uint256 fee_,
         string calldata description_
     ) external override onlyOwner returns (address deployed) {
+        // Requirements: confirm that vault has a nonempty description.
+        if (bytes(description_).length == 0) {
+            revert Aera__DescriptionIsEmpty();
+        }
+
         parameters = VaultParameters({
             owner: owner_,
             assetRegistry: assetRegistry_,
             guardian: guardian_,
             feeRecipient: feeRecipient_,
-            fee: fee_,
-            description: description_
+            fee: fee_
         });
 
         // Requirements, Effects and Interactions: deploy vault with create2.

@@ -194,7 +194,7 @@ contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
     }
 
     function test_createAeraVaultV2_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(IVault.Aera__DescriptionIsEmpty.selector);
+        vm.expectRevert(AeraVaultV2Factory.Aera__DescriptionIsEmpty.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -233,6 +233,5 @@ contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
-        assertEq(vault.description(), "Test Vault");
     }
 }

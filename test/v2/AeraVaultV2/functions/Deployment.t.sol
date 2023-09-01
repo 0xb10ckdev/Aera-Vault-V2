@@ -35,8 +35,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(0),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -53,8 +52,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(1),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -77,8 +75,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -91,8 +88,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(0),
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -103,8 +99,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             address(this),
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -117,8 +112,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             address(0),
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -131,8 +125,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             address(this),
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -143,8 +136,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -159,20 +151,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE + 1,
-            "Test Vault"
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(IVault.Aera__DescriptionIsEmpty.selector);
-        _deployVault(
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            ""
+            _MAX_FEE + 1
         );
     }
 
@@ -186,8 +165,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -202,8 +180,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(assetRegistry),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
 
         assertTrue(vault.paused());
@@ -211,7 +188,6 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.guardian(), _GUARDIAN);
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
-        assertEq(vault.description(), "Test Vault");
         assertEq(vault.wrappedNativeToken(), _WETH_ADDRESS);
         assertEq(assetRegistry.vault(), address(vault));
 
@@ -237,16 +213,14 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee,
-        string memory description
+        uint256 fee
     ) internal returns (AeraVaultV2 deployed) {
         parameters = VaultParameters({
             owner: owner,
             assetRegistry: assetRegistry,
             guardian: guardian,
             feeRecipient: feeRecipient,
-            fee: fee,
-            description: description
+            fee: fee
         });
 
         deployed = new AeraVaultV2{salt: bytes32(_ONE)}();

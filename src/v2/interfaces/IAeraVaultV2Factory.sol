@@ -54,7 +54,6 @@ interface IAeraVaultV2Factory {
     /// @return guardian Guardian address.
     /// @return feeRecipient Fee recipient address.
     /// @return fee Fee accrued per second, denoted in 18 decimal fixed point format.
-    /// @return description Vault description.
     function parameters()
         external
         view
@@ -63,7 +62,6 @@ interface IAeraVaultV2Factory {
             address assetRegistry,
             address guardian,
             address feeRecipient,
-            uint256 fee,
-            string memory description
+            uint256 fee
         );
 }

@@ -9,7 +9,7 @@ import {AeraVaultHooks} from "src/v2/AeraVaultHooks.sol";
 import {AeraVaultV2} from "src/v2/AeraVaultV2.sol";
 import {AeraVaultV2Factory} from "src/v2/AeraVaultV2Factory.sol";
 import {IAssetRegistry} from "src/v2/interfaces/IAssetRegistry.sol";
-import {TargetSighash} from "src/v2/Types.sol";
+import {TargetSighash, TargetSighashData} from "src/v2/Types.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import {Aeraform} from "script/utils/Aeraform.sol";
 
@@ -183,7 +183,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
         // Check deployed AeraVaultV2
         _checkAeraVaultV2Integrity(
-            deployed, assetRegistry, guardian, feeRecipient, fee, description
+            deployed, assetRegistry, guardian, feeRecipient, fee
         );
 
         // Store deployed address
@@ -199,7 +199,7 @@ contract DeployAeraContracts is DeployScriptBase {
         (
             address owner,
             uint256 maxDailyExecutionLoss,
-            TargetSighash[] memory targetSighashAllowlist
+            TargetSighashData[] memory targetSighashAllowlist
         ) = _getAeraVaultHooksParams(paramsRelFilePath);
 
         // Get bytecode
@@ -287,7 +287,7 @@ contract DeployAeraContracts is DeployScriptBase {
         returns (
             address owner,
             uint256 maxDailyExecutionLoss,
-            TargetSighash[] memory targetSighashAllowlist
+            TargetSighashData[] memory targetSighashAllowlist
         )
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
@@ -296,12 +296,41 @@ contract DeployAeraContracts is DeployScriptBase {
         owner = json.readAddress(".owner");
         maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
 
-        uint256[] memory allowlist =
-            json.readUintArray(".targetSighashAllowlist");
+        bytes32[] memory allowlistRaw =
+            json.readBytes32Array(".targetSighashAllowlist");
+        TargetSighash[] memory allowlist;
+        assembly {
+            allowlist := allowlistRaw
+        }
+        
+        TargetSighashData[] memory allowlistData;
+        for (uint256 i = 0; i < allowlist.length; i++) {
+            allowlistData[i] =
+                TargetSighashData({
+                    target: _getTarget(allowlist[i]),
+                    selector: _getSelector(allowlist[i])
+                });
+        }
 
         assembly {
-            targetSighashAllowlist := allowlist
+            targetSighashAllowlist := allowlistData
         }
+    }
+
+    function _getTarget(TargetSighash targetSighash) internal pure returns (address) {
+        bytes32 ts;
+        assembly {
+            ts := targetSighash
+        }
+        return address(bytes20(ts));
+    }
+
+    function _getSelector(TargetSighash targetSighash) internal pure returns (bytes4) {
+        bytes32 ts;
+        assembly {
+            ts := targetSighash
+        }
+        return bytes4(ts << (20 * 8));
     }
 
     function _checkAssetRegistryIntegrity(
@@ -340,8 +369,7 @@ contract DeployAeraContracts is DeployScriptBase {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee,
-        string memory description
+        uint256 fee
     ) internal {
         console.log("Checking Aera Vault V2 Integrity");
 
@@ -351,7 +379,6 @@ contract DeployAeraContracts is DeployScriptBase {
         assertEq(vault.guardian(), guardian);
         assertEq(vault.feeRecipient(), feeRecipient);
         assertEq(vault.fee(), fee);
-        assertEq(vault.description(), description);
 
         console.log("Checked Aera Vault V2 Integrity");
     }
@@ -360,7 +387,7 @@ contract DeployAeraContracts is DeployScriptBase {
         AeraVaultHooks hooks,
         address vault,
         uint256 maxDailyExecutionLoss,
-        TargetSighash[] memory targetSighashAllowlist
+        TargetSighashData[] memory targetSighashAllowlist
     ) internal {
         console.log("Checking Hooks Integrity");
 
