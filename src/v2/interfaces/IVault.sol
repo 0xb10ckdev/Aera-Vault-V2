@@ -27,7 +27,6 @@ interface IVault is IVaultEvents {
     error Aera__SubmitTargetIsHooksAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
-    error Aera__DescriptionIsEmpty();
     error Aera__CallerIsNotOwnerAndGuardian();
     error Aera__CallerIsNotGuardian();
     error Aera__AssetIsNotRegistered(IERC20 asset);
