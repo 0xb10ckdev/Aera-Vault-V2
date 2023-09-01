@@ -9,7 +9,7 @@ import {VaultParameters} from "src/v2/Types.sol";
 contract DeploymentTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
 
-    address public weth = _WETH_ADDRESS;
+    address public wrappedNativeToken = _WETH_ADDRESS;
     VaultParameters public parameters;
 
     function setUp() public override {
@@ -176,10 +176,11 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenWETHIsZeroAddress() public {
-        weth = address(0);
+    function test_aeraVaultV2Deployment_fail_whenWrappedNativeTokenIsZeroAddress(
+    ) public {
+        wrappedNativeToken = address(0);
 
-        vm.expectRevert(IVault.Aera__WETHIsZeroAddress.selector);
+        vm.expectRevert(IVault.Aera__WrappedNativeTokenIsZeroAddress.selector);
         _deployVault(
             address(this),
             address(assetRegistry),
@@ -211,7 +212,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         assertEq(vault.feeRecipient(), _FEE_RECIPIENT);
         assertEq(vault.fee(), _MAX_FEE);
         assertEq(vault.description(), "Test Vault");
-        assertEq(vault.weth(), _WETH_ADDRESS);
+        assertEq(vault.wrappedNativeToken(), _WETH_ADDRESS);
         assertEq(assetRegistry.vault(), address(vault));
 
         _setInvalidOracle(nonNumeraireId);

@@ -48,4 +48,7 @@ interface IHooks is IHooksEvents {
     /// @notice Hook that runs after finalize.
     /// @dev MUST revert if not called by vault.
     function afterFinalize() external;
+
+    /// @notice Take hooks out of use.
+    function decommission() external;
 }

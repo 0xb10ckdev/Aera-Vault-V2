@@ -36,8 +36,8 @@ contract AeraVaultV2 is
     /// @notice Asset registry address.
     IAssetRegistry public immutable assetRegistry;
 
-    /// @notice The address of WETH.
-    address public immutable weth;
+    /// @notice The address of wrapped native token.
+    address public immutable wrappedNativeToken;
 
     /// STORAGE ///
 
@@ -124,7 +124,8 @@ contract AeraVaultV2 is
             uint256 fee_,
             string memory description_
         ) = IAeraVaultV2Factory(msg.sender).parameters();
-        address weth_ = IAeraVaultV2Factory(msg.sender).weth();
+        address wrappedNativeToken_ =
+            IAeraVaultV2Factory(msg.sender).wrappedNativeToken();
 
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
@@ -143,12 +144,12 @@ contract AeraVaultV2 is
         if (bytes(description_).length == 0) {
             revert Aera__DescriptionIsEmpty();
         }
-        if (weth_ == address(0)) {
-            revert Aera__WETHIsZeroAddress();
+        if (wrappedNativeToken_ == address(0)) {
+            revert Aera__WrappedNativeTokenIsZeroAddress();
         }
 
         // Effects: initialize vault state.
-        weth = weth_;
+        wrappedNativeToken = wrappedNativeToken_;
         assetRegistry = IAssetRegistry(assetRegistry_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
@@ -292,6 +293,11 @@ contract AeraVaultV2 is
     {
         // Requirements: validate hooks address.
         _checkHooksAddress(newHooks);
+
+        // Effects: decommission old hooks contract.
+        if (address(hooks) != address(0)) {
+            hooks.decommission();
+        }
 
         // Effects: set new hooks address.
         hooks = IHooks(newHooks);
@@ -518,11 +524,12 @@ contract AeraVaultV2 is
         revert Aera__CannotRenounceOwnership();
     }
 
-    /// @notice Only accept ETH from the WETH contract when burning WETH tokens.
+    /// @notice Only accept native token from the wrapped native token contract
+    ///         when burning wrapped native tokens.
     receive() external payable {
-        // Requirements: verify that the sender is WETH.
-        if (msg.sender != weth) {
-            revert Aera__NotWETHContract();
+        // Requirements: verify that the sender is wrapped native token.
+        if (msg.sender != wrappedNativeToken) {
+            revert Aera__NotWrappedNativeTokenContract();
         }
     }
 
