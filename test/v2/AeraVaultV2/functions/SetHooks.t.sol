@@ -89,7 +89,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     }
 
     function test_setHooks_success() public {
-        assertEq(hooks.custody(), address(vault));
+        assertEq(hooks.vault(), address(vault));
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetHooks(address(newHooks));
@@ -97,7 +97,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
         vault.setHooks(address(newHooks));
 
         assertEq(address(vault.hooks()), address(newHooks));
-        assertEq(hooks.custody(), address(0));
+        assertEq(hooks.vault(), address(0));
     }
 
     function test_setHooks_success_increases_fees() public {
