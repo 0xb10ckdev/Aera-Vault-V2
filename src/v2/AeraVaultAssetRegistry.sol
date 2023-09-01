@@ -16,7 +16,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
-    /// @notice Vault module address.
+    /// @notice Vault address.
     address public immutable vault;
 
     /// @notice Fee token.
@@ -45,7 +45,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice Emitted in constructor.
     /// @param owner Owner address.
-    /// @param vault Vault module address.
+    /// @param vault Vault address.
     /// @param assets Initial list of registered assets.
     /// @param numeraireId The index of the numeraire asset in the assets array.
     /// @param feeToken Fee token address.
@@ -84,7 +84,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// FUNCTIONS ///
 
     /// @param owner_ Initial owner address.
-    /// @param vault_ Vault module address.
+    /// @param vault_ Vault address.
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireId_ The index of the numeraire asset in the assets array.
     /// @param feeToken_ Fee token address.

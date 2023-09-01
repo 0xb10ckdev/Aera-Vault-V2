@@ -7,7 +7,7 @@ import "./IVaultEvents.sol";
 import "./IHooks.sol";
 
 /// @title IVault
-/// @notice Interface for the vault module.
+/// @notice Interface for the vault.
 /// @dev Any implementation MUST also implement Ownable2Step.
 interface IVault is IVaultEvents {
     /// ERRORS ///
@@ -70,13 +70,13 @@ interface IVault is IVaultEvents {
     /// @dev MUST revert if not called by owner.
     function setHooks(address hooks) external;
 
-    /// @notice Execute a transaction via the vault module.
-    /// @dev Execution still should work when vault module is finalized.
+    /// @notice Execute a transaction via the vault.
+    /// @dev Execution still should work when vault is finalized.
     /// @param operation Struct details for target and calldata to execute.
     /// @dev MUST revert if not called by owner.
     function execute(Operation memory operation) external;
 
-    /// @notice Terminate the vault module and return all funds to owner.
+    /// @notice Terminate the vault and return all funds to owner.
     /// @dev MUST revert if not called by owner.
     function finalize() external;
 
@@ -88,7 +88,7 @@ interface IVault is IVaultEvents {
     /// @dev MUST revert if not called by owner.
     function resume() external;
 
-    /// @notice Submit a series of transactions for execution via the vault module.
+    /// @notice Submit a series of transactions for execution via the vault.
     /// @param operations Sequence of operations to execute.
     /// @dev MUST revert if not called by guardian.
     function submit(Operation[] memory operations) external;
@@ -126,7 +126,7 @@ interface IVault is IVaultEvents {
         view
         returns (AssetValue[] memory assetAmounts);
 
-    /// @notice Get current total value of assets in vault module.
+    /// @notice Get current total value of assets in vault.
     /// @return value Current total value.
     function value() external view returns (uint256 value);
 }

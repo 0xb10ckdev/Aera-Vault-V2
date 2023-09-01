@@ -736,7 +736,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Get total amount of assets in vault module.
+    /// @notice Get total amount of assets in vault.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)

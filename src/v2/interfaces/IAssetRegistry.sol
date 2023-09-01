@@ -24,8 +24,8 @@ interface IAssetRegistry {
         uint256 spotPrice;
     }
 
-    /// @notice Get address of vault module.
-    /// @return vault Address of vault module.
+    /// @notice Get address of vault.
+    /// @return vault Address of vault.
     function vault() external view returns (address vault);
 
     /// @notice Get a list of all registered assets.
