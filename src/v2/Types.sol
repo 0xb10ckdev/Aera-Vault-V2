@@ -42,12 +42,10 @@ struct TargetSighashData {
 /// @param guardian Guardian address.
 /// @param feeRecipient Fee recipient address.
 /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
-/// @param description Vault description.
 struct VaultParameters {
     address owner;
     address assetRegistry;
     address guardian;
     address feeRecipient;
     uint256 fee;
-    string description;
 }

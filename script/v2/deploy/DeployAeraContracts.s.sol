@@ -183,7 +183,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
         // Check deployed AeraVaultV2
         _checkAeraVaultV2Integrity(
-            deployed, assetRegistry, guardian, feeRecipient, fee, description
+            deployed, assetRegistry, guardian, feeRecipient, fee
         );
 
         // Store deployed address
@@ -369,8 +369,7 @@ contract DeployAeraContracts is DeployScriptBase {
         address assetRegistry,
         address guardian,
         address feeRecipient,
-        uint256 fee,
-        string memory description
+        uint256 fee
     ) internal {
         console.log("Checking Aera Vault V2 Integrity");
 
@@ -380,7 +379,6 @@ contract DeployAeraContracts is DeployScriptBase {
         assertEq(vault.guardian(), guardian);
         assertEq(vault.feeRecipient(), feeRecipient);
         assertEq(vault.fee(), fee);
-        assertEq(vault.description(), description);
 
         console.log("Checked Aera Vault V2 Integrity");
     }
