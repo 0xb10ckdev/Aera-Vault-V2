@@ -3,26 +3,27 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
 import "./IAssetRegistry.sol";
-import "./ICustodyEvents.sol";
+import "./IVaultEvents.sol";
 import "./IHooks.sol";
 
-/// @title ICustody
-/// @notice Interface for the custody module.
+/// @title IVault
+/// @notice Interface for the vault module.
 /// @dev Any implementation MUST also implement Ownable2Step.
-interface ICustody is ICustodyEvents {
+interface IVault is IVaultEvents {
     /// ERRORS ///
 
     error Aera__AssetRegistryIsZeroAddress();
     error Aera__AssetRegistryIsNotValid(address assetRegistry);
-    error Aera__AssetRegistryHasInvalidCustody();
+    error Aera__AssetRegistryHasInvalidVault();
     error Aera__HooksIsZeroAddress();
     error Aera__HooksIsNotValid(address hooks);
-    error Aera__HooksHasInvalidCustody();
+    error Aera__HooksHasInvalidVault();
     error Aera__GuardianIsZeroAddress();
     error Aera__GuardianIsOwner();
     error Aera__InitialOwnerIsZeroAddress();
     error Aera__FeeRecipientIsZeroAddress();
     error Aera__ExecuteTargetIsHooksAddress();
+    error Aera__SubmitTransfersAssetFromOwner();
     error Aera__SubmitTargetIsHooksAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
@@ -38,7 +39,7 @@ interface ICustody is ICustodyEvents {
     error Aera__SubmissionFailed(uint256 index, bytes result);
     error Aera__CannotUseReservedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
-    error Aera__NoAvailableFeeForCaller(address caller);
+    error Aera__NoClaimableFeesForCaller(address caller);
     error Aera__WETHIsZeroAddress();
     error Aera__NotWETHContract();
     error Aera__CannotRenounceOwnership();
@@ -69,13 +70,13 @@ interface ICustody is ICustodyEvents {
     /// @dev MUST revert if not called by owner.
     function setHooks(address hooks) external;
 
-    /// @notice Execute a transaction via the custody module.
-    /// @dev Execution still should work when custody module is finalized.
+    /// @notice Execute a transaction via the vault module.
+    /// @dev Execution still should work when vault module is finalized.
     /// @param operation Struct details for target and calldata to execute.
     /// @dev MUST revert if not called by owner.
     function execute(Operation memory operation) external;
 
-    /// @notice Terminate the custody module and return all funds to owner.
+    /// @notice Terminate the vault module and return all funds to owner.
     /// @dev MUST revert if not called by owner.
     function finalize() external;
 
@@ -87,7 +88,7 @@ interface ICustody is ICustodyEvents {
     /// @dev MUST revert if not called by owner.
     function resume() external;
 
-    /// @notice Submit a series of transactions for execution via the custody module.
+    /// @notice Submit a series of transactions for execution via the vault module.
     /// @param operations Sequence of operations to execute.
     /// @dev MUST revert if not called by guardian.
     function submit(Operation[] memory operations) external;
@@ -125,7 +126,7 @@ interface ICustody is ICustodyEvents {
         view
         returns (AssetValue[] memory assetAmounts);
 
-    /// @notice Get current total value of assets in custody module.
+    /// @notice Get current total value of assets in vault module.
     /// @return value Current total value.
     function value() external view returns (uint256 value);
 }

@@ -5,9 +5,9 @@ import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/IHooksEvents.sol";
-import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
+import {TestBaseVault} from "test/v2/utils/TestBase/TestBaseVault.sol";
 
-contract TestBaseAeraVaultHooks is TestBaseCustody, IHooksEvents {
+contract TestBaseAeraVaultHooks is TestBaseVault, IHooksEvents {
     function setUp() public virtual override {
         super.setUp();
 
@@ -15,7 +15,7 @@ contract TestBaseAeraVaultHooks is TestBaseCustody, IHooksEvents {
             (,,, address deployedHooks) = _loadDeployedAddresses();
 
             hooks = AeraVaultHooks(deployedHooks);
-            vault = AeraVaultV2(payable(address(hooks.custody())));
+            vault = AeraVaultV2(payable(address(hooks.vault())));
             assetRegistry =
                 AeraVaultAssetRegistry(address(vault.assetRegistry()));
 

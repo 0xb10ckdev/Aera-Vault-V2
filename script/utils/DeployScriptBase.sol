@@ -27,8 +27,8 @@ contract DeployScriptBase is Script, Test {
             try vm.parseJsonAddress(json, ".factory") returns (address addr) {
                 vm.serializeAddress("Deployments", "factory", addr);
             } catch {}
-            try vm.parseJsonAddress(json, ".custody") returns (address addr) {
-                vm.serializeAddress("Deployments", "custody", addr);
+            try vm.parseJsonAddress(json, ".vault") returns (address addr) {
+                vm.serializeAddress("Deployments", "vault", addr);
             } catch {}
             try vm.parseJsonAddress(json, ".hooks") returns (address addr) {
                 vm.serializeAddress("Deployments", "hooks", addr);

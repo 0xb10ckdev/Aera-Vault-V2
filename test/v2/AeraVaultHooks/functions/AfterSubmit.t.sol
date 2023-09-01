@@ -24,8 +24,8 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         vault.resume();
     }
 
-    function test_afterSubmit_fail_whenCallerIsNotCustody() public {
-        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotCustody.selector);
+    function test_afterSubmit_fail_whenCallerIsNotVault() public {
+        vm.expectRevert(AeraVaultHooks.Aera__CallerIsNotVault.selector);
 
         vm.prank(_USER);
         hooks.afterSubmit(new Operation[](0));

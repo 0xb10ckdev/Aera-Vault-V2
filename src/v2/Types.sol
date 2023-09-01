@@ -9,8 +9,8 @@ import "@openzeppelin/IERC20.sol";
 
 /// @notice Combination of contract address and sighash to be used in allowlist.
 /// @dev It's packed as follows:
-///      [<empty> 64 bits] [target 160 bits] [selector 32 bits]
-type TargetSighash is uint256;
+///      [target 160 bits] [selector 32 bits] [<empty> 64 bits]  
+type TargetSighash is bytes32;
 
 /// @notice Struct encapulating an asset and an associated value.
 /// @param asset Asset address.
