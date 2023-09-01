@@ -14,9 +14,10 @@ contract AddTargetSighashTest is TestBaseAeraVaultHooks {
     }
 
     function test_addTargetSighash_success() public {
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(
-            address(erc20Assets[0]), IERC20.transfer.selector
-        );
+        TargetSighashData memory targetSighash = TargetSighashData({
+            target: address(erc20Assets[0]),
+            selector: IERC20.transfer.selector
+        });
 
         assertFalse(hooks.targetSighashAllowed(targetSighash));
 

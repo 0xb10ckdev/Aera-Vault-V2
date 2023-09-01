@@ -14,9 +14,10 @@ contract RemoveTargetSighashTest is TestBaseAeraVaultHooks {
     }
 
     function test_removeTargetSighash_success() public {
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(
-            address(erc20Assets[0]), IERC20.transfer.selector
-        );
+        TargetSighashData memory targetSighash = TargetSighashData({
+            target: address(erc20Assets[0]),
+            selector: IERC20.transfer.selector
+        });
 
         hooks.addTargetSighash(
             address(erc20Assets[0]), IERC20.transfer.selector

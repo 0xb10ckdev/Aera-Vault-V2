@@ -30,6 +30,12 @@ struct Operation {
     bytes data;
 }
 
+/// @notice Contract address and sighash struct to be used in the public interface.
+struct TargetSighashData {
+    address target;
+    bytes4 selector;
+}
+
 /// @notice Vault parameters for vault deployment.
 /// @param owner Initial owner address.
 /// @param assetRegistry Asset registry address.
