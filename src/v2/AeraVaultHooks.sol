@@ -16,7 +16,12 @@ import {ONE} from "./Constants.sol";
 /// @title AeraVaultHooks
 /// @notice Default hooks contract which implements several safeguards.
 /// @dev Connected vault MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
-contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
+contract AeraVaultHooks is
+    IHooks,
+    IAeraVaultHooksEvents,
+    ERC165,
+    Ownable2Step
+{
     using SafeERC20 for IERC20;
 
     /// STORAGE ///
@@ -99,9 +104,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
         // Effects: initialize target sighash allowlist.
-        TargetSighashData memory targetSighash;
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
-            targetSighash = targetSighashAllowlist[i];
+            TargetSighashData memory targetSighash = targetSighashAllowlist[i];
             _targetSighashAllowed[TargetSighashLib.toTargetSighash(
                 targetSighash.target, targetSighash.selector
             )] = true;
@@ -148,7 +152,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(target, selector);
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, selector);
 
         // Requirements: check that current target sighash is set.
         if (!_targetSighashAllowed[targetSighash]) {
@@ -327,14 +332,14 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
     }
 
     /// @notice Check whether target and sighash combination is allowed.
-    /// @param key Struct containing target contract and sighash.
-    function targetSighashAllowed(TargetSighashData calldata key)
-        public
-        view
-        returns (bool)
-    {
+    /// @param target Address of target.
+    /// @param selector Selector of function.
+    function targetSighashAllowed(
+        address target,
+        bytes4 selector
+    ) external view returns (bool) {
         return _targetSighashAllowed[TargetSighashLib.toTargetSighash(
-            key.target, key.selector
+            target, selector
         )];
     }
 

@@ -320,7 +320,8 @@ contract DeployAeraContracts is DeployScriptBase {
         for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
             assertTrue(
                 hooks.targetSighashAllowed(
-                    hooksParameters.targetSighashAllowlist[i]
+                    hooksParameters.targetSighashAllowlist[i].target,
+                    hooksParameters.targetSighashAllowlist[i].selector
                 )
             );
         }
