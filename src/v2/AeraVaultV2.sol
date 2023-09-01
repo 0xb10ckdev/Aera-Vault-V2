@@ -307,6 +307,7 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc IVault
+    /// @dev reserveFees modifier is not used to avoid reverts.
     function execute(Operation calldata operation)
         external
         override
