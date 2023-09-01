@@ -16,7 +16,7 @@ import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 contract TestBaseAssetRegistry is TestBaseFactory {
     event Created(
         address indexed owner,
-        address indexed custody,
+        address indexed vault,
         IAssetRegistry.AssetInformation[] assets,
         uint256 numeraireId,
         address feeToken
@@ -48,7 +48,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             factory = AeraVaultV2Factory(_loadDeployedFactory());
             assetRegistry =
                 AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
-            vault = AeraVaultV2(payable(_loadDeployedCustody()));
+            vault = AeraVaultV2(payable(_loadDeployedVault()));
 
             vm.prank(assetRegistry.owner());
             assetRegistry.transferOwnership(address(this));
@@ -148,12 +148,12 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         return vm.parseJsonAddress(json, ".assetRegistry");
     }
 
-    function _loadDeployedCustody() internal returns (address) {
+    function _loadDeployedVault() internal returns (address) {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);
 
-        return vm.parseJsonAddress(json, ".custody");
+        return vm.parseJsonAddress(json, ".vault");
     }
 
     function _loadParameters() internal {

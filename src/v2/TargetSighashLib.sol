@@ -14,9 +14,8 @@ library TargetSighashLib {
         address target,
         bytes4 selector
     ) internal pure returns (TargetSighash targetSighash) {
-        // Upcast to uint256 is required to prevent truncation during left shift.
         targetSighash = TargetSighash.wrap(
-            (uint256(uint160(target)) << 32) | uint32(selector)
+            bytes20(target) | (bytes32(selector) >> (20 * 8))
         );
     }
 }

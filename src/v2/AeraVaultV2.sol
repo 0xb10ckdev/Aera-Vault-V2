@@ -11,13 +11,13 @@ import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 import "./interfaces/IHooks.sol";
-import "./interfaces/ICustody.sol";
+import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultV2.
-/// @notice Aera Vault V2 Custody contract.
+/// @notice Aera Vault V2 Vault contract.
 contract AeraVaultV2 is
-    ICustody,
+    IVault,
     ERC165,
     Ownable2Step,
     Pausable,
@@ -156,8 +156,10 @@ contract AeraVaultV2 is
         description = description_;
         lastFeeCheckpoint = block.timestamp;
 
-        // Effects: initiate ownership transfer and pause vault.
+        // Effects: set new owner.
         _transferOwnership(owner_);
+
+        // Effects: pause vault.
         _pause();
 
         // Log setting of asset registry.
@@ -167,7 +169,7 @@ contract AeraVaultV2 is
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function deposit(AssetValue[] calldata amounts)
         external
         override
@@ -223,7 +225,7 @@ contract AeraVaultV2 is
         emit Deposit(owner(), amounts);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function withdraw(AssetValue[] calldata amounts)
         external
         override
@@ -263,7 +265,7 @@ contract AeraVaultV2 is
         emit Withdraw(owner(), amounts);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function setGuardianAndFeeRecipient(
         address newGuardian,
         address newFeeRecipient
@@ -280,7 +282,7 @@ contract AeraVaultV2 is
         emit SetGuardianAndFeeRecipient(newGuardian, newFeeRecipient);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function setHooks(address newHooks)
         external
         override
@@ -298,12 +300,11 @@ contract AeraVaultV2 is
         emit SetHooks(newHooks);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function execute(Operation calldata operation)
         external
         override
         onlyOwner
-        reserveFees
     {
         // Requirements: check that the target contract is not hooks.
         if (operation.target == address(hooks)) {
@@ -329,7 +330,7 @@ contract AeraVaultV2 is
         emit Executed(owner(), operation);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function finalize()
         external
         override
@@ -351,7 +352,8 @@ contract AeraVaultV2 is
         uint256 numAssetAmounts = assetAmounts.length;
 
         for (uint256 i = 0; i < numAssetAmounts;) {
-            // Effects: transfer assets to owner.
+            // Effects: transfer registered assets to owner.
+            // Excludes reserved fee tokens and native token (e.g., ETH).
             assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
             unchecked {
                 i++; // gas savings
@@ -365,7 +367,7 @@ contract AeraVaultV2 is
         emit Finalized(owner(), assetAmounts);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function pause()
         external
         override
@@ -378,7 +380,7 @@ contract AeraVaultV2 is
         _pause();
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function resume()
         external
         override
@@ -394,7 +396,7 @@ contract AeraVaultV2 is
         _unpause();
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function submit(Operation[] calldata operations)
         external
         override
@@ -412,13 +414,21 @@ contract AeraVaultV2 is
 
         uint256 numOperations = operations.length;
 
-        Operation memory operation;
+        Operation calldata operation;
         bool success;
         bytes memory result;
         address hooksAddress = address(hooks);
 
         for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
+
+            // Requirements: validate that it doesn't transfer asset from owner.
+            if (
+                bytes4(operation.data[0:4]) == IERC20.transferFrom.selector
+                    && abi.decode(operation.data[4:], (address)) == owner()
+            ) {
+                revert Aera__SubmitTransfersAssetFromOwner();
+            }
 
             // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
@@ -448,13 +458,13 @@ contract AeraVaultV2 is
         emit Submitted(owner(), operations);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function claim() external override nonReentrant reserveFees {
         uint256 reservedFee = fees[msg.sender];
 
         // Requirements: check that there are fees to claim.
         if (reservedFee == 0) {
-            revert Aera__NoAvailableFeeForCaller(msg.sender);
+            revert Aera__NoClaimableFeesForCaller(msg.sender);
         }
 
         IERC20 feeToken = assetRegistry.feeToken();
@@ -475,7 +485,7 @@ contract AeraVaultV2 is
         emit Claimed(msg.sender, availableFee, unavailableFee);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function holdings() public view override returns (AssetValue[] memory) {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -483,7 +493,7 @@ contract AeraVaultV2 is
         return _getHoldings(assets);
     }
 
-    /// @inheritdoc ICustody
+    /// @inheritdoc IVault
     function value() external view override returns (uint256 vaultValue) {
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices =
             assetRegistry.spotPrices();
@@ -499,7 +509,7 @@ contract AeraVaultV2 is
         override
         returns (bool)
     {
-        return interfaceId == type(ICustody).interfaceId
+        return interfaceId == type(IVault).interfaceId
             || super.supportsInterface(interfaceId);
     }
 
@@ -556,10 +566,14 @@ contract AeraVaultV2 is
             return;
         }
 
+        IERC20 numeraireAsset =
+            assetRegistry.assets()[assetRegistry.numeraireId()].asset;
+
         // Calculate new fee for current fee recipient.
         uint256 newFee = lastValue * feeIndex * fee
             * 10 ** IERC20Metadata(address(feeToken)).decimals()
-            / lastFeeTokenPrice / ONE;
+            / lastFeeTokenPrice
+            / 10 ** IERC20Metadata(address(numeraireAsset)).decimals();
 
         if (newFee == 0) {
             return;
@@ -609,6 +623,12 @@ contract AeraVaultV2 is
             unchecked {
                 i++; // gas savings
             }
+        }
+
+        uint256 numeraireUnit = assetUnits[assetRegistry.numeraireId()];
+
+        if (numeraireUnit != ONE) {
+            vaultValue = vaultValue * numeraireUnit / ONE;
         }
     }
 
@@ -716,7 +736,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Get total amount of assets in custody module.
+    /// @notice Get total amount of assets in vault module.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)
@@ -804,8 +824,8 @@ contract AeraVaultV2 is
         ) {
             revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
         }
-        if (IAssetRegistry(newAssetRegistry).custody() != address(this)) {
-            revert Aera__AssetRegistryHasInvalidCustody();
+        if (IAssetRegistry(newAssetRegistry).vault() != address(this)) {
+            revert Aera__AssetRegistryHasInvalidVault();
         }
     }
 
@@ -820,8 +840,8 @@ contract AeraVaultV2 is
         ) {
             revert Aera__HooksIsNotValid(newHooks);
         }
-        if (IHooks(newHooks).custody() != address(this)) {
-            revert Aera__HooksHasInvalidCustody();
+        if (IHooks(newHooks).vault() != address(this)) {
+            revert Aera__HooksHasInvalidVault();
         }
     }
 
