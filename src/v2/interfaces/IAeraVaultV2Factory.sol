@@ -45,8 +45,8 @@ interface IAeraVaultV2Factory {
         bytes calldata code
     ) external view returns (address);
 
-    /// @notice Returns the address of WETH.
-    function weth() external view returns (address);
+    /// @notice Returns the address of wrapped native token.
+    function wrappedNativeToken() external view returns (address);
 
     /// @notice Returns vault parameters for vault deployment.
     /// @return owner Initial owner address.

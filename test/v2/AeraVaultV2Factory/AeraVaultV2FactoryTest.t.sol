@@ -29,10 +29,11 @@ contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
         );
     }
 
-    function test_aeraVaultV2FactoryDeployment_fail_whenWETHIsZeroAddress()
-        public
-    {
-        vm.expectRevert(AeraVaultV2Factory.Aera__WETHIsZeroAddress.selector);
+    function test_aeraVaultV2FactoryDeployment_fail_whenWrappedNativeTokenIsZeroAddress(
+    ) public {
+        vm.expectRevert(
+            AeraVaultV2Factory.Aera__WrappedNativeTokenIsZeroAddress.selector
+        );
         new AeraVaultV2Factory(address(0));
     }
 

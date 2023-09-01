@@ -17,11 +17,11 @@ contract DeployScript is DeployScriptBase {
             string.concat(vm.projectRoot(), "/config/AeraVaultV2Factory.json");
         string memory json = vm.readFile(path);
 
-        address weth = json.readAddress(".weth");
+        address wrappedNativeToken = json.readAddress(".wrappedNativeToken");
 
         vm.startBroadcast(_deployerAddress);
 
-        deployed = new AeraVaultV2Factory(weth);
+        deployed = new AeraVaultV2Factory(wrappedNativeToken);
 
         vm.stopBroadcast();
 

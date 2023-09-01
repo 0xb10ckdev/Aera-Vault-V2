@@ -11,8 +11,8 @@ import {VaultParameters} from "./Types.sol";
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
 /// @dev Only one instance of the factory will be required per chain.
 contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
-    /// @notice The address of WETH.
-    address public immutable weth;
+    /// @notice The address of wrapped native token.
+    address public immutable wrappedNativeToken;
 
     /// STORAGE ///
 
@@ -28,7 +28,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @param feeRecipient Fee recipient address.
     /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
-    /// @param weth The address of WETH.
+    /// @param wrappedNativeToken The address of wrapped native token.
     event VaultCreated(
         address indexed vault,
         address assetRegistry,
@@ -36,23 +36,23 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         address indexed feeRecipient,
         uint256 fee,
         string description,
-        address weth
+        address wrappedNativeToken
     );
 
     /// ERRORS ///
 
-    error Aera__WETHIsZeroAddress();
+    error Aera__WrappedNativeTokenIsZeroAddress();
 
     /// FUNCTIONS ///
 
     /// @notice Initialize the factory contract.
-    /// @param weth_ The address of WETH.
-    constructor(address weth_) {
-        if (weth_ == address(0)) {
-            revert Aera__WETHIsZeroAddress();
+    /// @param wrappedNativeToken_ The address of wrapped native token.
+    constructor(address wrappedNativeToken_) {
+        if (wrappedNativeToken_ == address(0)) {
+            revert Aera__WrappedNativeTokenIsZeroAddress();
         }
 
-        weth = weth_;
+        wrappedNativeToken = wrappedNativeToken_;
     }
 
     /// @inheritdoc IAeraVaultV2Factory
@@ -87,7 +87,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
             feeRecipient,
             fee,
             description,
-            weth
+            wrappedNativeToken
         );
     }
 

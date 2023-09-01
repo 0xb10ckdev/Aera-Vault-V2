@@ -40,8 +40,8 @@ interface IVault is IVaultEvents {
     error Aera__CannotUseReservedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoClaimableFeesForCaller(address caller);
-    error Aera__WETHIsZeroAddress();
-    error Aera__NotWETHContract();
+    error Aera__WrappedNativeTokenIsZeroAddress();
+    error Aera__NotWrappedNativeTokenContract();
     error Aera__CannotRenounceOwnership();
 
     /// FUNCTIONS ///
