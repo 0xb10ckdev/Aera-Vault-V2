@@ -14,7 +14,7 @@ import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultHooks
 /// @notice Default hooks contract which implements several safeguards.
-/// @dev Connected vault module MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
+/// @dev Connected vault MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
 contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
@@ -59,7 +59,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// MODIFIERS ///
 
-    /// @dev Throws if called by any account other than the vault module.
+    /// @dev Throws if called by any account other than the vault.
     modifier onlyVault() {
         if (msg.sender != vault) {
             revert Aera__CallerIsNotVault();
@@ -70,7 +70,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     /// FUNCTIONS ///
 
     /// @param owner_ Initial owner address.
-    /// @param vault_ Vault module address.
+    /// @param vault_ Vault address.
     /// @param maxDailyExecutionLoss_ The fraction of value that the vault can
     ///                               lose per day in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
@@ -80,7 +80,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         uint256 maxDailyExecutionLoss_,
         TargetSighash[] memory targetSighashAllowlist
     ) {
-        // Requirements: validate vault module.
+        // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
         }

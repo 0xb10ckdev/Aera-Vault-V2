@@ -7,8 +7,8 @@ import {AssetValue, Operation} from "../Types.sol";
 /// @title IHooks
 /// @notice Interface for the hooks module.
 interface IHooks is IHooksEvents {
-    /// @notice Get address of vault module.
-    /// @return vault Vault module address.
+    /// @notice Get address of vault.
+    /// @return vault Vault address.
     function vault() external view returns (address vault);
 
     /// @notice Hook that runs before deposit.

@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import {AssetValue, Operation} from "../Types.sol";
 
-/// @title Interface for vault module events.
+/// @title Interface for vault events.
 interface IVaultEvents {
     /// @notice Emitted when deposit is called.
     /// @param owner Owner address.

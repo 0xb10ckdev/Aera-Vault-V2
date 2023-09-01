@@ -307,6 +307,7 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc IVault
+    /// @dev reserveFees modifier is not used to avoid reverts.
     function execute(Operation calldata operation)
         external
         override
@@ -743,7 +744,7 @@ contract AeraVaultV2 is
         }
     }
 
-    /// @notice Get total amount of assets in vault module.
+    /// @notice Get total amount of assets in vault.
     /// @param assets Struct details for registered assets in asset registry.
     /// @return assetAmounts Amount of assets.
     function _getHoldings(IAssetRegistry.AssetInformation[] memory assets)
