@@ -24,9 +24,9 @@ interface IAssetRegistry {
         uint256 spotPrice;
     }
 
-    /// @notice Get address of custody module.
-    /// @return custody Address of custody module.
-    function custody() external view returns (address custody);
+    /// @notice Get address of vault module.
+    /// @return vault Address of vault module.
+    function vault() external view returns (address vault);
 
     /// @notice Get a list of all registered assets.
     /// @return assets List of assets.

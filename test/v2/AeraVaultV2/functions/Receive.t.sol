@@ -9,7 +9,7 @@ contract ReceiveTest is TestBaseAeraVaultV2 {
 
         uint256 balance = address(vault).balance;
 
-        vm.expectRevert(ICustody.Aera__NotWETHContract.selector);
+        vm.expectRevert(IVault.Aera__NotWETHContract.selector);
         (, bytes memory data) = address(vault).call{value: 1}("");
 
         // use data trivially to avoid unused low-level call return value warning

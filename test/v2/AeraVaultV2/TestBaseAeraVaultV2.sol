@@ -4,18 +4,18 @@ pragma solidity 0.8.21;
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/interfaces/ICustodyEvents.sol";
-import {TestBaseCustody} from "test/v2/utils/TestBase/TestBaseCustody.sol";
+import "src/v2/interfaces/IVaultEvents.sol";
+import {TestBaseVault} from "test/v2/utils/TestBase/TestBaseVault.sol";
 import {OracleMock} from "test/utils/OracleMock.sol";
 
-contract TestBaseAeraVaultV2 is TestBaseCustody, ICustodyEvents {
+contract TestBaseAeraVaultV2 is TestBaseVault, IVaultEvents {
     function setUp() public virtual override {
         super.setUp();
 
         if (_testWithDeployedContracts()) {
-            (,, address deployedCustody,) = _loadDeployedAddresses();
+            (,, address deployedVault,) = _loadDeployedAddresses();
 
-            vault = AeraVaultV2(payable(deployedCustody));
+            vault = AeraVaultV2(payable(deployedVault));
             assetRegistry =
                 AeraVaultAssetRegistry(address(vault.assetRegistry()));
             hooks = AeraVaultHooks(address(vault.hooks()));
