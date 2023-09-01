@@ -216,13 +216,13 @@ contract AeraVaultV2 is
             unchecked {
                 i++; // gas savings
             }
+
+            // Log deposit for this asset.
+            emit Deposit(msg.sender, assetValue.asset, assetValue.value);
         }
 
         // Hooks: after transferring assets.
         hooks.afterDeposit(amounts);
-
-        // Log deposit.
-        emit Deposit(owner(), amounts);
     }
 
     /// @inheritdoc IVault
@@ -256,13 +256,13 @@ contract AeraVaultV2 is
 
             // Interactions: withdraw assets.
             assetValue.asset.safeTransfer(owner(), assetValue.value);
+
+            // Log withdrawal for this asset.
+            emit Withdraw(msg.sender, assetValue.asset, assetValue.value);
         }
 
         // Hooks: after transferring assets.
         hooks.afterWithdraw(amounts);
-
-        // Log withdrawal.
-        emit Withdraw(owner(), amounts);
     }
 
     /// @inheritdoc IVault
@@ -432,7 +432,7 @@ contract AeraVaultV2 is
 
             // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
-                revert Aera__SubmitTargetIsHooksAddress();
+                revert Aera__SubmitTargetIsHooksAddress(i);
             }
 
             // Interactions: execute operation.
@@ -455,7 +455,7 @@ contract AeraVaultV2 is
         hooks.afterSubmit(operations);
 
         // Log submission.
-        emit Submitted(owner(), operations);
+        emit Submitted(guardian, operations);
     }
 
     /// @inheritdoc IVault
@@ -482,7 +482,7 @@ contract AeraVaultV2 is
         feeToken.safeTransfer(msg.sender, availableFee);
 
         // Log the claim.
-        emit Claimed(msg.sender, availableFee, unavailableFee);
+        emit Claimed(msg.sender, availableFee, unavailableFee, feeTotal);
     }
 
     /// @inheritdoc IVault
@@ -585,6 +585,9 @@ contract AeraVaultV2 is
         // Effects: accrue fee to fee recipient and remember new fee total.
         fees[feeRecipient] += newFee;
         feeTotal += newFee;
+
+        // Log fee reservation.
+        emit FeesReserved(feeRecipient, newFee, lastFeeCheckpoint, lastValue, lastFeeTokenPrice, feeTotal);
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.

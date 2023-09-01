@@ -23,6 +23,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
 
     /// @notice Emitted when the vault is created.
     /// @param vault Vault address.
+    /// @param owner Vault owner.
     /// @param assetRegistry Asset registry address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
@@ -31,9 +32,10 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @param weth The address of WETH.
     event VaultCreated(
         address indexed vault,
+        address indexed owner,
         address assetRegistry,
         address indexed guardian,
-        address indexed feeRecipient,
+        address feeRecipient,
         uint256 fee,
         string description,
         address weth
@@ -82,6 +84,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         // Log vault creation.
         emit VaultCreated(
             deployed,
+            owner,
             assetRegistry,
             guardian,
             feeRecipient,

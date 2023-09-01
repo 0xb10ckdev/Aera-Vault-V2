@@ -78,8 +78,10 @@ contract DepositTest is TestBaseAeraVaultV2 {
 
         vm.warp(block.timestamp + 1000);
 
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit Deposit(vault.owner(), depositAmounts);
+        for (uint256 i = 0; i < depositAmounts.length; i++) {
+            vm.expectEmit(true, true, true, true, address(vault));
+            emit Deposit(vault.owner(), depositAmounts[i].asset, depositAmounts[i].value);
+        }
 
         vault.deposit(depositAmounts);
     }
@@ -90,8 +92,10 @@ contract DepositTest is TestBaseAeraVaultV2 {
             balances[i] = depositAmounts[i].asset.balanceOf(address(this));
         }
 
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit Deposit(vault.owner(), depositAmounts);
+        for (uint256 i = 0; i < depositAmounts.length; i++) {
+            vm.expectEmit(true, true, true, true, address(vault));
+            emit Deposit(vault.owner(), depositAmounts[i].asset, depositAmounts[i].value);
+        }
 
         vault.deposit(depositAmounts);
 

@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
+import "@openzeppelin/IERC20.sol";
+
 import {AssetValue, Operation} from "../Types.sol";
 
 /// @title Interface for vault module events.
 interface IVaultEvents {
     /// @notice Emitted when deposit is called.
     /// @param owner Owner address.
-    /// @param amounts Struct details for deposited assets and amounts.
-    event Deposit(address indexed owner, AssetValue[] amounts);
+    /// @param asset Deposited asset.
+    /// @param amount Deposited asset amount.
+    event Deposit(address indexed owner, IERC20 indexed asset, uint256 amount);
 
     /// @notice Emitted when withdraw is called.
     /// @param owner Owner address.
-    /// @param amounts Struct details for withdrawn assets and amounts.
-    event Withdraw(address indexed owner, AssetValue[] amounts);
+    /// @param asset Withdrawn asset.
+    /// @param amount Withdrawn asset amount.
+    event Withdraw(address indexed owner, IERC20 indexed asset, uint256 amount);
 
     /// @notice Emitted when guardian is set.
     /// @param guardian Address of new guardian.
@@ -41,15 +45,32 @@ interface IVaultEvents {
     event Finalized(address indexed owner, AssetValue[] withdrawnAmounts);
 
     /// @notice Emitted when submit is called.
-    /// @param owner Owner address.
+    /// @param guardian Guardian address.
     /// @param operations Array of struct details for targets and calldatas.
-    event Submitted(address indexed owner, Operation[] operations);
+    event Submitted(address indexed guardian, Operation[] operations);
 
     /// @notice Emitted when guardian fees are claimed.
     /// @param feeRecipient Fee recipient address.
     /// @param claimedFee Claimed amount of fee token.
     /// @param unclaimedFee Unclaimed amount of fee token (unclaimed because Vault does not have enough balance of feeToken).
+    /// @param feeTotal New total reserved fee value.
     event Claimed(
-        address indexed feeRecipient, uint256 claimedFee, uint256 unclaimedFee
+        address indexed feeRecipient, uint256 claimedFee, uint256 unclaimedFee, uint256 feeTotal
+    );
+
+    /// @notice Emitted when new fees are reserved for recipient.
+    /// @param feeRecipient Fee recipient address.
+    /// @param newFee Fee amount reserved.
+    /// @param lastFeeCheckpoint Updated fee checkpoint.
+    /// @param lastValue Last registered vault value.
+    /// @param lastFeeTokenPrice Last registered fee token price.
+    /// @param feeTotal New total reserved fee value.
+    event FeesReserved(
+        address indexed feeRecipient,
+        uint256 newFee,
+        uint256 lastFeeCheckpoint,
+        uint256 lastValue,
+        uint256 lastFeeTokenPrice,
+        uint256 feeTotal
     );
 }

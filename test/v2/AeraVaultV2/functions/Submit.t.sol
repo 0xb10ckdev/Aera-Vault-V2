@@ -56,7 +56,11 @@ contract SubmitTest is TestBaseAeraVaultV2 {
             data: abi.encodeWithSelector(IHooks.beforeDeposit.selector, amounts)
         });
         vm.prank(_GUARDIAN);
-        vm.expectRevert(IVault.Aera__SubmitTargetIsHooksAddress.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IVault.Aera__SubmitTargetIsHooksAddress.selector, 0
+            )
+        );
         vault.submit(hookOperations);
     }
 
@@ -133,7 +137,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         }
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Submitted(vault.owner(), operations);
+        emit Submitted(vault.guardian(), operations);
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
