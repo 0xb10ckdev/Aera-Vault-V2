@@ -567,10 +567,16 @@ contract AeraVaultV2 is
             assetRegistry.assets()[assetRegistry.numeraireId()].asset;
 
         // Calculate new fee for current fee recipient.
-        uint256 newFee = lastValue * feeIndex * fee
-            * 10 ** IERC20Metadata(address(feeToken)).decimals()
-            / lastFeeTokenPrice
-            / 10 ** IERC20Metadata(address(numeraireAsset)).decimals();
+        uint256 newFee = lastValue * feeIndex * fee / lastFeeTokenPrice;
+        uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
+        uint256 numeraireDecimals =
+            IERC20Metadata(address(numeraireAsset)).decimals();
+
+        if (numeraireDecimals < feeTokenDecimals) {
+            newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
+        } else if (numeraireDecimals > feeTokenDecimals) {
+            newFee = newFee / (10 ** (numeraireDecimals - feeTokenDecimals));
+        }
 
         if (newFee == 0) {
             return;
