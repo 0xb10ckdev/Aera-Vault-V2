@@ -60,7 +60,7 @@ interface IAssetRegistry {
     function removeAsset(address asset) external;
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
-    /// @return spotPrices Spot prices of non-ERC4626 assets.
+    /// @return spotPrices Spot prices of non-ERC4626 assets in 18 decimals.
     /// @dev MUST return assets in the same order as in assets but with ERC4626 assets filtered out.
     /// @dev MUST also include numeraire asset (spot price = 1).
     /// @dev MAY revert if oracle prices for any asset are unreliable at the time.
