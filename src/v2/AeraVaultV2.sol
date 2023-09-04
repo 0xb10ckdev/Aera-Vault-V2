@@ -307,9 +307,6 @@ contract AeraVaultV2 is
             revert Aera__ExecuteTargetIsHooksAddress();
         }
 
-        uint256 prevFeeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
-
         // Interactions: execute operation.
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
