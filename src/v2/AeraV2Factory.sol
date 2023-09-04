@@ -27,6 +27,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param vault Vault address.
     /// @param assetRegistry Asset registry address.
     /// @param hooks Hooks address.
+    /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
     /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
@@ -36,11 +37,43 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address indexed vault,
         address assetRegistry,
         address hooks,
+        address owner,
         address indexed guardian,
         address indexed feeRecipient,
         uint256 fee,
         string description,
         address wrappedNativeToken
+    );
+
+    /// @notice Emitted when the asset registry is created.
+    /// @param assetRegistry Asset registry address.
+    /// @param vault Vault address.
+    /// @param owner Initial owner address.
+    /// @param assets Initial list of registered assets.
+    /// @param numeraireId The index of the numeraire asset in the assets array.
+    /// @param feeToken Fee token address.
+    event AssetRegistryCreated(
+        address indexed assetRegistry,
+        address indexed vault,
+        address indexed owner,
+        IAssetRegistry.AssetInformation[] assets,
+        uint256 numeraireId,
+        IERC20 feeToken
+    );
+
+    /// @notice Emitted when the hooks is created.
+    /// @param hooks Hooks address.
+    /// @param vault Vault address.
+    /// @param owner Initial owner address.
+    /// @param maxDailyExecutionLoss The fraction of value that the vault can
+    ///                               lose per day in the course of submissions.
+    /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
+    event HooksCreated(
+        address indexed hooks,
+        address indexed vault,
+        address indexed owner,
+        uint256 maxDailyExecutionLoss,
+        TargetSighash[] targetSighashAllowlist
     );
 
     /// ERRORS ///
@@ -68,8 +101,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address feeRecipient,
         uint256 fee,
         string calldata description,
-        AssetRegistryParameters memory assetRegistryParameters,
-        HooksParameters memory hooksParameters
+        AssetRegistryParameters calldata assetRegistryParameters,
+        HooksParameters calldata hooksParameters
     )
         external
         override
@@ -128,6 +161,43 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
                 assetRegistryParameters.feeToken
             )
         );
+
+        // Log asset registry creation.
+        emit AssetRegistryCreated(
+            deployed,
+            vault,
+            assetRegistryParameters.owner,
+            assetRegistryParameters.assets,
+            assetRegistryParameters.numeraireId,
+            assetRegistryParameters.feeToken
+        );
+    }
+
+    /// @notice Deploy asset registry.
+    /// @param vault Vault address.
+    /// @param hooksParameters Struct details for hooks deployment.
+    /// @return deployed The address of deployed hooks.
+    function _deployHooks(
+        address vault,
+        HooksParameters memory hooksParameters
+    ) internal returns (address deployed) {
+        deployed = address(
+            new AeraVaultHooks(
+                hooksParameters.owner,
+                vault,
+                hooksParameters.maxDailyExecutionLoss,
+                hooksParameters.targetSighashAllowlist
+            )
+        );
+
+        // Log hooks creation.
+        emit HooksCreated(
+            deployed,
+            vault,
+            hooksParameters.owner,
+            hooksParameters.maxDailyExecutionLoss,
+            hooksParameters.targetSighashAllowlist
+        );
     }
 
     /// @notice Deploy V2 vault.
@@ -170,29 +240,12 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             deployed,
             assetRegistry,
             hooks,
+            owner,
             guardian,
             feeRecipient,
             fee,
             description,
             wrappedNativeToken
-        );
-    }
-
-    /// @notice Deploy asset registry.
-    /// @param vault Vault address.
-    /// @param hooksParameters Struct details for hooks deployment.
-    /// @return deployed The address of deployed hooks.
-    function _deployHooks(
-        address vault,
-        HooksParameters memory hooksParameters
-    ) internal returns (address deployed) {
-        deployed = address(
-            new AeraVaultHooks(
-                hooksParameters.owner,
-                vault,
-                hooksParameters.maxDailyExecutionLoss,
-                hooksParameters.targetSighashAllowlist
-            )
         );
     }
 
