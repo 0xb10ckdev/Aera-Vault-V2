@@ -39,6 +39,15 @@ interface IAeraV2Factory {
             address deployedHooks
         );
 
+    /// @notice Deploy hooks.
+    /// @param vault Vault address.
+    /// @param hooksParameters Struct details for hooks deployment.
+    /// @return deployed The address of deployed hooks.
+    function deployHooks(
+        address vault,
+        HooksParameters memory hooksParameters
+    ) external returns (address deployed);
+
     /// @notice Calculate deployment address of V2 vault.
     /// @param salt The salt value to create vault.
     function computeVaultAddress(bytes32 salt)

@@ -133,6 +133,14 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     }
 
     /// @inheritdoc IAeraV2Factory
+    function deployHooks(
+        address vault,
+        HooksParameters memory hooksParameters
+    ) external returns (address) {
+        return _deployHooks(vault, hooksParameters);
+    }
+
+    /// @inheritdoc IAeraV2Factory
     function computeVaultAddress(bytes32 salt)
         external
         view
@@ -173,7 +181,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         );
     }
 
-    /// @notice Deploy asset registry.
+    /// @notice Deploy hooks.
     /// @param vault Vault address.
     /// @param hooksParameters Struct details for hooks deployment.
     /// @return deployed The address of deployed hooks.
