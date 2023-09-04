@@ -319,9 +319,6 @@ contract AeraVaultV2 is
             revert Aera__ExecutionFailed(result);
         }
 
-        // Invariants: check that insolvency of fee token was not introduced or increased.
-        _checkReservedFees(prevFeeTokenBalance);
-
         // Log that the operation was executed.
         emit Executed(owner(), operation);
     }
@@ -405,9 +402,6 @@ contract AeraVaultV2 is
         // Hooks: before executing operations.
         hooks.beforeSubmit(operations);
 
-        uint256 prevFeeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
-
         uint256 numOperations = operations.length;
 
         Operation calldata operation;
@@ -443,9 +437,6 @@ contract AeraVaultV2 is
                 i++; // gas savings
             }
         }
-
-        // Invariants: check that insolvency of fee token was not introduced or increased.
-        _checkReservedFees(prevFeeTokenBalance);
 
         // Hooks: after executing operations.
         hooks.afterSubmit(operations);
@@ -764,19 +755,6 @@ contract AeraVaultV2 is
             unchecked {
                 i++; //gas savings
             }
-        }
-    }
-
-    /// @notice Check if balance of fee becomes insolvent or becomes more insolvent.
-    /// @param prevFeeTokenBalance Balance of fee token before action.
-    function _checkReservedFees(uint256 prevFeeTokenBalance) internal view {
-        uint256 feeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
-
-        if (
-            feeTokenBalance < feeTotal && feeTokenBalance < prevFeeTokenBalance
-        ) {
-            revert Aera__CannotUseReservedFees();
         }
     }
 
