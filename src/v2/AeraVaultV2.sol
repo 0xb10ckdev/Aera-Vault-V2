@@ -568,7 +568,7 @@ contract AeraVaultV2 is
 
         // Calculate new fee for current fee recipient.
         // It calculates the fee in fee token decimals.
-        uint256 newFee = lastValue * feeIndex * fee / lastFeeTokenPrice;
+        uint256 newFee = lastValue * feeIndex * fee;
         uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
         uint256 numeraireDecimals =
             IERC20Metadata(address(numeraireAsset)).decimals();
@@ -578,6 +578,8 @@ contract AeraVaultV2 is
         } else if (numeraireDecimals > feeTokenDecimals) {
             newFee = newFee / (10 ** (numeraireDecimals - feeTokenDecimals));
         }
+
+        newFee /= lastFeeTokenPrice;
 
         if (newFee == 0) {
             return;
