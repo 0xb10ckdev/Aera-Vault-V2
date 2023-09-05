@@ -66,7 +66,7 @@ contract AeraVaultV2 is
     uint256 public feeTotal;
 
     /// @notice Last timestamp when fee index was reserved.
-    uint256 public lastFeeCheckpoint = type(uint256).max;
+    uint256 public lastFeeCheckpoint;
 
     /// MODIFIERS ///
 
