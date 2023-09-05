@@ -80,7 +80,7 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address vault_,
         uint256 maxDailyExecutionLoss_,
         TargetSighashData[] memory targetSighashAllowlist
-    ) {
+    ) Ownable() {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();

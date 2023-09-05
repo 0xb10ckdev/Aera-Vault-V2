@@ -118,7 +118,7 @@ contract AeraVaultV2 is
 
     /// FUNCTIONS ///
 
-    constructor() {
+    constructor() Ownable() ReentrancyGuard() {
         (
             address owner_,
             address assetRegistry_,
