@@ -93,26 +93,58 @@ contract SubmitTest is TestBaseAeraVaultV2 {
     }
 
     function test_submit_fail_whenUseReservedFees() public {
-        for (uint256 i = 0; i < operations.length; i++) {
-            hooks.addTargetSighash(
-                operations[i].target, IERC20.transfer.selector
-            );
+        uint256 feeTokenId;
+        uint256 nonFeeTokenId;
+        IERC20 nonFeeToken;
 
-            if (operations[i].target == address(feeToken)) {
-                operations[i].data = abi.encodeWithSignature(
-                    "transfer(address,uint256)",
-                    address(this),
-                    feeToken.balanceOf(address(vault))
-                );
+        for (uint256 i = 0; i < assetsInformation.length; i++) {
+            if (assetsInformation[i].asset == feeToken) {
+                feeTokenId = i;
+            } else if (!assetsInformation[i].isERC4626) {
+                nonFeeTokenId = i;
+                nonFeeToken = assetsInformation[i].asset;
             }
         }
 
-        vm.warp(block.timestamp + 1000);
+        uint256 feeTokenAmount = feeToken.balanceOf(address(vault));
+        uint256 nonFeeTokenAmount = feeTokenAmount
+            * oraclePrices[nonFeeTokenId] * _getScaler(nonFeeToken)
+            / oraclePrices[feeTokenId] / _getScaler(feeToken);
+
+        Operation[] memory ops = new Operation[](2);
+
+        hooks.addTargetSighash(address(feeToken), IERC20.transfer.selector);
+        ops[0] = Operation({
+            target: address(feeToken),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "transfer(address,uint256)", address(this), feeTokenAmount
+                )
+        });
+
+        hooks.addTargetSighash(
+            address(nonFeeToken), IERC20.transferFrom.selector
+        );
+        ops[1] = Operation({
+            target: address(nonFeeToken),
+            value: 0,
+            data: abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                _GUARDIAN,
+                address(vault),
+                nonFeeTokenAmount
+                )
+        });
+
+        skip(1000);
+
+        deal(address(nonFeeToken), _GUARDIAN, nonFeeTokenAmount);
+
+        vm.startPrank(_GUARDIAN);
+        nonFeeToken.approve(address(vault), nonFeeTokenAmount);
 
         vm.expectRevert(IVault.Aera__CannotUseReservedFees.selector);
-
-        vm.prank(_GUARDIAN);
-        vault.submit(operations);
+        vault.submit(ops);
     }
 
     function test_submit_success() public {
