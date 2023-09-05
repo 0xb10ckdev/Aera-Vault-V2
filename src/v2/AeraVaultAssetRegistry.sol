@@ -409,10 +409,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             if (address(asset.oracle) == address(0)) {
                 revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
             }
-            // Heartbeat shouldn't be 0.
-            if (asset.heartbeat == 0) {
-                revert Aera__OracleHeartbeatIsZero(address(asset.asset));
-            }
         }
     }
 
