@@ -49,36 +49,6 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
         vault.setHooks(address(1));
     }
 
-    function test_setHooks_fail_whenHooksHasInvalidVault() public {
-        assetRegistry = new AeraVaultAssetRegistry(
-            address(this),
-            factory.computeVaultAddress(bytes32(_ONE)),
-            assetsInformation,
-            numeraireId,
-            feeToken
-        );
-
-        address newVault = factory.create(
-            bytes32(_ONE),
-            address(this),
-            address(assetRegistry),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
-        );
-
-        newHooks = new AeraVaultHooks(
-            address(this),
-            newVault,
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
-        );
-
-        vm.expectRevert(IVault.Aera__HooksHasInvalidVault.selector);
-        vault.setHooks(address(newHooks));
-    }
-
     function test_setHooks_success_whenOraclePriceIsInvalid() public {
         _setInvalidOracle(nonNumeraireId);
 

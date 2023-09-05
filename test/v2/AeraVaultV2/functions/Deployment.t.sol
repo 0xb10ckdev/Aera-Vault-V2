@@ -24,6 +24,15 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             numeraireId,
             feeToken
         );
+
+        hooks = new AeraVaultHooks(
+            address(this),
+            Create2.computeAddress(
+                bytes32(_ONE), keccak256(type(AeraVaultV2).creationCode)
+            ),
+            _MAX_DAILY_EXECUTION_LOSS,
+            targetSighashAllowlist
+        );
     }
 
     function test_aeraVaultV2Deployment_fail_whenAssetRegistryIsZeroAddress()
@@ -33,6 +42,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(0),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -50,6 +60,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(1),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -73,6 +84,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -86,6 +98,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             address(0),
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -97,6 +110,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             address(this),
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -110,6 +124,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             address(0),
             _MAX_FEE
@@ -123,6 +138,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             address(this),
             _MAX_FEE
@@ -134,6 +150,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(0),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -149,6 +166,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE + 1
@@ -163,9 +181,11 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE
+            _MAX_FEE,
+            "Test Vault"
         );
     }
 
@@ -178,6 +198,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         vault = _deployVault(
             address(this),
             address(assetRegistry),
+            address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE
@@ -211,17 +232,20 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
     function _deployVault(
         address owner,
         address assetRegistry,
+        address hooks,
         address guardian,
         address feeRecipient,
         uint256 fee
     ) internal returns (AeraVaultV2 deployed) {
-        parameters = VaultParameters({
-            owner: owner,
-            assetRegistry: assetRegistry,
-            guardian: guardian,
-            feeRecipient: feeRecipient,
-            fee: fee
-        });
+        parameters = VaultParameters(
+            owner,
+            assetRegistry,
+            hooks,
+            guardian,
+            feeRecipient,
+            fee,
+            description
+        );
 
         deployed = new AeraVaultV2{salt: bytes32(_ONE)}();
 

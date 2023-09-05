@@ -14,7 +14,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
 
     function test_assetRegistryDeployment_fail_whenNumberOfAssetsExceedsMaximum(
     ) public {
-        _createAssets(30, 20);
+        _createAssets(30, 20, 10);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -36,8 +36,6 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function test_assetRegistryDeployment_fail_whenInitialOwnerIsZeroAddress()
         public
     {
-        _createAssets(1, 0);
-
         vm.expectRevert(
             AeraVaultAssetRegistry
                 .Aera__AssetRegistryInitialOwnerIsZeroAddress

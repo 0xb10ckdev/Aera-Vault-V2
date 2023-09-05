@@ -30,21 +30,6 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         );
     }
 
-    function test_aeraVaultHooksDeployment_fail_whenVaultIsNotValid() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AeraVaultHooks.Aera__VaultIsNotValid.selector, address(1)
-            )
-        );
-
-        new AeraVaultHooks(
-            address(this),
-            address(1),
-            _MAX_DAILY_EXECUTION_LOSS,
-            new TargetSighashData[](0)
-        );
-    }
-
     function test_aeraVaultHooksDeployment_fail_whenMaxDailyExecutionLossIsGreaterThanOne(
     ) public {
         vm.expectRevert(
