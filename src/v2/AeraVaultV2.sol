@@ -322,6 +322,10 @@ contract AeraVaultV2 is
         if (operation.target == address(hooks)) {
             revert Aera__ExecuteTargetIsHooksAddress();
         }
+        // Requirements: check that the target contract is not vault itself.
+        if (operation.target == address(this)) {
+            revert Aera__ExecuteTargetIsVaultAddress();
+        }
 
         // Interactions: execute operation.
         (bool success, bytes memory result) =
@@ -453,6 +457,10 @@ contract AeraVaultV2 is
             // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
                 revert Aera__SubmitTargetIsHooksAddress();
+            }
+            // Requirements: check that the target contract is not vault itself.
+            if (operation.target == address(this)) {
+                revert Aera__SubmitTargetIsVaultAddress();
             }
 
             // Interactions: execute operation.
