@@ -71,6 +71,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__UnderlyingAssetIsNotRegistered(
         address asset, address underlyingAsset
     );
+    error Aera__UnderlyingAssetIsItselfERC4626();
     error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
     error Aera__NumeraireAssetIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
@@ -436,9 +437,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         for (; underlyingIndex < numAssets; underlyingIndex++) {
             if (
-                !assetsToCheck[underlyingIndex].isERC4626
-                    && underlyingAsset
-                        == address(assetsToCheck[underlyingIndex].asset)
+                underlyingAsset
+                    == address(assetsToCheck[underlyingIndex].asset)
             ) {
                 break;
             }
@@ -448,6 +448,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__UnderlyingAssetIsNotRegistered(
                 address(asset.asset), underlyingAsset
             );
+        }
+
+        if (assetsToCheck[underlyingIndex].isERC4626) {
+            revert Aera__UnderlyingAssetIsItselfERC4626();
         }
     }
 
