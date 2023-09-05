@@ -123,7 +123,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
 
         // Requirements: confirm that fee token is present.
-        if (feeTokenIndex == numAssets) {
+        if (feeTokenIndex >= numAssets) {
             revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
         }
 
@@ -197,7 +197,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 numAssets = _assets.length;
 
         // Requirements: validate number of assets doesn't exceed bound.
-        if (numAssets == MAX_ASSETS) {
+        if (numAssets >= MAX_ASSETS) {
             revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
         }
 
@@ -434,7 +434,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        if (underlyingIndex == numAssets) {
+        if (underlyingIndex >= numAssets) {
             revert Aera__UnderlyingAssetIsNotRegistered(
                 address(asset.asset), underlyingAsset
             );
