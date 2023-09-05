@@ -368,11 +368,10 @@ contract AeraVaultV2 is
         external
         override
         onlyOwnerOrGuardian
-        whenNotPaused
         whenNotFinalized
         reserveFees
     {
-        // Effects: pause the vault.
+        // Requirements and Effects: checks contract is unpaused and pauses it.
         _pause();
     }
 
@@ -381,14 +380,13 @@ contract AeraVaultV2 is
         external
         override
         onlyOwner
-        whenPaused
         whenHooksSet
         whenNotFinalized
     {
         // Effects: start a new fee checkpoint.
         lastFeeCheckpoint = block.timestamp;
 
-        // Effects: unpause the vault.
+        // Requirements and Effects: checks contract is paused and unpauses it.
         _unpause();
     }
 
