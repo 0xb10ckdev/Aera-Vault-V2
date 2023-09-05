@@ -23,8 +23,10 @@ interface IVault is IVaultEvents {
     error Aera__InitialOwnerIsZeroAddress();
     error Aera__FeeRecipientIsZeroAddress();
     error Aera__ExecuteTargetIsHooksAddress();
+    error Aera__ExecuteTargetIsVaultAddress();
     error Aera__SubmitTransfersAssetFromOwner();
     error Aera__SubmitTargetIsHooksAddress();
+    error Aera__SubmitTargetIsVaultAddress();
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotOwnerAndGuardian();
