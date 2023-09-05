@@ -215,7 +215,7 @@ contract AeraVaultV2 is
 
             // Interactions: transfer asset from owner to vault.
             assetValue.asset.safeTransferFrom(
-                owner(), address(this), assetValue.value
+                msg.sender, address(this), assetValue.value
             );
 
             unchecked {
@@ -227,7 +227,7 @@ contract AeraVaultV2 is
         hooks.afterDeposit(amounts);
 
         // Log deposit.
-        emit Deposit(owner(), amounts);
+        emit Deposit(msg.sender, amounts);
     }
 
     /// @inheritdoc IVault
@@ -260,14 +260,14 @@ contract AeraVaultV2 is
             }
 
             // Interactions: withdraw assets.
-            assetValue.asset.safeTransfer(owner(), assetValue.value);
+            assetValue.asset.safeTransfer(msg.sender, assetValue.value);
         }
 
         // Hooks: after transferring assets.
         hooks.afterWithdraw(amounts);
 
         // Log withdrawal.
-        emit Withdraw(owner(), amounts);
+        emit Withdraw(msg.sender, amounts);
     }
 
     /// @inheritdoc IVault
@@ -337,7 +337,7 @@ contract AeraVaultV2 is
         }
 
         // Log that the operation was executed.
-        emit Executed(owner(), operation);
+        emit Executed(msg.sender, operation);
     }
 
     /// @inheritdoc IVault
@@ -364,7 +364,9 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAssetAmounts;) {
             // Effects: transfer registered assets to owner.
             // Excludes reserved fee tokens and native token (e.g., ETH).
-            assetAmounts[i].asset.safeTransfer(owner(), assetAmounts[i].value);
+            assetAmounts[i].asset.safeTransfer(
+                msg.sender, assetAmounts[i].value
+            );
             unchecked {
                 i++; // gas savings
             }
@@ -374,7 +376,7 @@ contract AeraVaultV2 is
         hooks.afterFinalize();
 
         // Log finalization.
-        emit Finalized(owner(), assetAmounts);
+        emit Finalized(msg.sender, assetAmounts);
     }
 
     /// @inheritdoc IVault
