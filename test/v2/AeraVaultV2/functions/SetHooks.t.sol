@@ -52,6 +52,17 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
     function test_setHooks_success_whenOraclePriceIsInvalid() public {
         _setInvalidOracle(nonNumeraireId);
 
+        skip(1000);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SpotPricesReverted(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                nonNumeraireId,
+                -1
+            )
+        );
+
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetHooks(address(newHooks));
 

@@ -57,6 +57,17 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     {
         _setInvalidOracle(nonNumeraireId);
 
+        skip(1000);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SpotPricesReverted(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                nonNumeraireId,
+                -1
+            )
+        );
+
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetGuardianAndFeeRecipient(_USER, address(1));
 
