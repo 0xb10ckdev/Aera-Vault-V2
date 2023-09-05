@@ -90,12 +90,10 @@ contract AeraVaultHooksHandler is TestBase {
         }
 
         if (beforeValue > 0) {
-            uint256 newMultiplier = (vault.value() * _ONE) / beforeValue;
-
-            if (currentDay == day) {
-                newMultiplier =
-                    (cumulativeDailyMultiplier * newMultiplier) / _ONE;
-            }
+            uint256 newMultiplier = (
+                vault.value()
+                    * (currentDay == day ? cumulativeDailyMultiplier : _ONE)
+            ) / beforeValue;
 
             if (newMultiplier < _ONE - hooks.maxDailyExecutionLoss()) {
                 return;
