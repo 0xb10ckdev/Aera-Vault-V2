@@ -774,11 +774,7 @@ contract AeraVaultV2 is
             });
 
             if (asset.asset == feeToken) {
-                if (assetAmounts[i].value > feeTotal) {
-                    assetAmounts[i].value -= feeTotal;
-                } else {
-                    assetAmounts[i].value = 0;
-                }
+                assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
             }
             unchecked {
                 i++; //gas savings
