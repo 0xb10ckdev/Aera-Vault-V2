@@ -226,13 +226,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
             uint256 newMultiplier =
-                (IVault(vault).value() * ONE) / _beforeValue;
-
-            if (currentDay == day) {
-                // Calculate total multiplier for today.
-                newMultiplier =
-                    (cumulativeDailyMultiplier * newMultiplier) / ONE;
-            }
+                (currentDay == day ? cumulativeDailyMultiplier : ONE);
+            newMultiplier =
+                newMultiplier * IVault(vault).value() / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
             if (newMultiplier < ONE - maxDailyExecutionLoss) {
