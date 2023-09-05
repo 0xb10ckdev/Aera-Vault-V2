@@ -136,9 +136,6 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
-        if (wrappedNativeToken_ == address(0)) {
-            revert Aera__WrappedNativeTokenIsZeroAddress();
-        }
 
         // Effects: initialize vault state.
         wrappedNativeToken = wrappedNativeToken_;
@@ -374,11 +371,10 @@ contract AeraVaultV2 is
         external
         override
         onlyOwnerOrGuardian
-        whenNotPaused
         whenNotFinalized
         reserveFees
     {
-        // Effects: pause the vault.
+        // Requirements and Effects: checks contract is unpaused and pauses it.
         _pause();
     }
 
@@ -387,14 +383,13 @@ contract AeraVaultV2 is
         external
         override
         onlyOwner
-        whenPaused
         whenHooksSet
         whenNotFinalized
     {
         // Effects: start a new fee checkpoint.
         lastFeeCheckpoint = block.timestamp;
 
-        // Effects: unpause the vault.
+        // Requirements and Effects: checks contract is paused and unpauses it.
         _unpause();
     }
 
