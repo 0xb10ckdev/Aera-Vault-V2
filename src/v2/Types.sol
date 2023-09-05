@@ -73,5 +73,5 @@ struct AssetRegistryParameters {
 struct HooksParameters {
     address owner;
     uint256 maxDailyExecutionLoss;
-    TargetSighash[] targetSighashAllowlist;
+    TargetSighashData[] targetSighashAllowlist;
 }
