@@ -428,7 +428,8 @@ contract AeraVaultV2 is
                 revert Aera__SubmitTransfersAssetFromOwner();
             }
 
-            // Requirements: validate that it doesn't redeem ERC4626 asset from owner.
+            // Requirements: check that operation is not trying to redeem ERC4626 shares from owner.
+            // This could occur if the owner had a pre-existing allowance introduced during deposit.
             if (
                 selector == IERC4626.withdraw.selector
                     || selector == IERC4626.redeem.selector
