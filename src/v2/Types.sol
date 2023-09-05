@@ -40,12 +40,14 @@ struct TargetSighashData {
 /// @notice Vault parameters for vault deployment.
 /// @param owner Initial owner address.
 /// @param assetRegistry Asset registry address.
+/// @param hooks Hooks address.
 /// @param guardian Guardian address.
 /// @param feeRecipient Fee recipient address.
 /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
 struct VaultParameters {
     address owner;
     address assetRegistry;
+    address hooks;
     address guardian;
     address feeRecipient;
     uint256 fee;

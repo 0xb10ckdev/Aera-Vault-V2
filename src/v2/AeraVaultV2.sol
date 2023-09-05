@@ -114,6 +114,7 @@ contract AeraVaultV2 is
         (
             address owner_,
             address assetRegistry_,
+            address hooks_,
             address guardian_,
             address feeRecipient_,
             uint256 fee_
@@ -123,6 +124,7 @@ contract AeraVaultV2 is
 
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
+        _checkHooksAddress(hooks_);
         _checkGuardianAddress(guardian_);
         _checkFeeRecipientAddress(feeRecipient_);
 
@@ -141,6 +143,7 @@ contract AeraVaultV2 is
         // Effects: initialize vault state.
         wrappedNativeToken = wrappedNativeToken_;
         assetRegistry = IAssetRegistry(assetRegistry_);
+        hooks = IHooks(hooks_);
         guardian = guardian_;
         feeRecipient = feeRecipient_;
         fee = fee_;
@@ -154,6 +157,9 @@ contract AeraVaultV2 is
 
         // Log setting of asset registry.
         emit SetAssetRegistry(assetRegistry_);
+
+        // Log new hooks address.
+        emit SetHooks(hooks_);
 
         // Log the current guardian and fee recipient.
         emit SetGuardianAndFeeRecipient(guardian_, feeRecipient_);

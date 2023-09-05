@@ -19,7 +19,9 @@ interface IAeraVaultV2Factory {
     /// @param description Vault description.
     /// @param assetRegistryParameters Struct details for asset registry deployment.
     /// @param hooksParameters Struct details for hooks deployment.
-    /// @return deployed The address of deployed vault.
+    /// @return deployedVault The address of deployed vault.
+    /// @return deployedAssetRegistry The address of deployed asset registry.
+    /// @return deployedHooks The address of deployed hooks.
     function create(
         bytes32 salt,
         address owner,
@@ -29,7 +31,13 @@ interface IAeraVaultV2Factory {
         string calldata description,
         AssetRegistryParameters memory assetRegistryParameters,
         HooksParameters memory hooksParameters
-    ) external returns (address deployed);
+    )
+        external
+        returns (
+            address deployedVault,
+            address deployedAssetRegistry,
+            address deployedHooks
+        );
 
     /// @notice Calculate deployment address of V2 vault.
     /// @param salt The salt value to create vault.
@@ -38,25 +46,13 @@ interface IAeraVaultV2Factory {
         view
         returns (address deployed);
 
-    /// @notice Deploy contract with the given bytecode if it is not deployed yet.
-    /// @param salt The salt value to create contract.
-    /// @param code Bytecode of contract to be deployed.
-    function deploy(bytes32 salt, bytes memory code) external;
-
-    /// @notice Calculate deployment address of contract.
-    /// @param salt The salt value to create contract.
-    /// @param code Bytecode of contract to be deployed.
-    function computeAddress(
-        bytes32 salt,
-        bytes calldata code
-    ) external view returns (address);
-
     /// @notice Returns the address of wrapped native token.
     function wrappedNativeToken() external view returns (address);
 
     /// @notice Returns vault parameters for vault deployment.
     /// @return owner Initial owner address.
     /// @return assetRegistry Asset registry address.
+    /// @return hooks Hooks address.
     /// @return guardian Guardian address.
     /// @return feeRecipient Fee recipient address.
     /// @return fee Fee accrued per second, denoted in 18 decimal fixed point format.
@@ -66,6 +62,7 @@ interface IAeraVaultV2Factory {
         returns (
             address owner,
             address assetRegistry,
+            address hooks,
             address guardian,
             address feeRecipient,
             uint256 fee
