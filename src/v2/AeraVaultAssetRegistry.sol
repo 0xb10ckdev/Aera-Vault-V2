@@ -262,7 +262,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         } else {
             for (uint256 i = 0; i < numAssets; i++) {
                 if (
-                    _assets[i].isERC4626
+                    i != oldAssetIndex && _assets[i].isERC4626
                         && IERC4626(address(_assets[i].asset)).asset() == asset
                 ) {
                     revert Aera__AssetIsUnderlyingAssetOfERC4626(
