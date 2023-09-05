@@ -73,7 +73,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address indexed vault,
         address indexed owner,
         uint256 maxDailyExecutionLoss,
-        TargetSighash[] targetSighashAllowlist
+        TargetSighashData[] targetSighashAllowlist
     );
 
     /// ERRORS ///
@@ -113,6 +113,11 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             address deployedHooks
         )
     {
+        // Requirements: confirm that vault has a nonempty description.
+        if (bytes(description).length == 0) {
+            revert Aera__DescriptionIsEmpty();
+        }
+
         deployedAssetRegistry = _deployAssetRegistry(
             _computeVaultAddress(salt), assetRegistryParameters
         );
@@ -229,13 +234,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         string calldata description
     ) internal returns (address deployed) {
         parameters = VaultParameters(
-            owner,
-            assetRegistry,
-            hooks,
-            guardian,
-            feeRecipient,
-            fee,
-            description
+            owner, assetRegistry, hooks, guardian, feeRecipient, fee
         );
 
         // Requirements, Effects and Interactions: deploy vault with create2.

@@ -11,7 +11,7 @@ import {AeraV2Factory} from "src/v2/AeraV2Factory.sol";
 import {IAssetRegistry} from "src/v2/interfaces/IAssetRegistry.sol";
 import {
     TargetSighash,
-    TargetSighashData
+    TargetSighashData,
     AssetRegistryParameters,
     HooksParameters,
     VaultParameters
@@ -41,14 +41,14 @@ contract DeployAeraContracts is DeployScriptBase {
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt
     ///         if they were not deployed yet.
     /// @param salt The salt value to create contract.
-    /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedVault The address of deployed AeraVaultV2.
+    /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedHooks The address of deployed Hooks.
     function run(bytes32 salt)
         public
         returns (
-            address deployedAssetRegistry,
             address deployedVault,
+            address deployedAssetRegistry,
             address deployedHooks
         )
     {
@@ -70,8 +70,8 @@ contract DeployAeraContracts is DeployScriptBase {
     )
         public
         returns (
-            address deployedAssetRegistry,
             address deployedVault,
+            address deployedAssetRegistry,
             address deployedHooks
         )
     {
@@ -88,8 +88,11 @@ contract DeployAeraContracts is DeployScriptBase {
             _getAssetRegistryParams(assetRegistryPath);
 
         // Get parameters for AeraVaultV2
-        (address aeraV2Factory, VaultParameters memory vaultParameters) =
-            _getAeraVaultV2Params(aeraVaultV2Path);
+        (
+            address aeraV2Factory,
+            VaultParameters memory vaultParameters,
+            string memory description
+        ) = _getAeraVaultV2Params(aeraVaultV2Path);
 
         // Get parameters for AeraVaultHooks
         HooksParameters memory hooksParameters =
@@ -106,7 +109,7 @@ contract DeployAeraContracts is DeployScriptBase {
             vaultParameters.guardian,
             vaultParameters.feeRecipient,
             vaultParameters.fee,
-            vaultParameters.description,
+            description,
             assetRegistryParameters,
             hooksParameters
         );
@@ -130,7 +133,7 @@ contract DeployAeraContracts is DeployScriptBase {
         );
 
         // Store deployed address
-        _storeDeployedAddress("custody", deployedVault);
+        _storeDeployedAddress("vault", deployedVault);
         _storeDeployedAddress("assetRegistry", deployedAssetRegistry);
         _storeDeployedAddress("hooks", deployedHooks);
 
@@ -164,7 +167,11 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
-        returns (address aeraV2Factory, VaultParameters memory vaultParameters)
+        returns (
+            address aeraV2Factory,
+            VaultParameters memory vaultParameters,
+            string memory description
+        )
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
@@ -174,7 +181,7 @@ contract DeployAeraContracts is DeployScriptBase {
         address guardian = json.readAddress(".guardian");
         address feeRecipient = json.readAddress(".feeRecipient");
         uint256 fee = json.readUint(".fee");
-        string memory description = json.readString(".description");
+        description = json.readString(".description");
 
         vaultParameters = VaultParameters(
             owner == address(0) ? _deployerAddress : owner,
@@ -182,8 +189,7 @@ contract DeployAeraContracts is DeployScriptBase {
             address(0),
             guardian,
             feeRecipient,
-            fee,
-            description
+            fee
         );
     }
 
@@ -196,7 +202,6 @@ contract DeployAeraContracts is DeployScriptBase {
 
         address owner = json.readAddress(".owner");
         uint256 maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
-        TargetSighash[] memory targetSighashAllowlist;
 
         bytes32[] memory allowlistRaw =
             json.readBytes32Array(".targetSighashAllowlist");
@@ -204,14 +209,13 @@ contract DeployAeraContracts is DeployScriptBase {
         assembly {
             allowlist := allowlistRaw
         }
-        
+
         TargetSighashData[] memory targetSighashAllowlist;
         for (uint256 i = 0; i < allowlist.length; i++) {
-            targetSighashAllowlist[i] =
-                TargetSighashData({
-                    target: _getTarget(allowlist[i]),
-                    selector: _getSelector(allowlist[i])
-                });
+            targetSighashAllowlist[i] = TargetSighashData({
+                target: _getTarget(allowlist[i]),
+                selector: _getSelector(allowlist[i])
+            });
         }
 
         return HooksParameters(
@@ -221,7 +225,11 @@ contract DeployAeraContracts is DeployScriptBase {
         );
     }
 
-    function _getTarget(TargetSighash targetSighash) internal pure returns (address) {
+    function _getTarget(TargetSighash targetSighash)
+        internal
+        pure
+        returns (address)
+    {
         bytes32 ts;
         assembly {
             ts := targetSighash
@@ -229,7 +237,11 @@ contract DeployAeraContracts is DeployScriptBase {
         return address(bytes20(ts));
     }
 
-    function _getSelector(TargetSighash targetSighash) internal pure returns (bytes4) {
+    function _getSelector(TargetSighash targetSighash)
+        internal
+        pure
+        returns (bytes4)
+    {
         bytes32 ts;
         assembly {
             ts := targetSighash
@@ -296,7 +308,7 @@ contract DeployAeraContracts is DeployScriptBase {
     ) internal {
         console.log("Checking Hooks Integrity");
 
-        assertEq(address(hooks.custody()), custody);
+        assertEq(address(hooks.vault()), vault);
         assertEq(
             hooks.maxDailyExecutionLoss(),
             hooksParameters.maxDailyExecutionLoss

@@ -22,12 +22,12 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         }
     }
 
-    function test_aeraVaultV2FactoryDeployment_fail_whenWrappedNativeTokenIsZeroAddress(
+    function test_aeraV2FactoryDeployment_fail_whenWrappedNativeTokenIsZeroAddress(
     ) public {
         vm.expectRevert(
             AeraV2Factory.Aera__WrappedNativeTokenIsZeroAddress.selector
         );
-        new AeraVaultV2Factory(address(0));
+        new AeraV2Factory(address(0));
     }
 
     function test_createAeraV2Contracts_fail_whenCallerIsNotOwner() public {
@@ -43,21 +43,6 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
             "Test Vault",
             assetRegistryParameters,
             hooksParameters
-        );
-    }
-
-    function test_createAeraV2Contracts_fail_whenGuardianIsZeroAddress()
-        public
-    {
-        vm.expectRevert(IVault.Aera__AssetRegistryIsZeroAddress.selector);
-        factory.create(
-            bytes32(_ONE),
-            address(this),
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
         );
     }
 
@@ -157,7 +142,7 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
     }
 
     function test_createAeraV2Contracts_fail_whenDescriptionIsEmpty() public {
-        vm.expectRevert(AeraVaultV2Factory.Aera__DescriptionIsEmpty.selector);
+        vm.expectRevert(AeraV2Factory.Aera__DescriptionIsEmpty.selector);
         factory.create(
             bytes32(_ONE),
             address(this),
@@ -200,7 +185,7 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         assertEq(vault.fee(), _MAX_FEE);
 
         assertEq(assetRegistry.owner(), assetRegistryParameters.owner);
-        assertEq(assetRegistry.custody(), address(vault));
+        assertEq(assetRegistry.vault(), address(vault));
         assertEq(
             assetRegistry.numeraireId(), assetRegistryParameters.numeraireId
         );
@@ -210,7 +195,7 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         );
 
         assertEq(hooks.owner(), hooksParameters.owner);
-        assertEq(address(hooks.custody()), address(vault));
+        assertEq(address(hooks.vault()), address(vault));
         assertEq(
             hooks.maxDailyExecutionLoss(),
             hooksParameters.maxDailyExecutionLoss

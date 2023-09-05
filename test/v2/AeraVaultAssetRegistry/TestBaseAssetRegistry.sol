@@ -183,7 +183,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         _deployAeraV2Factory();
         _createAssets(4, 2, 0);
 
-        TargetSighash[] memory targetSighashAllowlist;
+        TargetSighashData[] memory targetSighashAllowlist;
 
         vm.expectEmit(true, false, false, true);
         emit Created(

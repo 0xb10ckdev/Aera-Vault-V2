@@ -184,8 +184,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             address(hooks),
             _GUARDIAN,
             _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            _MAX_FEE
         );
     }
 
@@ -238,13 +237,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         uint256 fee
     ) internal returns (AeraVaultV2 deployed) {
         parameters = VaultParameters(
-            owner,
-            assetRegistry,
-            hooks,
-            guardian,
-            feeRecipient,
-            fee,
-            description
+            owner, assetRegistry, hooks, guardian, feeRecipient, fee
         );
 
         deployed = new AeraVaultV2{salt: bytes32(_ONE)}();
