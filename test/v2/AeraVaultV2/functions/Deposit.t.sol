@@ -76,7 +76,16 @@ contract DepositTest is TestBaseAeraVaultV2 {
     function test_deposit_success_whenOraclePriceIsInvalid() public {
         _setInvalidOracle(nonNumeraireId);
 
-        vm.warp(block.timestamp + 1000);
+        skip(1000);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SpotPricesReverted(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                nonNumeraireId,
+                -1
+            )
+        );
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Deposit(vault.owner(), depositAmounts);
@@ -110,7 +119,7 @@ contract DepositTest is TestBaseAeraVaultV2 {
         assertEq(vault.feeTotal(), 0);
         assertEq(vault.fees(feeRecipient), 0);
 
-        vm.warp(block.timestamp + 1000);
+        skip(1000);
 
         test_deposit_success();
 

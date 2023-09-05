@@ -47,6 +47,17 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
         AssetValue[] memory withdrawnAmounts = vault.holdings();
         _setInvalidOracle(nonNumeraireId);
 
+        skip(1000);
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit SpotPricesReverted(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                nonNumeraireId,
+                -1
+            )
+        );
+
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized(address(this), withdrawnAmounts);
 
