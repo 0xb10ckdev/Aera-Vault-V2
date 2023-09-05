@@ -52,4 +52,8 @@ interface IVaultEvents {
     event Claimed(
         address indexed feeRecipient, uint256 claimedFee, uint256 unclaimedFee
     );
+
+    /// @notice Emitted when getting spot prices from asset registry is reverted.
+    /// @param reason Revert reason.
+    event SpotPricesReverted(bytes reason);
 }

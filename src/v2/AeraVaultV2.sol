@@ -556,7 +556,12 @@ contract AeraVaultV2 is
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
             (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
-        } catch {}
+        } catch (bytes memory reason) {
+            if (reason.length == 0) {
+                revert Aera__SpotPricesReverted();
+            }
+            emit SpotPricesReverted(reason);
+        }
 
         // Requirements: check that fee token has a positive price.
         if (lastFeeTokenPrice == 0) {
