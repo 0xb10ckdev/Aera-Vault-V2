@@ -490,6 +490,11 @@ contract AeraVaultV2 is
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
+        // Requirements: check that fees are available to claim.
+        if (availableFee == 0) {
+            revert Aera__NoAvailableFeesForCaller(msg.sender);
+        }
+
         // Effects: update leftover fee.
         fees[msg.sender] = reservedFee;
 
