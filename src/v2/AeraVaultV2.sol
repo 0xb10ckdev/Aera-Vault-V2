@@ -108,6 +108,14 @@ contract AeraVaultV2 is
         _;
     }
 
+    /// @dev Check insolvency of fee token was not made worse.
+    modifier checkReservedFees() {
+        uint256 prevFeeTokenBalance =
+            assetRegistry.feeToken().balanceOf(address(this));
+        _;
+        _checkReservedFees(prevFeeTokenBalance);
+    }
+
     /// FUNCTIONS ///
 
     constructor() {
@@ -401,12 +409,10 @@ contract AeraVaultV2 is
         whenNotFinalized
         whenNotPaused
         reserveFees
+        checkReservedFees
     {
         // Hooks: before executing operations.
         hooks.beforeSubmit(operations);
-
-        uint256 prevFeeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
 
         uint256 numOperations = operations.length;
 
@@ -459,9 +465,6 @@ contract AeraVaultV2 is
                 i++; // gas savings
             }
         }
-
-        // Invariants: check that insolvency of fee token was not introduced or increased.
-        _checkReservedFees(prevFeeTokenBalance);
 
         // Hooks: after executing operations.
         hooks.afterSubmit(operations);
