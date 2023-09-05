@@ -9,7 +9,7 @@ import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/Pausable.sol";
 import "@openzeppelin/ReentrancyGuard.sol";
 import "@openzeppelin/SafeERC20.sol";
-import "./interfaces/IAeraVaultV2Factory.sol";
+import "./interfaces/IAeraV2Factory.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
@@ -118,9 +118,9 @@ contract AeraVaultV2 is
             address guardian_,
             address feeRecipient_,
             uint256 fee_
-        ) = IAeraVaultV2Factory(msg.sender).parameters();
+        ) = IAeraV2Factory(msg.sender).parameters();
         address wrappedNativeToken_ =
-            IAeraVaultV2Factory(msg.sender).wrappedNativeToken();
+            IAeraV2Factory(msg.sender).wrappedNativeToken();
 
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);

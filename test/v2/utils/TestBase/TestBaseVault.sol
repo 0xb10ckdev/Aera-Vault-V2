@@ -6,7 +6,7 @@ import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
 import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
@@ -51,7 +51,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
             _init();
 
-            _deployAeraVaultV2Factory();
+            _deployAeraV2Factory();
             _deployAeraV2Contracts();
         }
     }

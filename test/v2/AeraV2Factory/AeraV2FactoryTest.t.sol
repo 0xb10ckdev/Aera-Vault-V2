@@ -4,18 +4,18 @@ pragma solidity 0.8.21;
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
 import "src/v2/interfaces/IVaultEvents.sol";
 import {TestBaseVault} from "test/v2/utils/TestBase/TestBaseVault.sol";
 
-contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
+contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
     function setUp() public override {
         super.setUp();
 
         if (_testWithDeployedContracts()) {
             (, address deployedFactory,,) = _loadDeployedAddresses();
 
-            factory = AeraVaultV2Factory(deployedFactory);
+            factory = AeraV2Factory(deployedFactory);
 
             _updateOwnership();
             _loadParameters();
@@ -25,7 +25,7 @@ contract AeraVaultV2FactoryTest is TestBaseVault, IVaultEvents {
     function test_aeraVaultV2FactoryDeployment_fail_whenWrappedNativeTokenIsZeroAddress(
     ) public {
         vm.expectRevert(
-            AeraVaultV2Factory.Aera__WrappedNativeTokenIsZeroAddress.selector
+            AeraV2Factory.Aera__WrappedNativeTokenIsZeroAddress.selector
         );
         new AeraVaultV2Factory(address(0));
     }

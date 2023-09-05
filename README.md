@@ -90,10 +90,10 @@ And you should specify the parameters in configs.
 To do this, copy the example config files without the `.example` name in `/config` path.
 If you left `owner` with zero address, the deployer will be the owner of deployed contracts.
 
-Deploy the AeraVaultV2Factory to a specific network:
+Deploy the AeraV2Factory to a specific network:
 
 ```sh
-$ forge script script/v2/deploy/DeployAeraVaultV2Factory.s.sol --fork-url <URL> --broadcast
+$ forge script script/v2/deploy/DeployAeraV2Factory.s.sol --fork-url <URL> --broadcast
 ```
 
 Deploy the AeraVaultV2, AeraVaultAssetRegistry and AeraVaultHooks to a specific network with salt value:
@@ -118,13 +118,13 @@ Then just run the tests.
 graph LR
     D{Deployer}
     subgraph Contracts
-        F(AeraVaultV2Factory)
+        F(AeraV2Factory)
         A(AeraVaultAssetRegistry)
         V(AeraVaultV2)
         H(AeraVaultHooks)
     end
     subgraph Process
-        S1[1. Deploy AeraVaultV2Factory]:::Process
+        S1[1. Deploy AeraV2Factory]:::Process
         subgraph DeployContracts[Deploy Contracts]
             S2[2. Check and Deploy AeraVaultAssetRegistry]:::Process
             S3[3. Check and Deploy AeraVaultV2]:::Process

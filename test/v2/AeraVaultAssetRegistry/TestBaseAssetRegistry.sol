@@ -6,7 +6,7 @@ import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
 import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
@@ -45,7 +45,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            factory = AeraVaultV2Factory(_loadDeployedFactory());
+            factory = AeraV2Factory(_loadDeployedFactory());
             assetRegistry =
                 AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
             vault = AeraVaultV2(payable(_loadDeployedVault()));
@@ -180,7 +180,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     }
 
     function _deploy() internal {
-        _deployAeraVaultV2Factory();
+        _deployAeraV2Factory();
         _createAssets(4, 2, 0);
 
         TargetSighash[] memory targetSighashAllowlist;

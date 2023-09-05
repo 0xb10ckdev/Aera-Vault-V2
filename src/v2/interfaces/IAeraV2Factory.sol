@@ -7,9 +7,9 @@ import {
     HooksParameters
 } from "../Types.sol";
 
-/// @title IAeraVaultV2Factory
+/// @title IAeraV2Factory
 /// @notice Interface for the V2 vault factory.
-interface IAeraVaultV2Factory {
+interface IAeraV2Factory {
     /// @notice Create V2 vault.
     /// @param salt The salt value to create vault.
     /// @param owner Initial owner address.

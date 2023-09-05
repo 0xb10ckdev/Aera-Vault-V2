@@ -6,13 +6,13 @@ import "@openzeppelin/Ownable2Step.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
-import "./interfaces/IAeraVaultV2Factory.sol";
+import "./interfaces/IAeraV2Factory.sol";
 import {VaultParameters} from "./Types.sol";
 
-/// @title AeraVaultV2Factory
+/// @title AeraV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
 /// @dev Only one instance of the factory will be required per chain.
-contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
+contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @notice The address of wrapped native token.
     address public immutable wrappedNativeToken;
 
@@ -60,7 +60,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         wrappedNativeToken = wrappedNativeToken_;
     }
 
-    /// @inheritdoc IAeraVaultV2Factory
+    /// @inheritdoc IAeraV2Factory
     function create(
         bytes32 salt,
         address owner,
@@ -99,7 +99,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         );
     }
 
-    /// @inheritdoc IAeraVaultV2Factory
+    /// @inheritdoc IAeraV2Factory
     function computeVaultAddress(bytes32 salt)
         external
         view

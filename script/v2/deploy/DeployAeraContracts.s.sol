@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/IERC20.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
 import {AeraVaultHooks} from "src/v2/AeraVaultHooks.sol";
 import {AeraVaultV2} from "src/v2/AeraVaultV2.sol";
-import {AeraVaultV2Factory} from "src/v2/AeraVaultV2Factory.sol";
+import {AeraV2Factory} from "src/v2/AeraV2Factory.sol";
 import {IAssetRegistry} from "src/v2/interfaces/IAssetRegistry.sol";
 import {
     TargetSighash,
@@ -88,19 +88,19 @@ contract DeployAeraContracts is DeployScriptBase {
             _getAssetRegistryParams(assetRegistryPath);
 
         // Get parameters for AeraVaultV2
-        (address aeraVaultV2Factory, VaultParameters memory vaultParameters) =
+        (address aeraV2Factory, VaultParameters memory vaultParameters) =
             _getAeraVaultV2Params(aeraVaultV2Path);
 
         // Get parameters for AeraVaultHooks
         HooksParameters memory hooksParameters =
             _getAeraVaultHooksParams(aeraVaultHooksPath);
 
-        deployedVault =
-            AeraVaultV2Factory(aeraVaultV2Factory).computeVaultAddress(salt);
+        deployedVault = AeraV2Factory(aeraV2Factory).computeVaultAddress(salt);
 
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
-        (deployedVault, deployedAssetRegistry, deployedHooks) =
-        AeraVaultV2Factory(aeraVaultV2Factory).create(
+        (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(
+            aeraV2Factory
+        ).create(
             salt,
             vaultParameters.owner,
             vaultParameters.guardian,
@@ -164,15 +164,12 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
-        returns (
-            address aeraVaultV2Factory,
-            VaultParameters memory vaultParameters
-        )
+        returns (address aeraV2Factory, VaultParameters memory vaultParameters)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
-        aeraVaultV2Factory = json.readAddress(".aeraVaultV2Factory");
+        aeraV2Factory = json.readAddress(".aeraV2Factory");
         address owner = json.readAddress(".owner");
         address guardian = json.readAddress(".guardian");
         address feeRecipient = json.readAddress(".feeRecipient");

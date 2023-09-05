@@ -6,7 +6,7 @@ import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
 import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/IVault.sol";
 import "src/v2/AeraVaultHooks.sol";
@@ -103,7 +103,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     }
 
     function _deployFactory() internal {
-        AeraVaultV2Factory factory = new AeraVaultV2Factory(weth);
+        AeraV2Factory factory = new AeraV2Factory(weth);
         factoryAddress = address(factory);
         vm.label(factoryAddress, "Factory");
     }
@@ -118,9 +118,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         vm.serializeAddress("Deployments", "guardian", guardianAddress);
         vm.serializeAddress("Deployments", "feeRecipient", guardianAddress);
         vm.writeJson(
-            vm.serializeAddress(
-                "Deployments", "aeraVaultV2Factory", factoryAddress
-            ),
+            vm.serializeAddress("Deployments", "aeraV2Factory", factoryAddress),
             aeraVaultV2Path
         );
     }
