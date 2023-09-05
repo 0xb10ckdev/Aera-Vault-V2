@@ -496,7 +496,6 @@ contract AeraVaultV2 is
 
         uint256 availableFee =
             Math.min(feeToken.balanceOf(address(this)), reservedFee);
-        uint256 unavailableFee = reservedFee - availableFee;
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
@@ -512,7 +511,7 @@ contract AeraVaultV2 is
         feeToken.safeTransfer(msg.sender, availableFee);
 
         // Log the claim.
-        emit Claimed(msg.sender, availableFee, unavailableFee);
+        emit Claimed(msg.sender, availableFee, reservedFee);
     }
 
     /// @inheritdoc IVault
