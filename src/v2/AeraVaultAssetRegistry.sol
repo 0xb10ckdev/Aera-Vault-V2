@@ -116,9 +116,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         // Calculate the fee token index.
         uint256 feeTokenIndex = 0;
-        for (; feeTokenIndex < numAssets; feeTokenIndex++) {
+        for (; feeTokenIndex < numAssets;) {
             if (assets_[feeTokenIndex].asset == feeToken_) {
                 break;
+            }
+            unchecked {
+                feeTokenIndex++; // gas savings
             }
         }
 
@@ -250,8 +253,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             ;
             oldAssetIndex < numAssets
                 && address(_assets[oldAssetIndex].asset) != asset;
-            oldAssetIndex++
-        ) {}
+        ) {
+            unchecked {
+                oldAssetIndex++; // gas savings
+            }
+        }
 
         // Requirements: check that asset is registered.
         if (oldAssetIndex >= numAssets) {
@@ -262,7 +268,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         if (_assets[oldAssetIndex].isERC4626) {
             numYieldAssets--;
         } else {
-            for (uint256 i = 0; i < numAssets; i++) {
+            for (uint256 i = 0; i < numAssets;) {
                 if (
                     i != oldAssetIndex && _assets[i].isERC4626
                         && IERC4626(address(_assets[i].asset)).asset() == asset
@@ -270,6 +276,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                     revert Aera__AssetIsUnderlyingAssetOfERC4626(
                         address(_assets[i].asset)
                     );
+                }
+                unchecked {
+                    i++; // gas savings
                 }
             }
         }

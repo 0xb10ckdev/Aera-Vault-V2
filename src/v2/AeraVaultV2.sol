@@ -562,7 +562,9 @@ contract AeraVaultV2 is
     /// @return feeIndex Guardian fee index.
     function _getFeeIndex() internal view returns (uint256 feeIndex) {
         if (block.timestamp > lastFeeCheckpoint) {
-            feeIndex = block.timestamp - lastFeeCheckpoint;
+            unchecked {
+                feeIndex = block.timestamp - lastFeeCheckpoint;
+            }
         }
 
         return feeIndex;
