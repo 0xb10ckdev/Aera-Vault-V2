@@ -47,42 +47,6 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         vault.execute(operation);
     }
 
-    function test_execute_fail_whenFeeTokenBalanceGetLowerThanReservedFees()
-        public
-    {
-        skip(1000);
-
-        vault.setGuardianAndFeeRecipient(_GUARDIAN, address(1));
-
-        assertEq(vault.feeTotal(), 499999);
-        assertEq(vault.fees(_FEE_RECIPIENT), 499999);
-
-        deal(address(feeToken), address(vault), 499998);
-
-        AssetValue[] memory holdings = vault.holdings();
-        for (uint256 i = 0; i < holdings.length; i++) {
-            if (holdings[i].asset == feeToken) {
-                assertEq(holdings[i].value, 0);
-            } else {
-                assertEq(
-                    holdings[i].value,
-                    holdings[i].asset.balanceOf(address(vault))
-                );
-            }
-        }
-
-        operation = Operation({
-            target: address(feeToken),
-            value: 0,
-            data: abi.encodeWithSignature(
-                "transfer(address,uint256)", address(this), 1
-                )
-        });
-
-        vm.expectRevert(IVault.Aera__CannotUseReservedFees.selector);
-        vault.execute(operation);
-    }
-
     function test_execute_success() public {
         uint256 holding = erc20Assets[0].balanceOf(address(vault));
         uint256 balance = erc20Assets[0].balanceOf(address(this));

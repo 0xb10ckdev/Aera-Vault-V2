@@ -313,9 +313,6 @@ contract AeraVaultV2 is
             revert Aera__ExecuteTargetIsHooksAddress();
         }
 
-        uint256 prevFeeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
-
         // Interactions: execute operation.
         (bool success, bytes memory result) =
             operation.target.call{value: operation.value}(operation.data);
@@ -324,9 +321,6 @@ contract AeraVaultV2 is
         if (!success) {
             revert Aera__ExecutionFailed(result);
         }
-
-        // Invariants: check that insolvency of fee token was not introduced or increased.
-        _checkReservedFees(prevFeeTokenBalance);
 
         // Log that the operation was executed.
         emit Executed(owner(), operation);

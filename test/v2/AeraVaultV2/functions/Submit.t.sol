@@ -92,7 +92,7 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         vault.submit(operations);
     }
 
-    function test_submit_fail_whenUseLockedFees() public {
+    function test_submit_fail_whenUseReservedFees() public {
         for (uint256 i = 0; i < operations.length; i++) {
             hooks.addTargetSighash(
                 operations[i].target, IERC20.transfer.selector
