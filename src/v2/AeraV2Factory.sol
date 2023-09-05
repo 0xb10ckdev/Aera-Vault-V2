@@ -118,13 +118,16 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             revert Aera__DescriptionIsEmpty();
         }
 
+        // Effects: deploy asset registry.
         deployedAssetRegistry = _deployAssetRegistry(
             _computeVaultAddress(salt), assetRegistryParameters
         );
 
+        // Effects: deploy first instance of hooks.
         deployedHooks =
             _deployHooks(_computeVaultAddress(salt), hooksParameters);
 
+        // Effects: deploy the vault.
         deployedVault = _deployVault(
             salt,
             owner,
@@ -165,6 +168,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address vault,
         AssetRegistryParameters memory assetRegistryParameters
     ) internal returns (address deployed) {
+        // Effects: deploy asset registry.
         deployed = address(
             new AeraVaultAssetRegistry(
                 assetRegistryParameters.owner,
@@ -194,6 +198,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address vault,
         HooksParameters memory hooksParameters
     ) internal returns (address deployed) {
+        // Effects: deploy hooks.
         deployed = address(
             new AeraVaultHooks(
                 hooksParameters.owner,
