@@ -607,10 +607,19 @@ contract AeraVaultV2 is
             assetRegistry.assets()[assetRegistry.numeraireId()].asset;
 
         // Calculate new fee for current fee recipient.
-        uint256 newFee = lastValue * feeIndex * fee
-            * 10 ** IERC20Metadata(address(feeToken)).decimals()
-            / lastFeeTokenPrice
-            / 10 ** IERC20Metadata(address(numeraireAsset)).decimals();
+        // It calculates the fee in fee token decimals.
+        uint256 newFee = lastValue * feeIndex * fee;
+        uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
+        uint256 numeraireDecimals =
+            IERC20Metadata(address(numeraireAsset)).decimals();
+
+        if (numeraireDecimals < feeTokenDecimals) {
+            newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
+        } else if (numeraireDecimals > feeTokenDecimals) {
+            newFee = newFee / (10 ** (numeraireDecimals - feeTokenDecimals));
+        }
+
+        newFee /= lastFeeTokenPrice;
 
         if (newFee == 0) {
             return;
@@ -625,6 +634,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
+    /// @dev It calculates the value in numeraire asset decimals.
     /// @param erc20SpotPrices Spot prices of ERC20 assets.
     /// @param feeToken Fee token address.
     /// @return vaultValue Current total value.
@@ -716,6 +726,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get spot prices and units of requested assets.
+    /// @dev Spot prices are scaled to 18 decimals.
     /// @param assets Registered assets in asset registry and their information.
     /// @param erc20SpotPrices Struct details for spot prices of ERC20 assets.
     /// @return spotPrices Spot prices of assets.
