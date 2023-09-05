@@ -28,6 +28,7 @@ contract AeraVaultV2 is
     /// @notice Largest possible fee earned proportion per one second.
     /// @dev 0.0000001% per second, i.e. 3.1536% per year.
     ///      0.0000001% * (365 * 24 * 60 * 60) = 3.1536%
+    ///      or 3.16224% per year in leap years.
     uint256 private constant _MAX_FEE = 10 ** 9;
 
     /// @notice Fee per second in 18 decimal fixed point format.
