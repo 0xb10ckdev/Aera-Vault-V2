@@ -94,7 +94,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
         IERC20 feeToken_
-    ) {
+    ) Ownable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
