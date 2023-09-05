@@ -6,11 +6,11 @@ import "@openzeppelin/IERC20.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
+import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import {ERC20MockFactory} from "test/utils/ERC20Mock.sol";
-import {ERC4626Mock, ERC4626MockFactory} from "test/utils/ERC4626Mock.sol";
+import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 import {IOracleMock, OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseAssetRegistry is TestBaseFactory {
@@ -45,7 +45,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         if (_testWithDeployedContracts()) {
             vm.createSelectFork(vm.envString("FORK_URL"));
 
-            factory = AeraVaultV2Factory(_loadDeployedFactory());
+            factory = AeraV2Factory(_loadDeployedFactory());
             assetRegistry =
                 AeraVaultAssetRegistry(_loadDeployedAssetRegistry());
             vault = AeraVaultV2(payable(_loadDeployedVault()));
@@ -180,8 +180,10 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     }
 
     function _deploy() internal {
-        _deployAeraVaultV2Factory();
-        _createAssets(4, 2);
+        _deployAeraV2Factory();
+        _createAssets(4, 2, 0);
+
+        TargetSighashData[] memory targetSighashAllowlist;
 
         vm.expectEmit(true, false, false, true);
         emit Created(
@@ -191,37 +193,37 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             numeraireId,
             address(feeToken)
         );
-        assetRegistry = new AeraVaultAssetRegistry(
+
+        (address deployedVault, address deployedAssetRegistry,) = factory
+            .create(
+            bytes32(0),
             address(this),
-            factory.computeVaultAddress(bytes32(0)),
-            assets,
-            numeraireId,
-            feeToken
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault",
+            AssetRegistryParameters(
+                address(this), assets, numeraireId, feeToken
+            ),
+            HooksParameters(address(this), 0.1e18, targetSighashAllowlist)
         );
 
-        vault = AeraVaultV2(
-            payable(
-                factory.create(
-                    bytes32(0),
-                    address(this),
-                    address(assetRegistry),
-                    _GUARDIAN,
-                    _FEE_RECIPIENT,
-                    _MAX_FEE,
-                    "Test Vault"
-                )
-            )
-        );
+        assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+        vault = AeraVaultV2(payable(deployedVault));
     }
 
-    function _createAssets(uint256 numERC20, uint256 numERC4626) internal {
+    function _createAssets(
+        uint256 numERC20,
+        uint256 numERC4626,
+        uint256 initalSaltIndex
+    ) internal {
         for (uint256 i = 0; i < numERC20; i++) {
             (
                 address assetAddress,
                 IAssetRegistry.AssetInformation memory asset
             ) =
             // salt value was from trial/error to get desired sorting
-             _createAsset(false, address(0), numERC20 - i);
+             _createAsset(false, address(0), initalSaltIndex + i);
 
             if (i == numeraireSetIdx) {
                 numeraireAsset = address(asset.asset);
@@ -238,7 +240,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 (
                     address asset4626Address,
                     IAssetRegistry.AssetInformation memory asset4626
-                ) = _createAsset(true, assetAddress, i);
+                ) = _createAsset(
+                    true, assetAddress, initalSaltIndex + numERC20 + i
+                );
                 assets.push(asset4626);
                 if (i == 0) {
                     nonNumeraireERC4626Asset = asset4626Address;
@@ -270,7 +274,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     function _createAsset(
         bool isERC4626,
         address baseAssetAddress,
-        uint256 indexForSalt
+        uint256 saltIndex
     )
         internal
         returns (
@@ -279,21 +283,23 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         )
     {
         address oracleAddress;
-        bytes32 salt = bytes32(indexForSalt);
+
         if (isERC4626) {
             ERC20Mock baseAsset = ERC20Mock(baseAssetAddress);
-            asset = ERC4626MockFactory.deploy(
-                address(factory),
-                baseAsset,
-                baseAsset.name(),
-                baseAsset.symbol(),
-                salt
+            asset = address(
+                new ERC4626Mock{salt: bytes32(saltIndex)}(
+                    baseAsset,
+                    baseAsset.name(),
+                    baseAsset.symbol()
+                )
             );
+
             oracleAddress = address(0);
         } else {
-            asset = ERC20MockFactory.deploy(
-                address(factory), "Token", "TOKEN", 18, 1e30, salt
+            asset = address(
+                new ERC20Mock{salt: bytes32(saltIndex)}("Token", "TOKEN", 18, 1e30)
             );
+
             oracleAddress = address(new OracleMock(18));
             IOracleMock(oracleAddress).setLatestAnswer(int256(_ONE));
         }

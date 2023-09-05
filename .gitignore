@@ -10,7 +10,7 @@ node_modules/
 config/AeraVaultAssetRegistry.json
 config/AeraVaultHooks.json
 config/AeraVaultV2.json
-config/AeraVaultV2Factory.json
+config/AeraV2Factory.json
 config/Deployments.json
 config/AeraVaultDeposit.json
 config/AeraVaultAddTargetSighashes.json

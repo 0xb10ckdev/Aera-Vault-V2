@@ -88,10 +88,6 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         if (owner_ == address(0)) {
             revert Aera__HooksInitialOwnerIsZeroAddress();
         }
-        if (!ERC165Checker.supportsInterface(vault_, type(IVault).interfaceId))
-        {
-            revert Aera__VaultIsNotValid(vault_);
-        }
 
         // Requirements: check if max daily execution loss is bounded.
         if (maxDailyExecutionLoss_ > ONE) {
@@ -104,7 +100,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         TargetSighashData memory targetSighash;
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
             targetSighash = targetSighashAllowlist[i];
-            _targetSighashAllowed[TargetSighashLib.toTargetSighash(targetSighash.target, targetSighash.selector)] = true;
+            _targetSighashAllowed[TargetSighashLib.toTargetSighash(
+                targetSighash.target, targetSighash.selector
+            )] = true;
             unchecked {
                 i++; // gas savings
             }
@@ -128,8 +126,9 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         bytes4 selector
     ) external onlyOwner {
         // Effects: add target sighash combination to the allowlist.
-        _targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
-        = true;
+        _targetSighashAllowed[TargetSighashLib.toTargetSighash(
+            target, selector
+        )] = true;
 
         // Log the addition.
         emit TargetSighashAdded(target, selector);
@@ -321,8 +320,14 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
 
     /// @notice Check whether target and sighash combination is allowed.
     /// @param key Struct containing target contract and sighash.
-    function targetSighashAllowed(TargetSighashData calldata key) public view returns (bool) {
-        return _targetSighashAllowed[TargetSighashLib.toTargetSighash(key.target, key.selector)];
+    function targetSighashAllowed(TargetSighashData calldata key)
+        public
+        view
+        returns (bool)
+    {
+        return _targetSighashAllowed[TargetSighashLib.toTargetSighash(
+            key.target, key.selector
+        )];
     }
 
     /// INTERNAL FUNCTIONS ///

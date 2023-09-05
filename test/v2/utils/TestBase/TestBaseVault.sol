@@ -6,7 +6,8 @@ import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraVaultV2Factory.sol";
+import "src/v2/AeraV2Factory.sol";
+import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
@@ -39,6 +40,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     uint256 public numeraireId;
     uint256 public nonNumeraireId;
     TargetSighashData[] public targetSighashAllowlist;
+    AssetRegistryParameters public assetRegistryParameters;
+    HooksParameters public hooksParameters;
 
     function setUp() public virtual override {
         if (_testWithDeployedContracts()) {
@@ -48,10 +51,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
             _init();
 
-            _deployAeraVaultV2Factory();
-            _deployAssetRegistry();
-            _deployAeraVaultV2();
-            _deployHooks();
+            _deployAeraV2Factory();
+            _deployAeraV2Contracts();
         }
     }
 
@@ -247,6 +248,15 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         }
 
         feeToken = IERC20(_USDC_ADDRESS);
+
+        assetRegistryParameters.owner = address(this);
+        assetRegistryParameters.assets = assetsInformation;
+        assetRegistryParameters.numeraireId = numeraireId;
+        assetRegistryParameters.feeToken = feeToken;
+
+        hooksParameters.owner = address(this);
+        hooksParameters.maxDailyExecutionLoss = _MAX_DAILY_EXECUTION_LOSS;
+        hooksParameters.targetSighashAllowlist = targetSighashAllowlist;
     }
 
     function _initUnderlyingIndexes() internal {
@@ -284,41 +294,25 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         }
     }
 
-    function _deployAssetRegistry() internal {
-        assetRegistry = new AeraVaultAssetRegistry(
+    function _deployAeraV2Contracts() internal {
+        (
+            address deployedVault,
+            address deployedAssetRegistry,
+            address deployedHooks
+        ) = factory.create(
+            bytes32(0),
             address(this),
-            factory.computeVaultAddress(bytes32(0)),
-            assetsInformation,
-            numeraireId,
-            feeToken
-        );
-    }
-
-    function _deployHooks() internal {
-        hooks = new AeraVaultHooks(
-            address(this),
-            address(vault),
-            _MAX_DAILY_EXECUTION_LOSS,
-            targetSighashAllowlist
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault",
+            assetRegistryParameters,
+            hooksParameters
         );
 
-        vault.setHooks(address(hooks));
-    }
-
-    function _deployAeraVaultV2() internal {
-        vault = AeraVaultV2(
-            payable(
-                factory.create(
-                    "",
-                    address(this),
-                    address(assetRegistry),
-                    _GUARDIAN,
-                    _FEE_RECIPIENT,
-                    _MAX_FEE,
-                    "Test Vault"
-                )
-            )
-        );
+        assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
+        vault = AeraVaultV2(payable(deployedVault));
+        hooks = AeraVaultHooks(deployedHooks);
     }
 
     function _getOraclePrice(address oracle) internal view returns (uint256) {
