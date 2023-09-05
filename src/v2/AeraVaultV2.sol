@@ -749,38 +749,28 @@ contract AeraVaultV2 is
         assetUnits = new uint256[](numAssets);
 
         IAssetRegistry.AssetInformation memory asset;
-        address underlyingAsset;
 
         for (uint256 i = 0; i < numAssets;) {
             asset = assets[i];
 
-            if (asset.isERC4626) {
-                underlyingAsset = IERC4626(address(asset.asset)).asset();
-                for (uint256 j = 0; j < numERC20SpotPrices;) {
-                    if (underlyingAsset == address(erc20SpotPrices[j].asset)) {
-                        spotPrices[i] = erc20SpotPrices[j].spotPrice;
-                        assetUnits[i] =
-                            10 ** IERC20Metadata(underlyingAsset).decimals();
-                        break;
-                    }
-                    unchecked {
-                        j++; // gas savings
-                    }
+            IERC20 assetToFind = (
+                asset.isERC4626
+                    ? IERC20(IERC4626(address(asset.asset)).asset())
+                    : asset.asset
+            );
+            uint256 j = 0;
+            for (; j < numERC20SpotPrices;) {
+                if (assetToFind == erc20SpotPrices[j].asset) {
+                    break;
                 }
-            } else {
-                for (uint256 j = 0; j < numERC20SpotPrices;) {
-                    if (asset.asset == erc20SpotPrices[j].asset) {
-                        spotPrices[i] = erc20SpotPrices[j].spotPrice;
-                        break;
-                    }
-                    unchecked {
-                        j++; // gas savings
-                    }
+                unchecked {
+                    j++; // gas savings
                 }
-
-                assetUnits[i] =
-                    10 ** IERC20Metadata(address(asset.asset)).decimals();
             }
+            spotPrices[i] = erc20SpotPrices[j].spotPrice;
+            assetUnits[i] =
+                10 ** IERC20Metadata(address(assetToFind)).decimals();
+
             unchecked {
                 i++; // gas savings
             }
