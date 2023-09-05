@@ -300,7 +300,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         newAsset = IAssetRegistry.AssetInformation({
             asset: IERC20(asset),
             isERC4626: isERC4626,
-            oracle: AggregatorV2V3Interface(oracleAddress)
+            oracle: AggregatorV2V3Interface(oracleAddress),
+            heartbeat: 1 hours
         });
     }
 }

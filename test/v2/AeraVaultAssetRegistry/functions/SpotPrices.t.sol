@@ -22,6 +22,28 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         assetRegistry.spotPrices();
     }
 
+    function test_spotPrices_fail_whenOraclePriceIsTooOld() public {
+        skip(assets[nonNumeraireId].heartbeat + 1 hours + 1);
+
+        for (uint256 i = 0; i < numAssets; i++) {
+            if (address(assets[i].oracle) != address(0) && i != nonNumeraireId)
+            {
+                OracleMock(address(assets[i].oracle)).setUpdatedAt(
+                    block.timestamp
+                );
+            }
+        }
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsTooOld.selector,
+                nonNumeraireId,
+                OracleMock(address(assets[nonNumeraireId].oracle)).updatedAt()
+            )
+        );
+        assetRegistry.spotPrices();
+    }
+
     function test_spotPrices_success() public {
         uint256 testPrice = _ONE * 5;
 

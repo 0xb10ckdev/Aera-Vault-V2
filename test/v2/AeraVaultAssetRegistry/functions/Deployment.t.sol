@@ -214,6 +214,26 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
+    function test_assetRegistryDeployment_fail_whenOracleHeartbeatIsZero()
+        public
+    {
+        assets[nonNumeraireId].heartbeat = 0;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OracleHeartbeatIsZero.selector,
+                assets[nonNumeraireId].asset
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            vaultAddress,
+            assets,
+            numeraireId,
+            feeToken
+        );
+    }
+
     function test_assetRegistryDeployment_fail_whenERC4626OracleIsNotZeroAddress(
     ) public {
         for (uint256 i = 0; i < numAssets; i++) {

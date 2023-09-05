@@ -206,7 +206,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                             : address(assets[i]) == _WETH_ADDRESS
                                 ? _ETH_USD_ORACLE
                                 : address(0)
-                        )
+                        ),
+                    heartbeat: 1 hours
                 })
             );
         }
