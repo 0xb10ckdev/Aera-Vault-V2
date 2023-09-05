@@ -38,6 +38,7 @@ interface IVault is IVaultEvents {
     error Aera__SubmissionFailed(uint256 index, bytes result);
     error Aera__CannotUseReservedFees();
     error Aera__AssetIsDuplicated(IERC20 asset);
+    error Aera__NoAvailableFeesForCaller(address caller);
     error Aera__NoClaimableFeesForCaller(address caller);
     error Aera__WrappedNativeTokenIsZeroAddress();
     error Aera__NotWrappedNativeTokenContract();
