@@ -789,18 +789,19 @@ contract AeraVaultV2 is
 
         IERC20 feeToken = assetRegistry.feeToken();
         assetAmounts = new AssetValue[](numAssets);
-        IAssetRegistry.AssetInformation memory asset;
+        IAssetRegistry.AssetInformation memory assetInfo;
 
         for (uint256 i = 0; i < numAssets;) {
-            asset = assets[i];
+            assetInfo = assets[i];
             assetAmounts[i] = AssetValue({
-                asset: asset.asset,
-                value: asset.asset.balanceOf(address(this))
+                asset: assetInfo.asset,
+                value: assetInfo.asset.balanceOf(address(this))
             });
 
-            if (asset.asset == feeToken) {
+            if (assetInfo.asset == feeToken) {
                 assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
             }
+
             unchecked {
                 i++; //gas savings
             }
