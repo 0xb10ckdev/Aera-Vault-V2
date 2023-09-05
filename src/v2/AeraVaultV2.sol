@@ -426,6 +426,19 @@ contract AeraVaultV2 is
                 revert Aera__SubmitTransfersAssetFromOwner();
             }
 
+            // Requirements: validate that it doesn't redeem ERC4626 asset from owner.
+            if (
+                bytes4(operation.data[0:4]) == IERC4626.withdraw.selector
+                    || bytes4(operation.data[0:4]) == IERC4626.redeem.selector
+            ) {
+                (,, address assetOwner) =
+                    abi.decode(operation.data[4:], (uint256, address, address));
+
+                if (assetOwner == owner()) {
+                    revert Aera__SubmitRedeemERC4626AssetFromOwner();
+                }
+            }
+
             // Requirements: check that the target contract is not hooks.
             if (operation.target == hooksAddress) {
                 revert Aera__SubmitTargetIsHooksAddress();

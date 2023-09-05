@@ -46,6 +46,27 @@ contract SubmitTest is TestBaseAeraVaultV2 {
         vault.submit(hookOperations);
     }
 
+    function test_submit_fail_whenSubmitRedeemERC4626AssetFromOwner() public {
+        Operation[] memory hookOperations = new Operation[](1);
+        hooks.addTargetSighash(
+            address(yieldAssets[0]), IERC4626.withdraw.selector
+        );
+        hookOperations[0] = Operation({
+            target: address(yieldAssets[0]),
+            value: 0,
+            data: abi.encodeWithSelector(
+                IERC4626.withdraw.selector, 1, address(this), address(this)
+                )
+        });
+
+        vm.prank(_GUARDIAN);
+
+        vm.expectRevert(
+            IVault.Aera__SubmitRedeemERC4626AssetFromOwner.selector
+        );
+        vault.submit(hookOperations);
+    }
+
     function test_submit_fail_whenSubmitTargetIsHooks() public {
         AssetValue[] memory amounts = new AssetValue[](0);
         Operation[] memory hookOperations = new Operation[](1);
