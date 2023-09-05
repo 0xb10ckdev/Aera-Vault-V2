@@ -73,7 +73,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
     error Aera__NumeraireAssetIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
-    error Aera__ValueLengthIsNotSame(uint256 numAssets, uint256 numValues);
     error Aera__AssetIsAlreadyRegistered(uint256 index);
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireAsset(address asset);
@@ -186,12 +185,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         emit Created(owner_, vault_, assets_, numeraireId_, address(feeToken_));
     }
 
-    /// @inheritdoc IAssetRegistry
-    function addAsset(AssetInformation calldata asset)
-        external
-        override
-        onlyOwner
-    {
+    /// @notice Add a new asset.
+    /// @param asset Asset information for new asset.
+    /// @dev MUST revert if not called by owner.
+    /// @dev MUST revert if asset with the same address exists.
+    function addAsset(AssetInformation calldata asset) external onlyOwner {
         uint256 numAssets = _assets.length;
 
         // Requirements: validate number of assets doesn't exceed bound.
@@ -229,8 +227,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         _insertAsset(asset, i);
     }
 
-    /// @inheritdoc IAssetRegistry
-    function removeAsset(address asset) external override onlyOwner {
+    /// @notice Remove an asset.
+    /// @param asset An asset to remove.
+    /// @dev MUST revert if not called by owner.
+    function removeAsset(address asset) external onlyOwner {
         // Requirements: confirm that asset to remove is not numeraire.
         if (address(_assets[numeraireId].asset) == asset) {
             revert Aera__CannotRemoveNumeraireAsset(asset);

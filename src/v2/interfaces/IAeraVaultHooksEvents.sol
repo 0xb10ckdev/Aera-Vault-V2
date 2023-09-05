@@ -3,8 +3,8 @@ pragma solidity 0.8.21;
 
 import {TargetSighash} from "../Types.sol";
 
-/// @title Interface for hooks module.
-interface IHooksEvents {
+/// @title Events emitted by AeraVaultHooks implementation.
+interface IAeraVaultHooksEvents {
     /// @notice Emitted when targetSighash is added to allowlist.
     /// @param target Address of target.
     /// @param selector Selector of function.

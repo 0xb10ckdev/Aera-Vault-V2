@@ -48,17 +48,6 @@ interface IAssetRegistry {
     /// @dev MUST be a number between 0 (inclusive) and the length of assets array (exclusive).
     function numeraireId() external view returns (uint256 numeraireId);
 
-    /// @notice Add a new asset.
-    /// @param asset Asset information for new asset.
-    /// @dev MUST revert if not called by owner.
-    /// @dev MUST revert if asset with the same address exists.
-    function addAsset(AssetInformation memory asset) external;
-
-    /// @notice Remove an asset.
-    /// @param asset An asset to remove.
-    /// @dev MUST revert if not called by owner.
-    function removeAsset(address asset) external;
-
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets.
     /// @dev MUST return assets in the same order as in assets but with ERC4626 assets filtered out.

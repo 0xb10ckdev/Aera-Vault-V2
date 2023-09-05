@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "./IHooksEvents.sol";
 import {AssetValue, Operation} from "../Types.sol";
 
 /// @title IHooks
 /// @notice Interface for the hooks module.
-interface IHooks is IHooksEvents {
+interface IHooks {
     /// @notice Get address of vault.
     /// @return vault Vault address.
     function vault() external view returns (address vault);
