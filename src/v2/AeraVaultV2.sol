@@ -411,19 +411,35 @@ contract AeraVaultV2 is
         uint256 numOperations = operations.length;
 
         Operation calldata operation;
+        bytes4 selector;
         bool success;
         bytes memory result;
         address hooksAddress = address(hooks);
 
         for (uint256 i = 0; i < numOperations;) {
             operation = operations[i];
+            selector = bytes4(operation.data[0:4]);
 
             // Requirements: validate that it doesn't transfer asset from owner.
             if (
-                bytes4(operation.data[0:4]) == IERC20.transferFrom.selector
+                selector == IERC20.transferFrom.selector
                     && abi.decode(operation.data[4:], (address)) == owner()
             ) {
                 revert Aera__SubmitTransfersAssetFromOwner();
+            }
+
+            // Requirements: check that operation is not trying to redeem ERC4626 shares from owner.
+            // This could occur if the owner had a pre-existing allowance introduced during deposit.
+            if (
+                selector == IERC4626.withdraw.selector
+                    || selector == IERC4626.redeem.selector
+            ) {
+                (,, address assetOwner) =
+                    abi.decode(operation.data[4:], (uint256, address, address));
+
+                if (assetOwner == owner()) {
+                    revert Aera__SubmitRedeemERC4626AssetFromOwner();
+                }
             }
 
             // Requirements: check that the target contract is not hooks.
