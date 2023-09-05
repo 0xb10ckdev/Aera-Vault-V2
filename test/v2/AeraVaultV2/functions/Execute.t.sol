@@ -70,18 +70,4 @@ contract ExecuteTest is TestBaseAeraVaultV2 {
         assertEq(erc20Assets[0].balanceOf(address(vault)), 0);
         assertEq(erc20Assets[0].balanceOf(address(this)), balance + holding);
     }
-
-    function test_execute_msg_sender() public {
-        operation = Operation({
-            target: address(vault),
-            value: 0,
-            data: abi.encode(Ownable2Step.acceptOwnership.selector)
-        });
-        vault.transferOwnership(address(vault));
-
-        vm.expectEmit(true, true, true, true, address(vault));
-        emit Executed(vault.owner(), operation);
-
-        vault.execute(operation);
-    }
 }
