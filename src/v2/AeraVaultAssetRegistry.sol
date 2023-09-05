@@ -161,7 +161,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 _checkAssetOracle(assets_[i]);
 
                 if (assets_[i].isERC4626) {
-                    // Requirements: check that underlying asset exists.
+                    // Requirements: check that underlying asset is a registered ERC20.
                     _checkUnderlyingAsset(assets_[i], assets_);
                 }
             }
@@ -220,7 +220,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        // Requirements: check that underlying asset is registered.
+        // Requirements: check that underlying asset is a registered ERC20.
         if (asset.isERC4626) {
             _checkUnderlyingAsset(asset, _assets);
         }
@@ -402,7 +402,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
     }
 
-    /// @notice Check whether the underlying asset is listed or not.
+    /// @notice Check whether the underlying asset is listed as an ERC20.
+    /// @dev Will revert if underlying asset is an ERC4626.
     /// @param asset ERC4626 asset to check underlying asset.
     /// @param assetsToCheck Array of assets.
     function _checkUnderlyingAsset(
