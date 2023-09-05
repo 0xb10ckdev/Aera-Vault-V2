@@ -66,6 +66,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
+    error Aera__OracleHeartbeatIsZero(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
     error Aera__UnderlyingAssetIsNotRegistered(
         address asset, address underlyingAsset
@@ -80,6 +81,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
+    error Aera__OraclePriceIsTooOld(uint256 index, uint256 updatedAt);
 
     /// FUNCTIONS ///
 
@@ -322,6 +324,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 oracleDecimals;
         uint256 price;
         int256 answer;
+        uint256 updatedAt;
         uint256 index;
         for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
@@ -338,11 +341,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                     spotPrice: ONE
                 });
             } else {
-                (, answer,,,) = _assets[i].oracle.latestRoundData();
+                (, answer,, updatedAt,) = _assets[i].oracle.latestRoundData();
 
-                // Check basic validity
+                // Check price staleness
                 if (answer <= 0) {
                     revert Aera__OraclePriceIsInvalid(i, answer);
+                }
+                if (
+                    _assets[i].heartbeat > 0
+                        && updatedAt + _assets[i].heartbeat + 1 hours
+                            < block.timestamp
+                ) {
+                    revert Aera__OraclePriceIsTooOld(i, updatedAt);
                 }
 
                 price = uint256(answer);

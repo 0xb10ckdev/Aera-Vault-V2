@@ -26,7 +26,8 @@ contract AssetRegistryHandler is TestBase {
             .AssetInformation({
             asset: assetAddress,
             isERC4626: false,
-            oracle: AggregatorV2V3Interface(oracleAddress)
+            oracle: AggregatorV2V3Interface(oracleAddress),
+            heartbeat: 1 hours
         });
 
         vm.prank(assetRegistry.owner());
@@ -61,7 +62,8 @@ contract AssetRegistryHandler is TestBase {
             .AssetInformation({
             asset: IERC20(address(erc4626Asset)),
             isERC4626: true,
-            oracle: AggregatorV2V3Interface(address(0))
+            oracle: AggregatorV2V3Interface(address(0)),
+            heartbeat: 1 hours
         });
 
         vm.prank(assetRegistry.owner());

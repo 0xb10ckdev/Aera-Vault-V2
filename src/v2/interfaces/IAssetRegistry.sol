@@ -11,10 +11,12 @@ interface IAssetRegistry {
     /// @param asset Asset address.
     /// @param isERC4626 True if yield-bearing asset, false if just an ERC20 asset.
     /// @param oracle If applicable, oracle address for asset.
+    /// @param heartbeat Frequency of oracle price updates.
     struct AssetInformation {
         IERC20 asset;
         bool isERC4626;
         AggregatorV2V3Interface oracle;
+        uint256 heartbeat;
     }
 
     /// @param asset Asset address.

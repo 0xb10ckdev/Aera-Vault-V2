@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultHooks.sol";
+import {OracleMock} from "test/utils/OracleMock.sol";
 
 contract AfterSubmitTest is TestBaseAeraVaultHooks {
     function setUp() public override {
@@ -92,6 +93,18 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         }
 
         vm.warp(block.timestamp + 1 days);
+
+        for (uint256 i = 0; i < assetsInformation.length; i++) {
+            if (address(assetsInformation[i].oracle) != address(0)) {
+                deployCodeTo(
+                    "OracleMock.sol",
+                    abi.encode(6),
+                    address(assetsInformation[i].oracle)
+                );
+                OracleMock(address(assetsInformation[i].oracle))
+                    .setLatestAnswer(int256(oraclePrices[i]));
+            }
+        }
 
         vm.expectRevert(
             AeraVaultHooks.Aera__ExceedsMaxDailyExecutionLoss.selector
@@ -195,6 +208,18 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         vm.warp(block.timestamp + 1 days);
         day = block.timestamp / 1 days;
         assertEq(hooksCurrentDay + 1, day);
+
+        for (uint256 i = 0; i < assetsInformation.length; i++) {
+            if (address(assetsInformation[i].oracle) != address(0)) {
+                deployCodeTo(
+                    "OracleMock.sol",
+                    abi.encode(6),
+                    address(assetsInformation[i].oracle)
+                );
+                OracleMock(address(assetsInformation[i].oracle))
+                    .setLatestAnswer(int256(oraclePrices[i]));
+            }
+        }
 
         vm.prank(vault.feeRecipient());
         vault.claim();
