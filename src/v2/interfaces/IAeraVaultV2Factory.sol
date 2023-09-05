@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {TargetSighash} from "../Types.sol";
+import {
+    TargetSighash,
+    AssetRegistryParameters,
+    HooksParameters
+} from "../Types.sol";
 
 /// @title IAeraVaultV2Factory
 /// @notice Interface for the V2 vault factory.
@@ -9,20 +13,22 @@ interface IAeraVaultV2Factory {
     /// @notice Create V2 vault.
     /// @param salt The salt value to create vault.
     /// @param owner Initial owner address.
-    /// @param assetRegistry Asset registry address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
     /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
+    /// @param assetRegistryParameters Struct details for asset registry deployment.
+    /// @param hooksParameters Struct details for hooks deployment.
     /// @return deployed The address of deployed vault.
     function create(
         bytes32 salt,
         address owner,
-        address assetRegistry,
         address guardian,
         address feeRecipient,
         uint256 fee,
-        string memory description
+        string calldata description,
+        AssetRegistryParameters memory assetRegistryParameters,
+        HooksParameters memory hooksParameters
     ) external returns (address deployed);
 
     /// @notice Calculate deployment address of V2 vault.

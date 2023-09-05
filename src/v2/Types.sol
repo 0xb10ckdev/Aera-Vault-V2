@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
+import "./interfaces/IAssetRegistry.sol";
 
 // Types.sol
 //
@@ -9,7 +10,7 @@ import "@openzeppelin/IERC20.sol";
 
 /// @notice Combination of contract address and sighash to be used in allowlist.
 /// @dev It's packed as follows:
-///      [target 160 bits] [selector 32 bits] [<empty> 64 bits]  
+///      [target 160 bits] [selector 32 bits] [<empty> 64 bits]
 type TargetSighash is bytes32;
 
 /// @notice Struct encapulating an asset and an associated value.
@@ -48,4 +49,27 @@ struct VaultParameters {
     address guardian;
     address feeRecipient;
     uint256 fee;
+}
+
+/// @notice Asset registry parameters for asset registry deployment.
+/// @param owner Initial owner address.
+/// @param assets Initial list of registered assets.
+/// @param numeraireId The index of the numeraire asset in the assets array.
+/// @param feeToken Fee token address.
+struct AssetRegistryParameters {
+    address owner;
+    IAssetRegistry.AssetInformation[] assets;
+    uint256 numeraireId;
+    IERC20 feeToken;
+}
+
+/// @notice Hooks parameters for hooks deployment.
+/// @param owner Initial owner address.
+/// @param maxDailyExecutionLoss The fraction of value that the vault can
+///                               lose per day in the course of submissions.
+/// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
+struct HooksParameters {
+    address owner;
+    uint256 maxDailyExecutionLoss;
+    TargetSighash[] targetSighashAllowlist;
 }

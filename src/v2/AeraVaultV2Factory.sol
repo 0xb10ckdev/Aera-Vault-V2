@@ -3,6 +3,8 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
+import "./AeraVaultAssetRegistry.sol";
+import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
 import "./interfaces/IAeraVaultV2Factory.sol";
 import {VaultParameters} from "./Types.sol";
@@ -59,41 +61,32 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
     /// @inheritdoc IAeraVaultV2Factory
     function create(
         bytes32 salt,
-        address owner_,
-        address assetRegistry_,
-        address guardian_,
-        address feeRecipient_,
-        uint256 fee_,
-        string calldata description_
-    ) external override onlyOwner returns (address deployed) {
-        // Requirements: confirm that vault has a nonempty description.
-        if (bytes(description_).length == 0) {
-            revert Aera__DescriptionIsEmpty();
-        }
-
-        parameters = VaultParameters({
-            owner: owner_,
-            assetRegistry: assetRegistry_,
-            guardian: guardian_,
-            feeRecipient: feeRecipient_,
-            fee: fee_
-        });
-
-        // Requirements, Effects and Interactions: deploy vault with create2.
-        deployed = address(new AeraVaultV2{salt: salt}());
-
-        delete parameters;
-
-        // Log vault creation.
-        emit VaultCreated(
-            deployed,
-            assetRegistry_,
-            guardian_,
-            feeRecipient_,
-            fee_,
-            description_,
-            wrappedNativeToken
+        address owner,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description,
+        AssetRegistryParameters memory assetRegistryParameters,
+        HooksParameters memory hooksParameters
+    ) external override onlyOwner returns (address deployedVault) {
+        address deployedAssetRegistry = _deployAssetRegistry(
+            salt, _computeVaultAddress(salt), assetRegistryParameters
         );
+
+        deployedVault = _deployVault(
+            salt,
+            owner,
+            deployedAssetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description
+        );
+
+        address deployedHooks =
+            _deployHooks(salt, deployedVault, hooksParameters);
+
+        AeraVaultV2(payable(deployedVault)).setHooks(deployedHooks);
     }
 
     /// @inheritdoc IAeraVaultV2Factory
@@ -103,9 +96,7 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         override
         returns (address)
     {
-        return Create2.computeAddress(
-            salt, keccak256(type(AeraVaultV2).creationCode)
-        );
+        return _computeVaultAddress(salt);
     }
 
     /// @inheritdoc IAeraVaultV2Factory
@@ -123,5 +114,99 @@ contract AeraVaultV2Factory is IAeraVaultV2Factory, Ownable2Step {
         bytes calldata code
     ) external view override returns (address) {
         return Create2.computeAddress(salt, keccak256(code));
+    }
+
+    /// INTERNAL FUNCTIONS ///
+
+    /// @notice Deploy asset registry.
+    /// @param salt The salt value to deploy asset registry.
+    /// @param vault Vault address.
+    /// @param assetRegistryParameters Struct details for asset registry deployment.
+    /// @return deployed The address of deployed asset registry.
+    function _deployAssetRegistry(
+        bytes32 salt,
+        address vault,
+        AssetRegistryParameters memory assetRegistryParameters
+    ) internal returns (address deployed) {
+        deployed = address(
+            new AeraVaultAssetRegistry{salt: salt}(
+                assetRegistryParameters.owner,
+                vault,
+                assetRegistryParameters.assets,
+                assetRegistryParameters.numeraireId,
+                assetRegistryParameters.feeToken
+            )
+        );
+    }
+
+    /// @notice Deploy V2 vault.
+    /// @param salt The salt value to create vault.
+    /// @param owner Initial owner address.
+    /// @param assetRegistry Asset registry address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param description Vault description.
+    /// @return deployed The address of deployed vault.
+    function _deployVault(
+        bytes32 salt,
+        address owner,
+        address assetRegistry,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) internal returns (address deployed) {
+        parameters =
+            VaultParameters(owner, assetRegistry, guardian, feeRecipient, fee);
+
+        // Requirements, Effects and Interactions: deploy vault with create2.
+        deployed = address(new AeraVaultV2{salt: salt}());
+
+        delete parameters;
+
+        // Log vault creation.
+        emit VaultCreated(
+            deployed,
+            assetRegistry,
+            guardian,
+            feeRecipient,
+            fee,
+            description,
+            wrappedNativeToken
+        );
+    }
+
+    /// @notice Deploy asset registry.
+    /// @param salt The salt value to deploy hooks.
+    /// @param vault Vault address.
+    /// @param hooksParameters Struct details for hooks deployment.
+    /// @return deployed The address of deployed hooks.
+    function _deployHooks(
+        bytes32 salt,
+        address vault,
+        HooksParameters memory hooksParameters
+    ) internal returns (address deployed) {
+        deployed = address(
+            new AeraVaultHooks{salt: salt}(
+                hooksParameters.owner,
+                vault,
+                hooksParameters.maxDailyExecutionLoss,
+                hooksParameters.targetSighashAllowlist
+            )
+        );
+    }
+
+    /// @notice Calculate deployment address of V2 vault.
+    /// @param salt The salt value to create vault.
+    /// @return Calculated deployment address.
+    function _computeVaultAddress(bytes32 salt)
+        internal
+        view
+        returns (address)
+    {
+        return Create2.computeAddress(
+            salt, keccak256(type(AeraVaultV2).creationCode)
+        );
     }
 }
