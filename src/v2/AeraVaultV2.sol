@@ -315,6 +315,7 @@ contract AeraVaultV2 is
     function execute(Operation calldata operation)
         external
         override
+        nonReentrant
         onlyOwner
     {
         // Requirements: check that the target contract is not hooks.
