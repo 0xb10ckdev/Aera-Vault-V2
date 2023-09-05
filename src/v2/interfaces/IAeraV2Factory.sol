@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 import {
-    TargetSighash,
     AssetRegistryParameters,
     HooksParameters
 } from "../Types.sol";
