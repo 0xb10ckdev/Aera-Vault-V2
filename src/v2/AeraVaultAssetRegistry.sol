@@ -343,7 +343,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             } else {
                 (, answer,, updatedAt,) = _assets[i].oracle.latestRoundData();
 
-                // Check basic validity
+                // Check price staleness
                 if (answer <= 0) {
                     revert Aera__OraclePriceIsInvalid(i, answer);
                 }
