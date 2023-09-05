@@ -52,11 +52,13 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
     error Aera__VaultIsZeroAddress();
     error Aera__ETHBalanceIsDecreased();
     error Aera__MaxDailyExecutionLossIsGreaterThanOne();
+    error Aera__NoCodeAtTarget(address target);
     error Aera__VaultIsNotValid(address vault);
     error Aera__CallIsNotAllowed(Operation operation);
     error Aera__ExceedsMaxDailyExecutionLoss();
     error Aera__AllowanceIsNotZero(address asset, address spender);
     error Aera__HooksInitialOwnerIsZeroAddress();
+    error Aera__RemovingNonexistentTargetSighash(TargetSighash targetSighash);
 
     /// MODIFIERS ///
 
@@ -127,6 +129,11 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
+        // Requirements: check there is code at target.
+        if (target.code.length == 0) {
+            revert Aera__NoCodeAtTarget(target);
+        }
+
         // Effects: add target sighash combination to the allowlist.
         _targetSighashAllowed[TargetSighashLib.toTargetSighash(target, selector)]
         = true;
@@ -142,10 +149,15 @@ contract AeraVaultHooks is IHooks, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
+        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(target, selector);
+
+        // Requirements: check that current target sighash is set.
+        if (!_targetSighashAllowed[targetSighash]) {
+            revert Aera__RemovingNonexistentTargetSighash(targetSighash);
+        }
+
         // Effects: remove target sighash combination from the allowlist.
-        delete _targetSighashAllowed[
-            TargetSighashLib.toTargetSighash(target, selector)
-        ];
+        delete _targetSighashAllowed[targetSighash];
 
         // Log the removal.
         emit TargetSighashRemoved(target, selector);
