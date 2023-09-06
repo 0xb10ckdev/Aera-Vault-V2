@@ -75,11 +75,11 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         );
     }
 
-    function test_createAeraV2Contracts_fail_whenGuardianIsFactory() public {
+    function test_createAeraV2Contracts_fail_whenGuardianIsOwner() public {
         vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
         factory.create(
             bytes32(_ONE),
-            address(this),
+            address(factory),
             address(factory),
             _FEE_RECIPIENT,
             _MAX_FEE,
@@ -119,13 +119,13 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         );
     }
 
-    function test_createAeraV2Contracts_fail_whenFeeRecipientIsFactory()
+    function test_createAeraV2Contracts_fail_whenFeeRecipientIsOwner()
         public
     {
         vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
         factory.create(
             bytes32(_ONE),
-            address(this),
+            address(factory),
             _GUARDIAN,
             address(factory),
             _MAX_FEE,
