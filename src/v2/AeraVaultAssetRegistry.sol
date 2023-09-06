@@ -80,8 +80,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
-    error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
-    error Aera__OraclePriceIsTooOld(uint256 index, uint256 updatedAt);
+    error Aera__OraclePriceIsInvalid(AssetInformation asset, int256 actual);
+    error Aera__OraclePriceIsTooOld(AssetInformation asset, uint256 updatedAt);
 
     /// FUNCTIONS ///
 
@@ -333,8 +333,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         uint256 oracleDecimals;
         uint256 price;
-        int256 answer;
-        uint256 updatedAt;
         uint256 index = 0;
         for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
@@ -351,21 +349,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                     spotPrice: ONE
                 });
             } else {
-                (, answer,, updatedAt,) = _assets[i].oracle.latestRoundData();
-
-                // Check price staleness
-                if (answer <= 0) {
-                    revert Aera__OraclePriceIsInvalid(i, answer);
-                }
-                if (
-                    _assets[i].heartbeat > 0
-                        && updatedAt + _assets[i].heartbeat + 1 hours
-                            < block.timestamp
-                ) {
-                    revert Aera__OraclePriceIsTooOld(i, updatedAt);
-                }
-
-                price = uint256(answer);
+                price = _checkOraclePrice(_assets[i]);
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (oracleDecimals < 18) {
@@ -406,7 +390,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Ensure non-zero oracle address for ERC20
     ///         and zero oracle address for ERC4626.
     /// @param asset Asset details to check
-    function _checkAssetOracle(AssetInformation memory asset) internal pure {
+    function _checkAssetOracle(AssetInformation memory asset) internal view {
         if (asset.isERC4626) {
             // ERC4626 asset should not have a specified oracle.
             if (address(asset.oracle) != address(0)) {
@@ -419,7 +403,34 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             if (address(asset.oracle) == address(0)) {
                 revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
             }
+
+            // Requirements: validate oracle price.
+            _checkOraclePrice(asset);
         }
+    }
+
+    /// @notice Ensure oracle returns valid value and it's up to date.
+    /// @param asset Asset details to check.
+    /// @return price Valid oracle price.
+    function _checkOraclePrice(AssetInformation memory asset)
+        internal
+        view
+        returns (uint256 price)
+    {
+        (, int256 answer,, uint256 updatedAt,) = asset.oracle.latestRoundData();
+
+        // Check price staleness
+        if (answer <= 0) {
+            revert Aera__OraclePriceIsInvalid(asset, answer);
+        }
+        if (
+            asset.heartbeat > 0
+                && updatedAt + asset.heartbeat + 1 hours < block.timestamp
+        ) {
+            revert Aera__OraclePriceIsTooOld(asset, updatedAt);
+        }
+
+        price = uint256(answer);
     }
 
     /// @notice Check whether the underlying asset is listed as an ERC20.
