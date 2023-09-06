@@ -145,9 +145,6 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
-        if (wrappedNativeToken_ == address(0)) {
-            revert Aera__WrappedNativeTokenIsZeroAddress();
-        }
 
         // Effects: initialize vault state.
         wrappedNativeToken = wrappedNativeToken_;

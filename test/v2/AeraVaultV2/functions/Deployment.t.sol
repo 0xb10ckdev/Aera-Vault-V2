@@ -173,21 +173,6 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         );
     }
 
-    function test_aeraVaultV2Deployment_fail_whenWrappedNativeTokenIsZeroAddress(
-    ) public {
-        wrappedNativeToken = address(0);
-
-        vm.expectRevert(IVault.Aera__WrappedNativeTokenIsZeroAddress.selector);
-        _deployVault(
-            address(this),
-            address(assetRegistry),
-            address(hooks),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE
-        );
-    }
-
     function test_aeraVaultV2Deployment_success() public {
         vm.expectEmit(true, true, true, true);
         emit SetAssetRegistry(address(assetRegistry));

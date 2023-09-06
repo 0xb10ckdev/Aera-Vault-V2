@@ -44,7 +44,6 @@ interface IVault is IVaultEvents {
     error Aera__AssetIsDuplicated(IERC20 asset);
     error Aera__NoAvailableFeesForCaller(address caller);
     error Aera__NoClaimableFeesForCaller(address caller);
-    error Aera__WrappedNativeTokenIsZeroAddress();
     error Aera__NotWrappedNativeTokenContract();
     error Aera__CannotRenounceOwnership();
 
