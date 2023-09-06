@@ -18,7 +18,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         address indexed owner,
         address indexed vault,
         IAssetRegistry.AssetInformation[] assets,
-        uint256 numeraireId,
+        address numeraireAsset,
         address feeToken
     );
 
@@ -63,8 +63,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         IAssetRegistry.AssetInformation[] memory registryAssets =
             assetRegistry.assets();
 
-        assertEq(numeraireId, assetRegistry.numeraireId());
-        assertEq(numeraireAsset, address(registryAssets[numeraireId].asset));
+        assertEq(address(assetRegistry.numeraireAsset()), numeraireAsset);
+        assertEq(address(registryAssets[numeraireId].asset), numeraireAsset);
         assertEq(address(registryAssets[numeraireId].oracle), address(0));
     }
 
@@ -162,17 +162,24 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         numAssets = registeredAssets.length;
         feeToken = assetRegistry.feeToken();
-        numeraireId = assetRegistry.numeraireId();
-        numeraireAsset = address(registeredAssets[numeraireId].asset);
+        numeraireAsset = address(assetRegistry.numeraireAsset());
 
         for (uint256 i = 0; i < numAssets; i++) {
             assets.push(registeredAssets[i]);
 
-            if (!registeredAssets[i].isERC4626 && i != numeraireId) {
+            if (address(registeredAssets[i].asset) == numeraireAsset) {
+                numeraireId = i;
+            } else if (
+                !registeredAssets[i].isERC4626
+                    && address(registeredAssets[i].asset) != numeraireAsset
+            ) {
                 nonNumeraireId = i;
                 nonNumeraireAsset = address(registeredAssets[i].asset);
             }
-            if (registeredAssets[i].isERC4626 && i != numeraireId) {
+            if (
+                registeredAssets[i].isERC4626
+                    && address(registeredAssets[i].asset) != numeraireAsset
+            ) {
                 nonNumeraireERC4626Id = i;
                 nonNumeraireERC4626Asset = address(registeredAssets[i].asset);
             }
@@ -196,7 +203,11 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         vm.expectEmit(true, false, false, true);
         emit Created(
-            address(this), vaultAddress, assets, numeraireId, address(feeToken)
+            address(this),
+            vaultAddress,
+            assets,
+            numeraireAsset,
+            address(feeToken)
         );
 
         (address deployedVault, address deployedAssetRegistry,) = factory
@@ -208,7 +219,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             _MAX_FEE,
             "Test Vault",
             AssetRegistryParameters(
-                address(this), assets, numeraireId, feeToken
+                address(this), assets, IERC20(numeraireAsset), feeToken
             ),
             HooksParameters(address(this), 0.1e18, targetSighashAllowlist)
         );
