@@ -3,7 +3,6 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
-import "@openzeppelin/Address.sol";
 import "@openzeppelin/IERC20.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
@@ -92,7 +91,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }
-        if (!Address.isContract(wrappedNativeToken_)) {
+        if (wrappedNativeToken_.code.length == 0) {
             revert Aera__InvalidWrappedNativeToken();
         }
         try IERC20(wrappedNativeToken_).balanceOf(address(this)) returns (
