@@ -116,7 +116,11 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             vm.expectEmit(true, true, true, true, address(vault));
-            emit Withdraw(vault.owner(), withdrawAmounts[i].asset, withdrawAmounts[i].value);
+            emit Withdraw(
+                vault.owner(),
+                withdrawAmounts[i].asset,
+                withdrawAmounts[i].value
+            );
         }
 
         vault.withdraw(withdrawAmounts);
@@ -130,7 +134,11 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         for (uint256 i = 0; i < withdrawAmounts.length; i++) {
             vm.expectEmit(true, true, true, true, address(vault));
-            emit Withdraw(vault.owner(), withdrawAmounts[i].asset, withdrawAmounts[i].value);
+            emit Withdraw(
+                vault.owner(),
+                withdrawAmounts[i].asset,
+                withdrawAmounts[i].value
+            );
         }
 
         vault.withdraw(withdrawAmounts);
