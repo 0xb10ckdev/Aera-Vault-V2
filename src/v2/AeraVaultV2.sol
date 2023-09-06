@@ -412,6 +412,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyGuardian
+        whenHooksSet
         whenNotFinalized
         whenNotPaused
         reserveFees
