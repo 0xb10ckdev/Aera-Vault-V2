@@ -65,8 +65,8 @@ contract DepositTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IVault.Aera__AssetIsDuplicated.selector,
-                depositAmounts[0].asset
+                IVault.Aera__AmountsOrderIsIncorrect.selector,
+                1
             )
         );
 

@@ -184,6 +184,9 @@ contract AeraVaultV2 is
         // Hooks: before transferring assets.
         hooks.beforeDeposit(amounts);
 
+        // Requirements: check that provided amounts are sorted by asset and unique.
+        _checkAmountsSorted(amounts);
+
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
@@ -198,16 +201,6 @@ contract AeraVaultV2 is
             // Requirements: check that deposited assets are registered.
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
-            }
-
-            for (uint256 j = 0; j < numAmounts;) {
-                // Requirements: check that no duplicate assets are provided.
-                if (i != j && assetValue.asset == amounts[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetValue.asset);
-                }
-                unchecked {
-                    j++; // gas savings
-                }
             }
 
             // Interactions: transfer asset from owner to vault.
@@ -242,6 +235,9 @@ contract AeraVaultV2 is
 
         // Requirements: check the withdraw request.
         _checkWithdrawRequest(assets, amounts);
+
+        // Requirements: check that provided amounts are sorted by asset and unique.
+        _checkAmountsSorted(amounts);
 
         // Hooks: before transferring assets.
         hooks.beforeWithdraw(amounts);
@@ -680,6 +676,21 @@ contract AeraVaultV2 is
         }
     }
 
+    /// @notice Check that assets in provided amounts are sorted and unique.
+    /// @param amounts Struct details for assets and amounts to withdraw.
+    function _checkAmountsSorted(AssetValue[] memory amounts) internal pure {
+        uint256 numAssets = amounts.length;
+
+        for (uint256 i = 1; i < numAssets;) {
+            if (amounts[i - 1].asset >= amounts[i].asset) {
+                revert Aera__AmountsOrderIsIncorrect(i);
+            }
+            unchecked {
+                i++; // gas savings
+            }
+        }
+    }
+
     /// @notice Check request to withdraw.
     /// @param assets Struct details for asset information from asset registry.
     /// @param amounts Struct details for assets and amounts to withdraw.
@@ -702,15 +713,6 @@ contract AeraVaultV2 is
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
-            }
-
-            for (uint256 j = 0; j < numAmounts;) {
-                if (i != j && assetValue.asset == amounts[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetValue.asset);
-                }
-                unchecked {
-                    j++; // gas savings
-                }
             }
 
             if (assetAmounts[assetIndex].value < assetValue.value) {
