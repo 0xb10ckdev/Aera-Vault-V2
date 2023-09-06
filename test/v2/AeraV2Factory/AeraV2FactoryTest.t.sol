@@ -156,7 +156,14 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
     }
 
     function test_createAeraV2Contracts_success() public {
-        address predict = factory.computeVaultAddress(bytes32(_ONE));
+        address predict = factory.computeVaultAddress(
+            bytes32(_ONE),
+            address(this),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
 
         (
             address deployedVault,
