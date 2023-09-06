@@ -33,6 +33,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
 
+    AggregatorV2V3Interface public sequencer;
+
     /// EVENTS ///
 
     /// @notice Emitted when a new asset is added.
@@ -80,6 +82,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
+    error Aera__SequencerIsDown();
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
     error Aera__OraclePriceIsTooOld(uint256 index, uint256 updatedAt);
 
@@ -90,12 +93,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireId_ The index of the numeraire asset in the assets array.
     /// @param feeToken_ Fee token address.
+    /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
         address vault_,
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
-        IERC20 feeToken_
+        IERC20 feeToken_,
+        AggregatorV2V3Interface sequencer_
     ) Ownable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
@@ -179,10 +184,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        // Effects: set vault, numeraire and fee token.
+        // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
         numeraireId = numeraireId_;
         feeToken = feeToken_;
+        sequencer = sequencer_;
 
         // Effects: set new owner.
         _transferOwnership(owner_);
@@ -325,6 +331,18 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         override
         returns (AssetPriceReading[] memory)
     {
+        int256 answer;
+
+        // Requirements: check that sequencer is up.
+        if (address(sequencer) != address(0)) {
+            (, answer,,,) = sequencer.latestRoundData();
+
+            // Answer == 0: Sequencer is up
+            if (answer != 0) {
+                revert Aera__SequencerIsDown();
+            }
+        }
+
         // Prepare price array.
         uint256 numAssets = _assets.length;
         AssetPriceReading[] memory prices = new AssetPriceReading[](
@@ -333,7 +351,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         uint256 oracleDecimals;
         uint256 price;
-        int256 answer;
         uint256 updatedAt;
         uint256 index = 0;
         for (uint256 i = 0; i < numAssets;) {
