@@ -334,7 +334,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 price;
         int256 answer;
         uint256 updatedAt;
-        uint256 index;
+        uint256 index = 0;
         for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
                 unchecked {
@@ -432,7 +432,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         uint256 numAssets = assetsToCheck.length;
 
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
-        uint256 underlyingIndex;
+        uint256 underlyingIndex = 0;
 
         for (; underlyingIndex < numAssets; underlyingIndex++) {
             if (
