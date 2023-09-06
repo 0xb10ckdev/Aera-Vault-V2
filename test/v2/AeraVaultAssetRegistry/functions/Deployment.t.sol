@@ -9,7 +9,14 @@ contract DeploymentTest is TestBaseAssetRegistry {
     function setUp() public override {
         super.setUp();
 
-        vaultAddress = factory.computeVaultAddress(bytes32(0));
+        vaultAddress = factory.computeVaultAddress(
+            bytes32(0),
+            address(this),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
     }
 
     function test_assetRegistryDeployment_fail_whenNumberOfAssetsExceedsMaximum(

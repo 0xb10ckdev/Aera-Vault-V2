@@ -185,13 +185,18 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         TargetSighashData[] memory targetSighashAllowlist;
 
+        address vaultAddress = factory.computeVaultAddress(
+            bytes32(0),
+            address(this),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
+
         vm.expectEmit(true, false, false, true);
         emit Created(
-            address(this),
-            factory.computeVaultAddress(bytes32(0)),
-            assets,
-            numeraireId,
-            address(feeToken)
+            address(this), vaultAddress, assets, numeraireId, address(feeToken)
         );
 
         (address deployedVault, address deployedAssetRegistry,) = factory
