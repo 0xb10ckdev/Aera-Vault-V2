@@ -152,13 +152,13 @@ contract DeployAeraContracts is DeployScriptBase {
         address owner = json.readAddress(".owner");
         IAssetRegistry.AssetInformation[] memory assets =
             abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
-        uint256 numeraireId = json.readUint(".numeraireId");
+        address numeraireAsset = json.readAddress(".numeraireAsset");
         address feeToken = json.readAddress(".feeToken");
 
         return AssetRegistryParameters(
             owner == address(0) ? _deployerAddress : owner,
             assets,
-            numeraireId,
+            IERC20(numeraireAsset),
             IERC20(feeToken)
         );
     }
@@ -274,7 +274,8 @@ contract DeployAeraContracts is DeployScriptBase {
         }
 
         assertEq(
-            assetRegistry.numeraireId(), assetRegistryParameters.numeraireId
+            address(assetRegistry.numeraireAsset()),
+            address(assetRegistryParameters.numeraireAsset)
         );
         assertEq(
             address(assetRegistry.feeToken()),
