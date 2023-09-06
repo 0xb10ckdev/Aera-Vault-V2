@@ -156,12 +156,14 @@ contract DeployAeraContracts is DeployScriptBase {
             abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
         uint256 numeraireId = json.readUint(".numeraireId");
         address feeToken = json.readAddress(".feeToken");
+        address sequencer = json.readAddress(".sequencer");
 
         return AssetRegistryParameters(
             owner == address(0) ? _deployerAddress : owner,
             assets,
             numeraireId,
-            IERC20(feeToken)
+            IERC20(feeToken),
+            AggregatorV2V3Interface(sequencer)
         );
     }
 
