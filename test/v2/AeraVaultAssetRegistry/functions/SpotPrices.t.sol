@@ -19,6 +19,20 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         assetRegistry.spotPrices();
     }
 
+    function test_spotPrices_fail_whenGracePeriodNotOver() public {
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            address(vault),
+            assets,
+            numeraireId,
+            feeToken,
+            AggregatorV2V3Interface(address(new OracleMock(18)))
+        );
+
+        vm.expectRevert(AeraVaultAssetRegistry.Aera__GracePeriodNotOver.selector);
+        assetRegistry.spotPrices();
+    }
+
     function test_spotPrices_fail_whenOraclePriceIsInvalid() public {
         deployCodeTo(
             "OracleMock.sol",

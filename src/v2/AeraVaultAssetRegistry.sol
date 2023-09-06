@@ -16,6 +16,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
+    /// @notice Time to pass before accepting answers when sequencer comes back up.
+    uint256 public constant GRACE_PERIOD_TIME = 3600;
+
     /// @notice Vault address.
     address public immutable vault;
 
@@ -84,6 +87,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
     error Aera__SequencerIsDown();
+    error Aera__GracePeriodNotOver();
     error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
     error Aera__OraclePriceIsTooOld(uint256 index, uint256 updatedAt);
 
@@ -333,14 +337,22 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         returns (AssetPriceReading[] memory)
     {
         int256 answer;
+        uint256 startedAt;
 
         // Requirements: check that sequencer is up.
         if (address(sequencer) != address(0)) {
-            (, answer,,,) = sequencer.latestRoundData();
+            (, answer, startedAt,,) = sequencer.latestRoundData();
 
             // Answer == 0: Sequencer is up
+            // Requirements: check that the sequencer is up.
             if (answer != 0) {
                 revert Aera__SequencerIsDown();
+            }
+
+            // Requirements: check that the grace period has passed after the
+            //               sequencer is back up.
+            if (block.timestamp < startedAt + GRACE_PERIOD_TIME) {
+                revert Aera__GracePeriodNotOver();
             }
         }
 

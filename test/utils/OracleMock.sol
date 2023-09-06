@@ -12,10 +12,12 @@ interface IOracleMock {
 contract OracleMock {
     uint256 public decimals;
     int256 public answer;
+    uint256 public startedAt;
     uint256 public updatedAt;
 
     constructor(uint256 _decimals) {
         decimals = _decimals;
+        startedAt = block.timestamp;
         updatedAt = block.timestamp;
     }
 
@@ -40,6 +42,6 @@ contract OracleMock {
         view
         returns (uint80, int256, uint256, uint256, uint80)
     {
-        return (0, answer, 0, updatedAt, 0);
+        return (0, answer, startedAt, updatedAt, 0);
     }
 }
