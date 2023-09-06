@@ -20,16 +20,21 @@ import {ONE} from "./Constants.sol";
 contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
     using SafeERC20 for IERC20;
 
+    /// @notice Min bound on minimum fraction of vault value that the vault has to retain
+    ///         between submissions during a single day.
+    /// @dev    Loose bound to mitigate initialization error.
+    uint256 private constant _LOWEST_MIN_DAILY_VALUE = ONE / 2;
+
+    /// @notice The minimum fraction of vault value that the vault has to
+    ///         retain per day during submit transactions.
+    ///         e.g. 0.9 (in 18-decimal form) allows the vault to lose up to
+    ///         10% in value across consecutive submissions.
+    uint256 public immutable minDailyValue;
+
     /// STORAGE ///
 
     /// @notice The address of the vault.
     address public vault;
-
-    /// @notice The maximum fraction of value that the vault can lose per day
-    ///         during submit transactions.
-    ///         e.g. 0.1 (in 18-decimal form) allows the vault to lose up to
-    ///         10% in value across consecutive submissions.
-    uint256 public maxDailyExecutionLoss;
 
     /// @notice Current day (UTC).
     uint256 public currentDay;
@@ -52,11 +57,12 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
     error Aera__CallerIsNotVault();
     error Aera__VaultIsZeroAddress();
     error Aera__ETHBalanceIsDecreased();
-    error Aera__MaxDailyExecutionLossIsGreaterThanOne();
+    error Aera__MinDailyValueTooLow();
+    error Aera__MinDailyValueIsNotLessThanOne();
     error Aera__NoCodeAtTarget(address target);
     error Aera__VaultIsNotValid(address vault);
     error Aera__CallIsNotAllowed(Operation operation);
-    error Aera__ExceedsMaxDailyExecutionLoss();
+    error Aera__VaultValueBelowMinDailyValue();
     error Aera__AllowanceIsNotZero(address asset, address spender);
     error Aera__HooksInitialOwnerIsZeroAddress();
     error Aera__RemovingNonexistentTargetSighash(TargetSighash targetSighash);
@@ -75,13 +81,13 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
 
     /// @param owner_ Initial owner address.
     /// @param vault_ Vault address.
-    /// @param maxDailyExecutionLoss_ The fraction of value that the vault can
-    ///                               lose per day in the course of submissions.
+    /// @param minDailyValue_ The minimum fraction of value that the vault has to retain
+    ///                       during the day in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     constructor(
         address owner_,
         address vault_,
-        uint256 maxDailyExecutionLoss_,
+        uint256 minDailyValue_,
         TargetSighashData[] memory targetSighashAllowlist
     ) Ownable() {
         // Requirements: validate vault.
@@ -92,9 +98,14 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
             revert Aera__HooksInitialOwnerIsZeroAddress();
         }
 
-        // Requirements: check if max daily execution loss is bounded.
-        if (maxDailyExecutionLoss_ > ONE) {
-            revert Aera__MaxDailyExecutionLossIsGreaterThanOne();
+        // Requirements: check that minimum daily value doesn't mandate vault growth.
+        if (minDailyValue_ >= ONE) {
+            revert Aera__MinDailyValueIsNotLessThanOne();
+        }
+
+        // Requirements: check that minimum daily value enforces a lower bound.
+        if (minDailyValue_ < _LOWEST_MIN_DAILY_VALUE) {
+            revert Aera__MinDailyValueTooLow();
         }
 
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
@@ -113,7 +124,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
 
         // Effects: initialize state variables.
         vault = vault_;
-        maxDailyExecutionLoss = maxDailyExecutionLoss_;
+        minDailyValue = minDailyValue_;
         currentDay = block.timestamp / 1 days;
         cumulativeDailyMultiplier = ONE;
 
@@ -243,8 +254,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
                 newMultiplier * IVault(vault).value() / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
-            if (newMultiplier < ONE - maxDailyExecutionLoss) {
-                revert Aera__ExceedsMaxDailyExecutionLoss();
+            if (newMultiplier < minDailyValue) {
+                revert Aera__VaultValueBelowMinDailyValue();
             }
 
             // Effects: update the daily multiplier.
@@ -297,7 +308,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
     /// @inheritdoc IHooks
     function afterFinalize() external override onlyVault {
         // Effects: release storage
-        maxDailyExecutionLoss = 0;
         currentDay = 0;
         cumulativeDailyMultiplier = 0;
     }
@@ -308,7 +318,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         vault = address(0);
 
         // Effects: release storage
-        maxDailyExecutionLoss = 0;
         currentDay = 0;
         cumulativeDailyMultiplier = 0;
 
