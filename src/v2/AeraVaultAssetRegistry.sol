@@ -33,6 +33,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
 
+    /// @notice Sequencer Uptime Feed address for L2.
     AggregatorV2V3Interface public sequencer;
 
     /// EVENTS ///

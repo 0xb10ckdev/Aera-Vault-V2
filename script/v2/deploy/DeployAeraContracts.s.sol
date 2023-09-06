@@ -4,6 +4,8 @@ pragma solidity ^0.8.21;
 import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
+import {AggregatorV2V3Interface} from
+    "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
 import {AeraVaultHooks} from "src/v2/AeraVaultHooks.sol";
 import {AeraVaultV2} from "src/v2/AeraVaultV2.sol";
