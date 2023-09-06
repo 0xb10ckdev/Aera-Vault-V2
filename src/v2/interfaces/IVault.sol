@@ -26,8 +26,8 @@ interface IVault is IVaultEvents {
     error Aera__ExecuteTargetIsVaultAddress();
     error Aera__SubmitTransfersAssetFromOwner();
     error Aera__SubmitRedeemERC4626AssetFromOwner();
-    error Aera__SubmitTargetIsHooksAddress();
     error Aera__SubmitTargetIsVaultAddress();
+    error Aera__SubmitTargetIsHooksAddress(uint256 index);
     error Aera__FeeRecipientIsOwner();
     error Aera__FeeIsAboveMax(uint256 actual, uint256 max);
     error Aera__CallerIsNotOwnerAndGuardian();

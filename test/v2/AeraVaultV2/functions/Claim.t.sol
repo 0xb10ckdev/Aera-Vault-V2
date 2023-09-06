@@ -43,7 +43,7 @@ contract ClaimTest is TestBaseAeraVaultV2 {
 
         uint256 reservedFeeInClaim = 899998;
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Claimed(_FEE_RECIPIENT, fee, reservedFeeInClaim - feeBalance);
+        emit Claimed(_FEE_RECIPIENT, fee, reservedFeeInClaim - feeBalance, 399999);
 
         vault.claim();
 
@@ -84,7 +84,7 @@ contract ClaimTest is TestBaseAeraVaultV2 {
         vm.startPrank(_FEE_RECIPIENT);
 
         vm.expectEmit(true, true, true, true, address(vault));
-        emit Claimed(_FEE_RECIPIENT, fee, 0);
+        emit Claimed(_FEE_RECIPIENT, fee, 0, feeTotal - fee);
 
         vault.claim();
 
