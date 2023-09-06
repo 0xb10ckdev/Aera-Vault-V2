@@ -95,8 +95,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @inheritdoc IAeraV2Factory
     function create(
-        bytes32 salt,
-        address owner,
+        bytes32 saltInput,
+        address owner_,
         address guardian,
         address feeRecipient,
         uint256 fee,
@@ -118,6 +118,10 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             revert Aera__DescriptionIsEmpty();
         }
 
+        bytes32 salt = _calculateSalt(
+            saltInput, owner_, guardian, feeRecipient, fee, description
+        );
+
         // Effects: deploy asset registry.
         deployedAssetRegistry = _deployAssetRegistry(
             _computeVaultAddress(salt), assetRegistryParameters
@@ -130,7 +134,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         // Effects: deploy the vault.
         deployedVault = _deployVault(
             salt,
-            owner,
+            owner_,
             deployedAssetRegistry,
             deployedHooks,
             guardian,
@@ -149,13 +153,19 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     }
 
     /// @inheritdoc IAeraV2Factory
-    function computeVaultAddress(bytes32 salt)
-        external
-        view
-        override
-        returns (address)
-    {
-        return _computeVaultAddress(salt);
+    function computeVaultAddress(
+        bytes32 saltInput,
+        address owner_,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) external view override returns (address) {
+        return _computeVaultAddress(
+            _calculateSalt(
+                saltInput, owner_, guardian, feeRecipient, fee, description
+            )
+        );
     }
 
     /// INTERNAL FUNCTIONS ///
@@ -220,7 +230,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Deploy V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner Initial owner address.
+    /// @param owner_ Initial owner address.
     /// @param assetRegistry Asset registry address.
     /// @param hooks Hooks address.
     /// @param guardian Guardian address.
@@ -230,7 +240,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @return deployed The address of deployed vault.
     function _deployVault(
         bytes32 salt,
-        address owner,
+        address owner_,
         address assetRegistry,
         address hooks,
         address guardian,
@@ -239,7 +249,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         string calldata description
     ) internal returns (address deployed) {
         parameters = VaultParameters(
-            owner, assetRegistry, hooks, guardian, feeRecipient, fee
+            owner_, assetRegistry, hooks, guardian, feeRecipient, fee
         );
 
         // Requirements, Effects and Interactions: deploy vault with create2.
@@ -252,7 +262,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             deployed,
             assetRegistry,
             hooks,
-            owner,
+            owner_,
             guardian,
             feeRecipient,
             fee,
@@ -271,6 +281,28 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     {
         return Create2.computeAddress(
             salt, keccak256(type(AeraVaultV2).creationCode)
+        );
+    }
+
+    /// @notice Calculate salt from vault parameters.
+    /// @param saltInput The salt value to create vault.
+    /// @param owner_ Initial owner address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param description Vault description.
+    function _calculateSalt(
+        bytes32 saltInput,
+        address owner_,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encodePacked(
+                saltInput, owner_, guardian, feeRecipient, fee, description
+            )
         );
     }
 }
