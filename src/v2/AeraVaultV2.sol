@@ -631,7 +631,14 @@ contract AeraVaultV2 is
         feeTotal += newFee;
 
         // Log fee reservation.
-        emit FeesReserved(feeRecipient, newFee, lastFeeCheckpoint, lastValue, lastFeeTokenPrice, feeTotal);
+        emit FeesReserved(
+            feeRecipient,
+            newFee,
+            lastFeeCheckpoint,
+            lastValue,
+            lastFeeTokenPrice,
+            feeTotal
+        );
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.

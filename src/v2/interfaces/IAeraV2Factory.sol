@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {
-    AssetRegistryParameters,
-    HooksParameters
-} from "../Types.sol";
+import {AssetRegistryParameters, HooksParameters} from "../Types.sol";
 
 /// @title IAeraV2Factory
 /// @notice Interface for the V2 vault factory.
