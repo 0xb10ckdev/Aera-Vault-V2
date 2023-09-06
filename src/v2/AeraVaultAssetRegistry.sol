@@ -2,12 +2,9 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
-import "@openzeppelin/ERC165Checker.sol";
-import "@openzeppelin/IERC20Metadata.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAssetRegistry.sol";
-import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultAssetRegistry

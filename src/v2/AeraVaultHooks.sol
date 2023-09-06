@@ -3,7 +3,6 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
-import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "@openzeppelin/IERC20IncreaseAllowance.sol";
