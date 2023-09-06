@@ -291,6 +291,7 @@ contract AeraVaultV2 is
     function setHooks(address newHooks)
         external
         override
+        nonReentrant
         onlyOwner
         whenNotFinalized
         reserveFees
