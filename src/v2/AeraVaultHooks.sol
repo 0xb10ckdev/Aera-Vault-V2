@@ -233,18 +233,19 @@ contract AeraVaultHooks is
         override
         onlyVault
     {
-        uint256 day = block.timestamp / 1 days;
-
+        // Requirements: check that ETH balance is not decreased.
         if (vault.balance < _beforeBalance) {
             revert Aera__ETHBalanceIsDecreased();
         }
 
+        uint256 newMultiplier;
+        uint256 currentMultiplier = cumulativeDailyMultiplier;
+        uint256 day = block.timestamp / 1 days;
+
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
-            uint256 newMultiplier =
-                (currentDay == day ? cumulativeDailyMultiplier : ONE);
-            newMultiplier =
-                newMultiplier * IVault(vault).value() / _beforeValue;
+            newMultiplier = currentDay == day ? currentMultiplier : ONE;
+            newMultiplier = (newMultiplier * IVault(vault).value()) / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
             if (newMultiplier < ONE - maxDailyExecutionLoss) {
@@ -252,11 +253,17 @@ contract AeraVaultHooks is
             }
 
             // Effects: update the daily multiplier.
-            cumulativeDailyMultiplier = newMultiplier;
+            if (currentMultiplier != newMultiplier) {
+                cumulativeDailyMultiplier = newMultiplier;
+            }
         }
 
-        // Effects: reset day and prior vault value for the next submission.
-        currentDay = day;
+        // Effects: reset current day for the next submission.
+        if (currentDay != day) {
+            currentDay = day;
+        }
+
+        // Effects: reset prior vault value for the next submission.
         _beforeBalance = 0;
         _beforeValue = 0;
 

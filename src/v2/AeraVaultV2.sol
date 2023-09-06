@@ -804,7 +804,8 @@ contract AeraVaultV2 is
             });
 
             if (assetInfo.asset == feeToken) {
-                assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
+                assetAmounts[i].value -=
+                    Math.min(feeTotal, assetAmounts[i].value);
             }
 
             unchecked {
