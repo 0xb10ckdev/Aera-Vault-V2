@@ -19,6 +19,7 @@ import {
     VaultParameters
 } from "src/v2/Types.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
+import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 
 contract DeployAeraContracts is DeployScriptBase {
     using stdJson for string;
@@ -142,6 +143,13 @@ contract DeployAeraContracts is DeployScriptBase {
         }
     }
 
+    struct AssetInformation {
+        address asset;
+        uint256 heartbeat;
+        bool isERC4626;
+        address oracle;
+    }
+
     function _getAssetRegistryParams(string memory relFilePath)
         internal
         returns (AssetRegistryParameters memory)
@@ -212,7 +220,8 @@ contract DeployAeraContracts is DeployScriptBase {
             allowlist := allowlistRaw
         }
 
-        TargetSighashData[] memory targetSighashAllowlist;
+        TargetSighashData[] memory targetSighashAllowlist =
+            new TargetSighashData[](allowlist.length);
         for (uint256 i = 0; i < allowlist.length; i++) {
             targetSighashAllowlist[i] = TargetSighashData({
                 target: _getTarget(allowlist[i]),
