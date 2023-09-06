@@ -52,13 +52,15 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param assets Initial list of registered assets.
     /// @param numeraireId The index of the numeraire asset in the assets array.
     /// @param feeToken Fee token address.
+    /// @param sequencer Sequencer Uptime Feed address for L2.
     event AssetRegistryCreated(
         address indexed assetRegistry,
         address indexed vault,
         address indexed owner,
         IAssetRegistry.AssetInformation[] assets,
         uint256 numeraireId,
-        IERC20 feeToken
+        IERC20 feeToken,
+        AggregatorV2V3Interface sequencer
     );
 
     /// @notice Emitted when the hooks is created.
@@ -187,7 +189,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             assetRegistryParameters.owner,
             assetRegistryParameters.assets,
             assetRegistryParameters.numeraireId,
-            assetRegistryParameters.feeToken
+            assetRegistryParameters.feeToken,
+            assetRegistryParameters.sequencer
         );
     }
 
