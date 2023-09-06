@@ -361,9 +361,11 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAssetAmounts;) {
             // Effects: transfer registered assets to owner.
             // Excludes reserved fee tokens and native token (e.g., ETH).
-            assetAmounts[i].asset.safeTransfer(
-                msg.sender, assetAmounts[i].value
-            );
+            if (assetAmounts[i].value > 0) {
+                assetAmounts[i].asset.safeTransfer(
+                    msg.sender, assetAmounts[i].value
+                );
+            }
             unchecked {
                 i++; // gas savings
             }
