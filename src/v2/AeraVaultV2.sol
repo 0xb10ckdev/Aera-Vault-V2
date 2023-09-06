@@ -633,7 +633,14 @@ contract AeraVaultV2 is
         feeTotal += newFee;
 
         // Log fee reservation.
-        emit FeesReserved(feeRecipient, newFee, lastFeeCheckpoint, lastValue, lastFeeTokenPrice, feeTotal);
+        emit FeesReserved(
+            feeRecipient,
+            newFee,
+            lastFeeCheckpoint,
+            lastValue,
+            lastFeeTokenPrice,
+            feeTotal
+        );
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
@@ -799,7 +806,8 @@ contract AeraVaultV2 is
             });
 
             if (assetInfo.asset == feeToken) {
-                assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
+                assetAmounts[i].value -=
+                    Math.min(feeTotal, assetAmounts[i].value);
             }
 
             unchecked {

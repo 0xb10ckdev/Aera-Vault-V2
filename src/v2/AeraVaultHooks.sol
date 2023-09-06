@@ -4,12 +4,12 @@ pragma solidity 0.8.21;
 import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
-import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
 import "./interfaces/IAeraVaultHooksEvents.sol";
 import "./interfaces/IVault.sol";
+import "./Sweepable.sol";
 import "./TargetSighashLib.sol";
 import "./Types.sol";
 import {ONE} from "./Constants.sol";
@@ -17,7 +17,7 @@ import {ONE} from "./Constants.sol";
 /// @title AeraVaultHooks
 /// @notice Default hooks contract which implements several safeguards.
 /// @dev Connected vault MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
-contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
+contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     using SafeERC20 for IERC20;
 
     /// STORAGE ///
@@ -83,7 +83,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         address vault_,
         uint256 maxDailyExecutionLoss_,
         TargetSighashData[] memory targetSighashAllowlist
-    ) Ownable() {
+    ) Sweepable() {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
@@ -149,7 +149,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(target, selector);
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, selector);
 
         // Requirements: check that current target sighash is set.
         if (!_targetSighashAllowed[targetSighash]) {

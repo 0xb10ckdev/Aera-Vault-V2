@@ -5,14 +5,14 @@ import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/IERC20Metadata.sol";
 import "@openzeppelin/IERC4626.sol";
-import "@openzeppelin/Ownable2Step.sol";
+import "./Sweepable.sol";
 import "./interfaces/IAssetRegistry.sol";
 import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultAssetRegistry
 /// @notice Maintains a list of registered assets and their oracles (when applicable).
-contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
+contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
@@ -96,7 +96,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
         IERC20 feeToken_
-    ) Ownable() {
+    ) Sweepable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
