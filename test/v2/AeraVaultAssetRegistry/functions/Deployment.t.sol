@@ -29,7 +29,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -46,7 +47,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -61,7 +63,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(0),
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -82,7 +85,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -106,7 +110,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -127,7 +132,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             invalidNumeraire,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -154,7 +160,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -171,7 +178,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -189,7 +197,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -208,7 +217,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -230,7 +240,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
                     vaultAddress,
                     assets, 
                     numeraireId, 
-                    feeToken
+                    feeToken,
+            AggregatorV2V3Interface(address(0))
                 );
                 assets[i].oracle = AggregatorV2V3Interface(address(0));
             }
@@ -269,7 +280,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -279,7 +291,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         assertEq(assetRegistry.vault(), vaultAddress);

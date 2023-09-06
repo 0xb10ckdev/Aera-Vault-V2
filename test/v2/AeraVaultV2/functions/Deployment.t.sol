@@ -22,7 +22,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             ),
             assetsInformation,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         hooks = new AeraVaultHooks(
@@ -77,7 +78,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             ),
             assetsInformation,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         vm.expectRevert(IVault.Aera__AssetRegistryHasInvalidVault.selector);
