@@ -225,7 +225,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 feeToken,
                 AggregatorV2V3Interface(address(0))
             ),
-            HooksParameters(address(this), 0.1e18, targetSighashAllowlist)
+            HooksParameters(address(this), 0.9e18, targetSighashAllowlist)
         );
 
         assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);

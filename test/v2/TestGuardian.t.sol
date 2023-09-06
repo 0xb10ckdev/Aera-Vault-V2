@@ -45,7 +45,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     address wsteth = 0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD;
     address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 1000000000;
-    uint256 maxDailyExecutionLoss = 100000000000000000;
+    uint256 minDailyValue = 900000000000000000;
     uint256 minBlockNumber = 46145721;
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
@@ -266,7 +266,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
 
         vm.serializeAddress("Hooks", "owner", address(this));
         vm.serializeUint(
-            "Deployments", "maxDailyExecutionLoss", maxDailyExecutionLoss
+            "Deployments", "minDailyValue", minDailyValue
         );
         string memory json;
         json = vm.serializeBytes32(

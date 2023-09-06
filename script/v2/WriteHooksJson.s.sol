@@ -145,11 +145,11 @@ contract WriteHooksJson is Script, Test {
         string memory json = vm.readFile(path);
 
         address owner = json.readAddress(".owner");
-        uint256 maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
+        uint256 minDailyValue = json.readUint(".minDailyValue");
 
         vm.serializeAddress("Hooks", "owner", owner);
         vm.serializeUint(
-            "Hooks", "maxDailyExecutionLoss", maxDailyExecutionLoss
+            "Hooks", "minDailyValue", minDailyValue
         );
         vm.writeJson(
             vm.serializeBytes32(
