@@ -601,15 +601,12 @@ contract AeraVaultV2 is
             return;
         }
 
-        IERC20 numeraireAsset =
-            assetRegistry.assets()[assetRegistry.numeraireId()].asset;
-
         // Calculate new fee for current fee recipient.
         // It calculates the fee in fee token decimals.
         uint256 newFee = lastValue * feeIndex * fee;
         uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
         uint256 numeraireDecimals =
-            IERC20Metadata(address(numeraireAsset)).decimals();
+            IERC20Metadata(address(assetRegistry.numeraireAsset())).decimals();
 
         if (numeraireDecimals < feeTokenDecimals) {
             newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
@@ -631,7 +628,14 @@ contract AeraVaultV2 is
         feeTotal += newFee;
 
         // Log fee reservation.
-        emit FeesReserved(feeRecipient, newFee, lastFeeCheckpoint, lastValue, lastFeeTokenPrice, feeTotal);
+        emit FeesReserved(
+            feeRecipient,
+            newFee,
+            lastFeeCheckpoint,
+            lastValue,
+            lastFeeTokenPrice,
+            feeTotal
+        );
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
@@ -673,7 +677,9 @@ contract AeraVaultV2 is
             }
         }
 
-        uint256 numeraireUnit = assetUnits[assetRegistry.numeraireId()];
+        uint256 numeraireDecimals =
+            IERC20Metadata(address(assetRegistry.numeraireAsset())).decimals();
+        uint256 numeraireUnit = 10 ** numeraireDecimals;
 
         if (numeraireUnit != ONE) {
             vaultValue = vaultValue * numeraireUnit / ONE;
@@ -797,7 +803,8 @@ contract AeraVaultV2 is
             });
 
             if (assetInfo.asset == feeToken) {
-                assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
+                assetAmounts[i].value -=
+                    Math.min(feeTotal, assetAmounts[i].value);
             }
 
             unchecked {

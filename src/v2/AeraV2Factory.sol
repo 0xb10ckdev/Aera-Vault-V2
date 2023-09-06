@@ -51,14 +51,14 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param vault Vault address.
     /// @param owner Initial owner address.
     /// @param assets Initial list of registered assets.
-    /// @param numeraireId The index of the numeraire asset in the assets array.
+    /// @param numeraireAsset Numeraire asset address.
     /// @param feeToken Fee token address.
     event AssetRegistryCreated(
         address indexed assetRegistry,
         address indexed vault,
         address indexed owner,
         IAssetRegistry.AssetInformation[] assets,
-        uint256 numeraireId,
+        IERC20 numeraireAsset,
         IERC20 feeToken
     );
 
@@ -194,7 +194,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
                 assetRegistryParameters.owner,
                 vault,
                 assetRegistryParameters.assets,
-                assetRegistryParameters.numeraireId,
+                assetRegistryParameters.numeraireAsset,
                 assetRegistryParameters.feeToken
             )
         );
@@ -205,7 +205,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             vault,
             assetRegistryParameters.owner,
             assetRegistryParameters.assets,
-            assetRegistryParameters.numeraireId,
+            assetRegistryParameters.numeraireAsset,
             assetRegistryParameters.feeToken
         );
     }

@@ -56,12 +56,12 @@ struct VaultParameters {
 /// @notice Asset registry parameters for asset registry deployment.
 /// @param owner Initial owner address.
 /// @param assets Initial list of registered assets.
-/// @param numeraireId The index of the numeraire asset in the assets array.
+/// @param numeraireAsset Numeraire asset address.
 /// @param feeToken Fee token address.
 struct AssetRegistryParameters {
     address owner;
     IAssetRegistry.AssetInformation[] assets;
-    uint256 numeraireId;
+    IERC20 numeraireAsset;
     IERC20 feeToken;
 }
 

@@ -45,10 +45,10 @@ interface IAssetRegistry {
     function feeToken() external view returns (IERC20 feeToken);
 
     /// @notice Get the index of the numeraire asset in the assets array.
-    /// @return numeraireId Index of numeraire asset.
+    /// @return numeraireAsset Numeraire asset address.
     /// @dev Represented as an index for efficiency reasons.
     /// @dev MUST be a number between 0 (inclusive) and the length of assets array (exclusive).
-    function numeraireId() external view returns (uint256 numeraireId);
+    function numeraireAsset() external view returns (IERC20 numeraireAsset);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets in 18 decimals.
