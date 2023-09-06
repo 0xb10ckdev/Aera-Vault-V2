@@ -30,6 +30,18 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         new AeraV2Factory(address(0));
     }
 
+    function test_aeraV2FactoryDeployment_fail_whenWrappedNativeTokenIsNotContract(
+    ) public {
+        vm.expectRevert(AeraV2Factory.Aera__InvalidWrappedNativeToken.selector);
+        new AeraV2Factory(address(1));
+    }
+
+    function test_aeraV2FactoryDeployment_fail_whenWrappedNativeTokenIsNotERC20(
+    ) public {
+        vm.expectRevert(AeraV2Factory.Aera__InvalidWrappedNativeToken.selector);
+        new AeraV2Factory(address(vault));
+    }
+
     function test_createAeraV2Contracts_fail_whenCallerIsNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
 
