@@ -38,9 +38,9 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         address indexed vault,
         address assetRegistry,
         address hooks,
-        address owner,
+        address indexed owner,
         address indexed guardian,
-        address indexed feeRecipient,
+        address feeRecipient,
         uint256 fee,
         string description,
         address wrappedNativeToken
