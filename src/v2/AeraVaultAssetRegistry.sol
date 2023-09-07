@@ -103,7 +103,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         uint256 numeraireId_,
         IERC20 feeToken_,
         AggregatorV2V3Interface sequencer_
-    ) Sweepable() {
+    ) Sweepable() Ownable2Step() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();

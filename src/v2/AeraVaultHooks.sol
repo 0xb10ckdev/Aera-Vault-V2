@@ -82,7 +82,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         address vault_,
         uint256 maxDailyExecutionLoss_,
         TargetSighashData[] memory targetSighashAllowlist
-    ) Sweepable() {
+    ) Sweepable() Ownable2Step() {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
