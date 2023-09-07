@@ -4,6 +4,10 @@ pragma solidity 0.8.21;
 import "../TestBaseAeraVaultV2.sol";
 
 contract SubmitTest is TestBaseAeraVaultV2 {
+    // Received by 'forge inspect ./src/v2/AeraVaultV2.sol:AeraVaultV2 storage --pretty'
+    bytes32 public constant HOOKS_SLOT = bytes32(
+        0x0000000000000000000000000000000000000000000000000000000000000003
+    );
     Operation[] public operations;
 
     function setUp() public override {
@@ -183,6 +187,14 @@ contract SubmitTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(IVault.Aera__CannotUseReservedFees.selector);
         vault.submit(ops);
+    }
+
+    function test_submit_fail_whenHooksNotSet() public {
+        vm.store(address(vault), HOOKS_SLOT, bytes32(0)); // force clear hooks
+
+        vm.startPrank(_GUARDIAN);
+        vm.expectRevert(IVault.Aera__HooksIsZeroAddress.selector);
+        vault.submit(operations);
     }
 
     function test_submit_success() public {

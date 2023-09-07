@@ -22,7 +22,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             ),
             assetsInformation,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         hooks = new AeraVaultHooks(
@@ -77,7 +78,8 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             ),
             assetsInformation,
             numeraireId,
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         vm.expectRevert(IVault.Aera__AssetRegistryHasInvalidVault.selector);
@@ -170,21 +172,6 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             _GUARDIAN,
             _FEE_RECIPIENT,
             _MAX_FEE + 1
-        );
-    }
-
-    function test_aeraVaultV2Deployment_fail_whenWrappedNativeTokenIsZeroAddress(
-    ) public {
-        wrappedNativeToken = address(0);
-
-        vm.expectRevert(IVault.Aera__WrappedNativeTokenIsZeroAddress.selector);
-        _deployVault(
-            address(this),
-            address(assetRegistry),
-            address(hooks),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE
         );
     }
 

@@ -4,6 +4,8 @@ pragma solidity ^0.8.21;
 import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
+import {AggregatorV2V3Interface} from
+    "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
 import {AeraVaultHooks} from "src/v2/AeraVaultHooks.sol";
 import {AeraVaultV2} from "src/v2/AeraVaultV2.sol";
@@ -23,7 +25,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks if they were not
     ///         deployed yet.
-    /// @dev It uses 0x00 for salt value.
+    /// @dev It uses 0x00 for salt input value.
     /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedVault The address of deployed AeraVaultV2.
     /// @return deployedHooks The address of deployed Hooks.
@@ -38,13 +40,13 @@ contract DeployAeraContracts is DeployScriptBase {
         return run(0);
     }
 
-    /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt
+    /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt input
     ///         if they were not deployed yet.
-    /// @param salt The salt value to create contract.
+    /// @param saltInput The salt input value to generate salt.
     /// @return deployedVault The address of deployed AeraVaultV2.
     /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedHooks The address of deployed Hooks.
-    function run(bytes32 salt)
+    function run(bytes32 saltInput)
         public
         returns (
             address deployedVault,
@@ -53,7 +55,7 @@ contract DeployAeraContracts is DeployScriptBase {
         )
     {
         return runFromSpecifiedConfigPaths(
-            salt,
+            saltInput,
             "/config/AeraVaultAssetRegistry.json",
             "/config/AeraVaultV2.json",
             "/config/AeraVaultHooks.json",
@@ -62,7 +64,7 @@ contract DeployAeraContracts is DeployScriptBase {
     }
 
     function runFromSpecifiedConfigPaths(
-        bytes32 salt,
+        bytes32 saltInput,
         string memory assetRegistryPath,
         string memory aeraVaultV2Path,
         string memory aeraVaultHooksPath,
@@ -98,13 +100,11 @@ contract DeployAeraContracts is DeployScriptBase {
         HooksParameters memory hooksParameters =
             _getAeraVaultHooksParams(aeraVaultHooksPath);
 
-        deployedVault = AeraV2Factory(aeraV2Factory).computeVaultAddress(salt);
-
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
         (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(
             aeraV2Factory
         ).create(
-            salt,
+            saltInput,
             vaultParameters.owner,
             vaultParameters.guardian,
             vaultParameters.feeRecipient,
@@ -156,12 +156,14 @@ contract DeployAeraContracts is DeployScriptBase {
             abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
         uint256 numeraireId = json.readUint(".numeraireId");
         address feeToken = json.readAddress(".feeToken");
+        address sequencer = json.readAddress(".sequencer");
 
         return AssetRegistryParameters(
             owner == address(0) ? _deployerAddress : owner,
             assets,
             numeraireId,
-            IERC20(feeToken)
+            IERC20(feeToken),
+            AggregatorV2V3Interface(sequencer)
         );
     }
 
@@ -322,7 +324,8 @@ contract DeployAeraContracts is DeployScriptBase {
         for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
             assertTrue(
                 hooks.targetSighashAllowed(
-                    hooksParameters.targetSighashAllowlist[i]
+                    hooksParameters.targetSighashAllowlist[i].target,
+                    hooksParameters.targetSighashAllowlist[i].selector
                 )
             );
         }

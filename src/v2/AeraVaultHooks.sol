@@ -3,7 +3,6 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
-import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "@openzeppelin/IERC20IncreaseAllowance.sol";
 import "./interfaces/IHooks.sol";
@@ -100,9 +99,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
         // Effects: initialize target sighash allowlist.
-        TargetSighashData memory targetSighash;
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
-            targetSighash = targetSighashAllowlist[i];
+            TargetSighashData memory targetSighash = targetSighashAllowlist[i];
             _targetSighashAllowed[TargetSighashLib.toTargetSighash(
                 targetSighash.target, targetSighash.selector
             )] = true;
@@ -230,18 +228,19 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         override
         onlyVault
     {
-        uint256 day = block.timestamp / 1 days;
-
+        // Requirements: check that ETH balance is not decreased.
         if (vault.balance < _beforeBalance) {
             revert Aera__ETHBalanceIsDecreased();
         }
 
+        uint256 newMultiplier;
+        uint256 currentMultiplier = cumulativeDailyMultiplier;
+        uint256 day = block.timestamp / 1 days;
+
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
-            uint256 newMultiplier =
-                (currentDay == day ? cumulativeDailyMultiplier : ONE);
-            newMultiplier =
-                newMultiplier * IVault(vault).value() / _beforeValue;
+            newMultiplier = currentDay == day ? currentMultiplier : ONE;
+            newMultiplier = (newMultiplier * IVault(vault).value()) / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
             if (newMultiplier < ONE - maxDailyExecutionLoss) {
@@ -249,11 +248,17 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
             }
 
             // Effects: update the daily multiplier.
-            cumulativeDailyMultiplier = newMultiplier;
+            if (currentMultiplier != newMultiplier) {
+                cumulativeDailyMultiplier = newMultiplier;
+            }
         }
 
-        // Effects: reset day and prior vault value for the next submission.
-        currentDay = day;
+        // Effects: reset current day for the next submission.
+        if (currentDay != day) {
+            currentDay = day;
+        }
+
+        // Effects: reset prior vault value for the next submission.
         _beforeBalance = 0;
         _beforeValue = 0;
 
@@ -329,14 +334,14 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     }
 
     /// @notice Check whether target and sighash combination is allowed.
-    /// @param key Struct containing target contract and sighash.
-    function targetSighashAllowed(TargetSighashData calldata key)
-        public
-        view
-        returns (bool)
-    {
+    /// @param target Address of target.
+    /// @param selector Selector of function.
+    function targetSighashAllowed(
+        address target,
+        bytes4 selector
+    ) external view returns (bool) {
         return _targetSighashAllowed[TargetSighashLib.toTargetSighash(
-            key.target, key.selector
+            target, selector
         )];
     }
 

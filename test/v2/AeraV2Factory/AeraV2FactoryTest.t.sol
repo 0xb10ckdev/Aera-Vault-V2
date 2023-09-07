@@ -30,6 +30,18 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         new AeraV2Factory(address(0));
     }
 
+    function test_aeraV2FactoryDeployment_fail_whenWrappedNativeTokenIsNotContract(
+    ) public {
+        vm.expectRevert(AeraV2Factory.Aera__InvalidWrappedNativeToken.selector);
+        new AeraV2Factory(address(1));
+    }
+
+    function test_aeraV2FactoryDeployment_fail_whenWrappedNativeTokenIsNotERC20(
+    ) public {
+        vm.expectRevert(AeraV2Factory.Aera__InvalidWrappedNativeToken.selector);
+        new AeraV2Factory(address(vault));
+    }
+
     function test_createAeraV2Contracts_fail_whenCallerIsNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
 
@@ -63,11 +75,11 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         );
     }
 
-    function test_createAeraV2Contracts_fail_whenGuardianIsFactory() public {
+    function test_createAeraV2Contracts_fail_whenGuardianIsOwner() public {
         vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
         factory.create(
             bytes32(_ONE),
-            address(this),
+            address(factory),
             address(factory),
             _FEE_RECIPIENT,
             _MAX_FEE,
@@ -107,13 +119,13 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         );
     }
 
-    function test_createAeraV2Contracts_fail_whenFeeRecipientIsFactory()
+    function test_createAeraV2Contracts_fail_whenFeeRecipientIsOwner()
         public
     {
         vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
         factory.create(
             bytes32(_ONE),
-            address(this),
+            address(factory),
             _GUARDIAN,
             address(factory),
             _MAX_FEE,
@@ -156,7 +168,14 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
     }
 
     function test_createAeraV2Contracts_success() public {
-        address predict = factory.computeVaultAddress(bytes32(_ONE));
+        address predict = factory.computeVaultAddress(
+            bytes32(_ONE),
+            address(this),
+            _GUARDIAN,
+            _FEE_RECIPIENT,
+            _MAX_FEE,
+            "Test Vault"
+        );
 
         (
             address deployedVault,
