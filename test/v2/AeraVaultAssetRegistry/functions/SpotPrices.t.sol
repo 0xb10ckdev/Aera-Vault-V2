@@ -44,7 +44,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
-                nonNumeraireId,
+                assets[nonNumeraireId],
                 0
             )
         );
@@ -66,7 +66,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsTooOld.selector,
-                nonNumeraireId,
+                assets[nonNumeraireId],
                 OracleMock(address(assets[nonNumeraireId].oracle)).updatedAt()
             )
         );

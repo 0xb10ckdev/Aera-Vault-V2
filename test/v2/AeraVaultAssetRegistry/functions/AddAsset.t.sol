@@ -72,6 +72,32 @@ contract AddAssetTest is TestBaseAssetRegistry {
         assetRegistry.addAsset(newERC4626Asset);
     }
 
+    function test_addAsset_fail_whenOraclePriceIsInvalid() public {
+        OracleMock(address(newERC20Asset.oracle)).setLatestAnswer(0);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
+                newERC20Asset,
+                0
+            )
+        );
+        assetRegistry.addAsset(newERC20Asset);
+    }
+
+    function test_addAsset_fail_whenOraclePriceIsTooOld() public {
+        skip(newERC20Asset.heartbeat + 1 hours + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__OraclePriceIsTooOld.selector,
+                newERC20Asset,
+                OracleMock(address(newERC20Asset.oracle)).updatedAt()
+            )
+        );
+        assetRegistry.addAsset(newERC20Asset);
+    }
+
     function test_addAsset_fail_whenAssetIsAlreadyRegistered() public {
         vm.expectRevert(
             abi.encodeWithSelector(
