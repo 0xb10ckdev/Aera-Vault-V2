@@ -13,14 +13,10 @@ contract Sweepable is ISweepable, Ownable2Step {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ISweepable
-    function sweep(address token) external onlyOwner {
-        uint256 amount;
-
+    function sweep(address token, uint256 amount) external onlyOwner {
         if (token == address(0)) {
-            amount = address(this).balance;
             owner().call{value: amount}("");
         } else {
-            amount = IERC20(token).balanceOf(address(this));
             IERC20(token).safeTransfer(owner(), amount);
         }
 

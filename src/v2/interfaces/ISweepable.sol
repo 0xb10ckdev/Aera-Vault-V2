@@ -10,5 +10,6 @@ interface ISweepable {
 
     /// @notice Withdraw any tokens accidentally sent to contract.
     /// @param token Token address to withdraw or zero address for the chain's native token.
-    function sweep(address token) external;
+    /// @param amount Amount to withdraw.
+    function sweep(address token, uint256 amount) external;
 }
