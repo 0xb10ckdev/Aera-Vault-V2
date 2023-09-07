@@ -152,6 +152,13 @@ contract DeployAeraContracts is DeployScriptBase {
         string memory json = vm.readFile(path);
 
         aeraV2Factory = json.readAddress(".aeraV2Factory");
+        if (aeraV2Factory == address(0)) {
+            string memory factoryPath = string.concat(
+                vm.projectRoot(), "/config/FactoryAddresses.json"
+            );
+            string memory factoryJson = vm.readFile(factoryPath);
+            aeraV2Factory = factoryJson.readAddress(".v2Factory");
+        }
         address owner = json.readAddress(".owner");
         address guardian = json.readAddress(".guardian");
         address feeRecipient = json.readAddress(".feeRecipient");
@@ -176,6 +183,13 @@ contract DeployAeraContracts is DeployScriptBase {
         bytes memory rawAssets = json.parseRaw(".assets");
 
         address factory = json.readAddress(".assetRegistryFactory");
+        if (factory == address(0)) {
+            string memory factoryPath = string.concat(
+                vm.projectRoot(), "/config/FactoryAddresses.json"
+            );
+            string memory factoryJson = vm.readFile(factoryPath);
+            factory = factoryJson.readAddress(".vaultModulesFactory");
+        }
         address owner = json.readAddress(".owner");
         IAssetRegistry.AssetInformation[] memory assets =
             abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
@@ -201,6 +215,13 @@ contract DeployAeraContracts is DeployScriptBase {
         string memory json = vm.readFile(path);
 
         address factory = json.readAddress(".hooksFactory");
+        if (factory == address(0)) {
+            string memory factoryPath = string.concat(
+                vm.projectRoot(), "/config/FactoryAddresses.json"
+            );
+            string memory factoryJson = vm.readFile(factoryPath);
+            factory = factoryJson.readAddress(".vaultModulesFactory");
+        }
         address owner = json.readAddress(".owner");
         uint256 minDailyValue = json.readUint(".minDailyValue");
 

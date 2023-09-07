@@ -11,6 +11,10 @@ contract DeployScriptBase is Script, Test {
     // subclasses need to set this to msg.sender
     address internal _deployerAddress;
 
+    function setDeployerAddress(address deployerAddress) public {
+        _deployerAddress = deployerAddress;
+    }
+
     function _storeDeployedAddress(
         string memory key,
         address deployed
