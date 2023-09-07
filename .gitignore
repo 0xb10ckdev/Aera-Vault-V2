@@ -11,6 +11,7 @@ config/AeraVaultAssetRegistry.json
 config/AeraVaultHooks.json
 config/AeraVaultV2.json
 config/AeraV2Factory.json
+config/AeraVaultModulesFactory.json
 config/Deployments.json
 config/AeraVaultDeposit.json
 config/AeraVaultAddTargetSighashes.json

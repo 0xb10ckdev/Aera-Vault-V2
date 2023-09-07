@@ -85,16 +85,16 @@ contract DeployAeraContracts is DeployScriptBase {
             vm.startBroadcast(_deployerAddress);
         }
 
-        // Get parameters for AssetRegistry
-        AssetRegistryParameters memory assetRegistryParameters =
-            _getAssetRegistryParams(assetRegistryPath);
-
         // Get parameters for AeraVaultV2
         (
             address aeraV2Factory,
             VaultParameters memory vaultParameters,
             string memory description
         ) = _getAeraVaultV2Params(aeraVaultV2Path);
+
+        // Get parameters for AssetRegistry
+        AssetRegistryParameters memory assetRegistryParameters =
+            _getAssetRegistryParams(assetRegistryPath);
 
         // Get parameters for AeraVaultHooks
         HooksParameters memory hooksParameters =
@@ -142,31 +142,6 @@ contract DeployAeraContracts is DeployScriptBase {
         }
     }
 
-    function _getAssetRegistryParams(string memory relFilePath)
-        internal
-        returns (AssetRegistryParameters memory)
-    {
-        string memory path = string.concat(vm.projectRoot(), relFilePath);
-        string memory json = vm.readFile(path);
-
-        bytes memory rawAssets = json.parseRaw(".assets");
-
-        address owner = json.readAddress(".owner");
-        IAssetRegistry.AssetInformation[] memory assets =
-            abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
-        address numeraireToken = json.readAddress(".numeraireToken");
-        address feeToken = json.readAddress(".feeToken");
-        address sequencer = json.readAddress(".sequencer");
-
-        return AssetRegistryParameters(
-            owner == address(0) ? _deployerAddress : owner,
-            assets,
-            IERC20(numeraireToken),
-            IERC20(feeToken),
-            AggregatorV2V3Interface(sequencer)
-        );
-    }
-
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
         returns (
@@ -195,6 +170,33 @@ contract DeployAeraContracts is DeployScriptBase {
         );
     }
 
+    function _getAssetRegistryParams(string memory relFilePath)
+        internal
+        returns (AssetRegistryParameters memory)
+    {
+        string memory path = string.concat(vm.projectRoot(), relFilePath);
+        string memory json = vm.readFile(path);
+
+        bytes memory rawAssets = json.parseRaw(".assets");
+
+        address factory = json.readAddress(".assetRegistryFactory");
+        address owner = json.readAddress(".owner");
+        IAssetRegistry.AssetInformation[] memory assets =
+            abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
+        address numeraireToken = json.readAddress(".numeraireToken");
+        address feeToken = json.readAddress(".feeToken");
+        address sequencer = json.readAddress(".sequencer");
+
+        return AssetRegistryParameters(
+            factory,
+            owner == address(0) ? _deployerAddress : owner,
+            assets,
+            IERC20(numeraireToken),
+            IERC20(feeToken),
+            AggregatorV2V3Interface(sequencer)
+        );
+    }
+
     function _getAeraVaultHooksParams(string memory relFilePath)
         internal
         returns (HooksParameters memory)
@@ -202,6 +204,7 @@ contract DeployAeraContracts is DeployScriptBase {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
+        address factory = json.readAddress(".hooksFactory");
         address owner = json.readAddress(".owner");
         uint256 maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
 
@@ -221,6 +224,7 @@ contract DeployAeraContracts is DeployScriptBase {
         }
 
         return HooksParameters(
+            factory,
             owner == address(0) ? _deployerAddress : owner,
             maxDailyExecutionLoss,
             targetSighashAllowlist
