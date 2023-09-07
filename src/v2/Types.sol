@@ -54,12 +54,14 @@ struct VaultParameters {
 }
 
 /// @notice Asset registry parameters for asset registry deployment.
+/// @param factory Asset registry factory address.
 /// @param owner Initial owner address.
 /// @param assets Initial list of registered assets.
 /// @param numeraireToken Numeraire token address.
 /// @param feeToken Fee token address.
 /// @param sequencer Sequencer Uptime Feed address for L2.
 struct AssetRegistryParameters {
+    address factory;
     address owner;
     IAssetRegistry.AssetInformation[] assets;
     IERC20 numeraireToken;
@@ -68,11 +70,13 @@ struct AssetRegistryParameters {
 }
 
 /// @notice Hooks parameters for hooks deployment.
+/// @param factory Hooks factory address.
 /// @param owner Initial owner address.
 /// @param maxDailyExecutionLoss The fraction of value that the vault can
 ///                               lose per day in the course of submissions.
 /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
 struct HooksParameters {
+    address factory;
     address owner;
     uint256 maxDailyExecutionLoss;
     TargetSighashData[] targetSighashAllowlist;

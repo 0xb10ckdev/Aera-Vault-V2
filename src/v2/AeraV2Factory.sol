@@ -4,10 +4,10 @@ pragma solidity 0.8.21;
 import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/IERC20.sol";
-import "./AeraVaultAssetRegistry.sol";
-import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
 import "./interfaces/IAeraV2Factory.sol";
+import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
+import "./interfaces/IAeraVaultHooksFactory.sol";
 import {VaultParameters} from "./Types.sol";
 
 /// @title AeraV2Factory
@@ -134,14 +134,17 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             saltInput, owner_, guardian, feeRecipient, fee, description
         );
 
-        // Effects: deploy asset registry.
-        deployedAssetRegistry = _deployAssetRegistry(
-            _computeVaultAddress(salt), assetRegistryParameters
-        );
+        {
+            address vaultAddress = _computeVaultAddress(salt);
 
-        // Effects: deploy first instance of hooks.
-        deployedHooks =
-            _deployHooks(_computeVaultAddress(salt), hooksParameters);
+            // Effects: deploy asset registry.
+            deployedAssetRegistry = _deployAssetRegistry(
+                salt, vaultAddress, assetRegistryParameters
+            );
+
+            // Effects: deploy first instance of hooks.
+            deployedHooks = _deployHooks(salt, vaultAddress, hooksParameters);
+        }
 
         // Effects: deploy the vault.
         deployedVault = _deployVault(
@@ -154,14 +157,6 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             fee,
             description
         );
-    }
-
-    /// @inheritdoc IAeraV2Factory
-    function deployHooks(
-        address vault,
-        HooksParameters memory hooksParameters
-    ) external returns (address) {
-        return _deployHooks(vault, hooksParameters);
     }
 
     /// @inheritdoc IAeraV2Factory
@@ -183,23 +178,26 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Deploy asset registry.
+    /// @param salt The salt value to deploy asset registry.
     /// @param vault Vault address.
     /// @param assetRegistryParameters Struct details for asset registry deployment.
     /// @return deployed The address of deployed asset registry.
     function _deployAssetRegistry(
+        bytes32 salt,
         address vault,
         AssetRegistryParameters memory assetRegistryParameters
     ) internal returns (address deployed) {
         // Effects: deploy asset registry.
-        deployed = address(
-            new AeraVaultAssetRegistry(
-                assetRegistryParameters.owner,
-                vault,
-                assetRegistryParameters.assets,
-                assetRegistryParameters.numeraireToken,
-                assetRegistryParameters.feeToken,
-                assetRegistryParameters.sequencer
-            )
+        deployed = IAeraVaultAssetRegistryFactory(
+            assetRegistryParameters.factory
+        ).deployAssetRegistry(
+            salt,
+            assetRegistryParameters.owner,
+            vault,
+            assetRegistryParameters.assets,
+            assetRegistryParameters.numeraireToken,
+            assetRegistryParameters.feeToken,
+            assetRegistryParameters.sequencer
         );
 
         // Log asset registry creation.
@@ -215,21 +213,22 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     }
 
     /// @notice Deploy hooks.
+    /// @param salt The salt value to deploy hooks.
     /// @param vault Vault address.
     /// @param hooksParameters Struct details for hooks deployment.
     /// @return deployed The address of deployed hooks.
     function _deployHooks(
+        bytes32 salt,
         address vault,
         HooksParameters memory hooksParameters
     ) internal returns (address deployed) {
         // Effects: deploy hooks.
-        deployed = address(
-            new AeraVaultHooks(
-                hooksParameters.owner,
-                vault,
-                hooksParameters.maxDailyExecutionLoss,
-                hooksParameters.targetSighashAllowlist
-            )
+        deployed = IAeraVaultHooksFactory(hooksParameters.factory).deployHooks(
+            salt,
+            hooksParameters.owner,
+            vault,
+            hooksParameters.maxDailyExecutionLoss,
+            hooksParameters.targetSighashAllowlist
         );
 
         // Log hooks creation.
