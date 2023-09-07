@@ -66,8 +66,8 @@ contract WithdrawTest is TestBaseAeraVaultV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IVault.Aera__AssetIsDuplicated.selector,
-                withdrawAmounts[0].asset
+                IVault.Aera__AmountsOrderIsIncorrect.selector,
+                1
             )
         );
 
