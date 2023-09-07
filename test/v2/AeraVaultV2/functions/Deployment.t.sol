@@ -21,7 +21,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
                 bytes32(_ONE), keccak256(type(AeraVaultV2).creationCode)
             ),
             assetsInformation,
-            numeraireId,
+            numeraireToken,
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -77,7 +77,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
                 bytes32(_ONE + 1), keccak256(type(AeraVaultV2).creationCode)
             ),
             assetsInformation,
-            numeraireId,
+            numeraireToken,
             feeToken,
             AggregatorV2V3Interface(address(0))
         );

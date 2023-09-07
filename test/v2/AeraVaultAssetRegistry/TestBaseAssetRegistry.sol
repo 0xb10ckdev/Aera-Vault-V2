@@ -18,7 +18,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         address indexed owner,
         address indexed vault,
         IAssetRegistry.AssetInformation[] assets,
-        uint256 numeraireId,
+        address indexed numeraireToken,
         address feeToken
     );
 
@@ -30,7 +30,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     AeraVaultV2 public vault;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
-    address public numeraireAsset;
+    address public numeraireToken;
     address public nonNumeraireAsset;
     address public nonNumeraireERC4626Asset;
     uint256 public numeraireId;
@@ -63,8 +63,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         IAssetRegistry.AssetInformation[] memory registryAssets =
             assetRegistry.assets();
 
-        assertEq(numeraireId, assetRegistry.numeraireId());
-        assertEq(numeraireAsset, address(registryAssets[numeraireId].asset));
+        assertEq(address(assetRegistry.numeraireToken()), numeraireToken);
+        assertEq(address(registryAssets[numeraireId].asset), numeraireToken);
         assertEq(address(registryAssets[numeraireId].oracle), address(0));
     }
 
@@ -162,17 +162,24 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         numAssets = registeredAssets.length;
         feeToken = assetRegistry.feeToken();
-        numeraireId = assetRegistry.numeraireId();
-        numeraireAsset = address(registeredAssets[numeraireId].asset);
+        numeraireToken = address(assetRegistry.numeraireToken());
 
         for (uint256 i = 0; i < numAssets; i++) {
             assets.push(registeredAssets[i]);
 
-            if (!registeredAssets[i].isERC4626 && i != numeraireId) {
+            if (address(registeredAssets[i].asset) == numeraireToken) {
+                numeraireId = i;
+            } else if (
+                !registeredAssets[i].isERC4626
+                    && address(registeredAssets[i].asset) != numeraireToken
+            ) {
                 nonNumeraireId = i;
                 nonNumeraireAsset = address(registeredAssets[i].asset);
             }
-            if (registeredAssets[i].isERC4626 && i != numeraireId) {
+            if (
+                registeredAssets[i].isERC4626
+                    && address(registeredAssets[i].asset) != numeraireToken
+            ) {
                 nonNumeraireERC4626Id = i;
                 nonNumeraireERC4626Asset = address(registeredAssets[i].asset);
             }
@@ -196,7 +203,11 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         vm.expectEmit(true, false, false, true);
         emit Created(
-            address(this), vaultAddress, assets, numeraireId, address(feeToken)
+            address(this),
+            vaultAddress,
+            assets,
+            numeraireToken,
+            address(feeToken)
         );
 
         (address deployedVault, address deployedAssetRegistry,) = factory
@@ -210,7 +221,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             AssetRegistryParameters(
                 address(this),
                 assets,
-                numeraireId,
+                IERC20(numeraireToken),
                 feeToken,
                 AggregatorV2V3Interface(address(0))
             ),
@@ -235,7 +246,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
              _createAsset(false, address(0), initalSaltIndex + i);
 
             if (i == numeraireSetIdx) {
-                numeraireAsset = address(asset.asset);
+                numeraireToken = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
             } else if (i == (numeraireSetIdx + 1) % numERC20) {
                 nonNumeraireAsset = address(asset.asset);
@@ -270,7 +281,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 }
             }
 
-            if (address(assets[i].asset) == numeraireAsset) {
+            if (address(assets[i].asset) == numeraireToken) {
                 numeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireAsset) {
                 nonNumeraireId = i;

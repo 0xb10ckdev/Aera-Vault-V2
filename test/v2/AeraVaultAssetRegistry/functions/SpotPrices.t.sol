@@ -9,7 +9,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             address(this),
             address(vault),
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
@@ -24,7 +24,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             address(this),
             address(vault),
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
@@ -77,7 +77,10 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         uint256 testPrice = _ONE * 5;
 
         for (uint256 i = 0; i < numAssets; i++) {
-            if (i == numeraireId || assets[i].isERC4626) {
+            if (
+                address(assets[i].asset) == numeraireToken
+                    || assets[i].isERC4626
+            ) {
                 continue;
             }
 
@@ -92,7 +95,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         IAssetRegistry.AssetPriceReading[] memory spotPrices =
             assetRegistry.spotPrices();
 
-        uint256 numeraireUnit = 10 ** IERC20Metadata(numeraireAsset).decimals();
+        uint256 numeraireUnit = 10 ** IERC20Metadata(numeraireToken).decimals();
 
         uint256 index;
         for (uint256 i = 0; i < numAssets; i++) {
@@ -104,7 +107,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
                 address(spotPrices[index].asset), address(assets[i].asset)
             );
 
-            if (i == numeraireId) {
+            if (address(assets[i].asset) == numeraireToken) {
                 assertEq(spotPrices[index].spotPrice, numeraireUnit);
             } else {
                 uint256 oracleUnit = 10 ** assets[i].oracle.decimals();

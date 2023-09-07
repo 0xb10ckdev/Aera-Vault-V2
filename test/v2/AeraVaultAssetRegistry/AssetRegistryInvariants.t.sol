@@ -41,7 +41,7 @@ contract AssetRegistryInvariantTest is TestBaseAssetRegistry {
             assetRegistry.assets();
 
         for (uint256 i = 0; i < assets.length; i++) {
-            if (i == assetRegistry.numeraireId()) {
+            if (assets[i].asset == assetRegistry.numeraireToken()) {
                 assertEq(address(assets[i].oracle), address(0));
             } else if (assets[i].isERC4626) {
                 assertEq(address(assets[i].oracle), address(0));
@@ -55,9 +55,18 @@ contract AssetRegistryInvariantTest is TestBaseAssetRegistry {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
-        assertEq(
-            address(assets[assetRegistry.numeraireId()].asset), numeraireAsset
-        );
+        assertEq(address(assetRegistry.numeraireToken()), numeraireToken);
+
+        bool isRegistered;
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            if (address(assets[i].asset) == numeraireToken) {
+                isRegistered = true;
+                break;
+            }
+        }
+
+        assertTrue(isRegistered);
     }
 
     function invariant_feeToken() public {

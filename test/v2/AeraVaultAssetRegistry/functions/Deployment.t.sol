@@ -35,7 +35,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -53,7 +53,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(0),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -69,7 +69,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             address(0),
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -91,7 +91,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -116,29 +116,27 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenNumeraireIndexIsTooHigh()
-        public
-    {
-        uint256 invalidNumeraire = numAssets + 1;
-
+    function test_assetRegistryDeployment_fail_whenNumeraireAssetIsNotRegistered(
+    ) public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__NumeraireIndexTooHigh.selector,
-                numAssets,
-                invalidNumeraire
+                AeraVaultAssetRegistry
+                    .Aera__NumeraireAssetIsNotRegistered
+                    .selector,
+                address(1)
             )
         );
         new AeraVaultAssetRegistry(
             address(this),
             vaultAddress,
             assets,
-            invalidNumeraire,
+            IERC20(address(1)),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -151,12 +149,6 @@ contract DeploymentTest is TestBaseAssetRegistry {
         assets[0] = assets[1];
         assets[1] = temp;
 
-        for (numeraireId = 0; numeraireId < assets.length; numeraireId++) {
-            if (address(assets[numeraireId].asset) == numeraireAsset) {
-                break;
-            }
-        }
-
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__AssetOrderIsIncorrect.selector, 1
@@ -166,7 +158,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -184,7 +176,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -203,7 +195,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -223,7 +215,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -246,7 +238,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                     address(this), 
                     vaultAddress,
                     assets, 
-                    numeraireId, 
+                    IERC20(numeraireToken),
                     feeToken,
             AggregatorV2V3Interface(address(0))
                 );
@@ -286,7 +278,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );
@@ -297,7 +289,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(this),
             vaultAddress,
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(0))
         );

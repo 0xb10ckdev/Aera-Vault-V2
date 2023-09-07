@@ -35,9 +35,9 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     mapping(IERC20 => bool) public isERC4626;
     mapping(IERC20 => uint256) public underlyingIndex;
     IAssetRegistry.AssetInformation[] public assetsInformation;
+    IERC20 public numeraireToken;
     IERC20 public feeToken;
     uint256[] public oraclePrices;
-    uint256 public numeraireId;
     uint256 public nonNumeraireId;
     TargetSighashData[] public targetSighashAllowlist;
     AssetRegistryParameters public assetRegistryParameters;
@@ -83,7 +83,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
         if (address(assetRegistry) != address(0)) {
             feeToken = assetRegistry.feeToken();
-            numeraireId = assetRegistry.numeraireId();
+            numeraireToken = assetRegistry.numeraireToken();
 
             IAssetRegistry.AssetInformation[] memory registeredAssets =
                 assetRegistry.assets();
@@ -102,7 +102,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                 } else {
                     erc20Assets.push(registeredAssets[i].asset);
 
-                    if (i != numeraireId) {
+                    if (registeredAssets[i].asset != numeraireToken) {
                         nonNumeraireId = i;
                     }
                 }
@@ -115,8 +115,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                 if (assetsInformation[i].isERC4626) {
                     index = underlyingIndex[assets[i]];
                 }
-                if (index == numeraireId) {
-                    oraclePrices.push(_getScaler(assets[numeraireId]));
+                if (assets[i] == numeraireToken) {
+                    oraclePrices.push(_getScaler(numeraireToken));
                 } else {
                     oraclePrices.push(
                         _getOraclePrice(
@@ -178,9 +178,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                     )
             ) {
                 assets.push(erc20Assets[erc20Index]);
-                if (address(erc20Assets[erc20Index]) == _USDC_ADDRESS) {
-                    numeraireId = i;
-                } else if (address(erc20Assets[erc20Index]) == _WETH_ADDRESS) {
+                if (address(erc20Assets[erc20Index]) == _WETH_ADDRESS) {
                     nonNumeraireId = i;
                 }
                 erc20Index++;
@@ -249,10 +247,11 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         }
 
         feeToken = IERC20(_USDC_ADDRESS);
+        numeraireToken = IERC20(_USDC_ADDRESS);
 
         assetRegistryParameters.owner = address(this);
         assetRegistryParameters.assets = assetsInformation;
-        assetRegistryParameters.numeraireId = numeraireId;
+        assetRegistryParameters.numeraireToken = numeraireToken;
         assetRegistryParameters.feeToken = feeToken;
 
         hooksParameters.owner = address(this);

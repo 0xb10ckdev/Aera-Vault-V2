@@ -610,15 +610,12 @@ contract AeraVaultV2 is
             return;
         }
 
-        IERC20 numeraireAsset =
-            assetRegistry.assets()[assetRegistry.numeraireId()].asset;
-
         // Calculate new fee for current fee recipient.
         // It calculates the fee in fee token decimals.
         uint256 newFee = lastValue * feeIndex * fee;
         uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
         uint256 numeraireDecimals =
-            IERC20Metadata(address(numeraireAsset)).decimals();
+            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
 
         if (numeraireDecimals < feeTokenDecimals) {
             newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
@@ -651,7 +648,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
-    /// @dev It calculates the value in numeraire asset decimals.
+    /// @dev It calculates the value in Numeraire token decimals.
     /// @param erc20SpotPrices Spot prices of ERC20 assets.
     /// @param feeToken Fee token address.
     /// @return vaultValue Current total value.
@@ -689,7 +686,9 @@ contract AeraVaultV2 is
             }
         }
 
-        uint256 numeraireUnit = assetUnits[assetRegistry.numeraireId()];
+        uint256 numeraireDecimals =
+            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
+        uint256 numeraireUnit = 10 ** numeraireDecimals;
 
         if (numeraireUnit != ONE) {
             vaultValue = vaultValue * numeraireUnit / ONE;
@@ -848,7 +847,7 @@ contract AeraVaultV2 is
     function _checkGuardianAddress(
         address newGuardian,
         address owner_
-    ) internal view {
+    ) internal pure {
         if (newGuardian == address(0)) {
             revert Aera__GuardianIsZeroAddress();
         }
@@ -863,7 +862,7 @@ contract AeraVaultV2 is
     function _checkFeeRecipientAddress(
         address newFeeRecipient,
         address owner_
-    ) internal view {
+    ) internal pure {
         if (newFeeRecipient == address(0)) {
             revert Aera__FeeRecipientIsZeroAddress();
         }

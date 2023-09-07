@@ -19,6 +19,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Vault address.
     address public immutable vault;
 
+    /// @notice Numeraire token.
+    IERC20 public immutable numeraireToken;
+
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
@@ -26,9 +29,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice List of currently registered assets.
     AssetInformation[] internal _assets;
-
-    /// @notice The index of the numeraire asset in the assets array.
-    uint256 public numeraireId;
 
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
@@ -50,13 +50,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param owner Owner address.
     /// @param vault Vault address.
     /// @param assets Initial list of registered assets.
-    /// @param numeraireId The index of the numeraire asset in the assets array.
+    /// @param numeraireToken Numeraire token address.
     /// @param feeToken Fee token address.
     event Created(
         address indexed owner,
         address indexed vault,
         AssetInformation[] assets,
-        uint256 numeraireId,
+        address indexed numeraireToken,
         address feeToken
     );
 
@@ -65,7 +65,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__FeeTokenIsERC4626(address feeToken);
-    error Aera__NumeraireIndexTooHigh(uint256 numAssets, uint256 index);
+    error Aera__NumeraireAssetIsNotRegistered(address numeraireToken);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
@@ -93,14 +93,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param owner_ Initial owner address.
     /// @param vault_ Vault address.
     /// @param assets_ Initial list of registered assets.
-    /// @param numeraireId_ The index of the numeraire asset in the assets array.
+    /// @param numeraireAsset_ Numeraire token address.
     /// @param feeToken_ Fee token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
         address vault_,
         AssetInformation[] memory assets_,
-        uint256 numeraireId_,
+        IERC20 numeraireAsset_,
         IERC20 feeToken_,
         AggregatorV2V3Interface sequencer_
     ) Ownable() {
@@ -119,6 +119,17 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         // Requirements: confirm that number of assets is within bounds.
         if (numAssets > MAX_ASSETS) {
             revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
+        }
+
+        // Calculate the Numeraire token index.
+        uint256 numeraireIndex = 0;
+        for (; numeraireIndex < numAssets;) {
+            if (assets_[numeraireIndex].asset == numeraireAsset_) {
+                break;
+            }
+            unchecked {
+                numeraireIndex++; // gas savings
+            }
         }
 
         // Calculate the fee token index.
@@ -142,18 +153,20 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__FeeTokenIsERC4626(address(feeToken_));
         }
 
-        // Requirements: confirm that numeraire index is in valid range.
-        if (numeraireId_ >= numAssets) {
-            revert Aera__NumeraireIndexTooHigh(numAssets, numeraireId_);
+        // Requirements: confirm that Numeraire token is present.
+        if (numeraireIndex >= numAssets) {
+            revert Aera__NumeraireAssetIsNotRegistered(
+                address(numeraireAsset_)
+            );
         }
 
         // Requirements: confirm that numeraire is not an ERC4626 asset.
-        if (assets_[numeraireId_].isERC4626) {
+        if (assets_[numeraireIndex].isERC4626) {
             revert Aera__NumeraireAssetIsMarkedAsERC4626();
         }
 
         // Requirements: confirm that numeraire does not have a specified oracle.
-        if (address(assets_[numeraireId_].oracle) != address(0)) {
+        if (address(assets_[numeraireIndex].oracle) != address(0)) {
             revert Aera__NumeraireOracleIsNotZeroAddress();
         }
 
@@ -168,7 +181,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         }
 
         for (uint256 i = 0; i < numAssets;) {
-            if (i != numeraireId_) {
+            if (i != numeraireIndex) {
                 // Requirements: check asset oracle is correctly specified.
                 _checkAssetOracle(assets_[i]);
 
@@ -188,7 +201,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
-        numeraireId = numeraireId_;
+        numeraireToken = numeraireAsset_;
         feeToken = feeToken_;
         sequencer = sequencer_;
 
@@ -196,7 +209,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         _transferOwnership(owner_);
 
         // Log asset registry creation.
-        emit Created(owner_, vault_, assets_, numeraireId_, address(feeToken_));
+        emit Created(
+            owner_,
+            vault_,
+            assets_,
+            address(numeraireAsset_),
+            address(feeToken_)
+        );
     }
 
     /// @notice Add a new asset.
@@ -246,7 +265,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @dev MUST revert if not called by owner.
     function removeAsset(address asset) external onlyOwner {
         // Requirements: confirm that asset to remove is not numeraire.
-        if (address(_assets[numeraireId].asset) == asset) {
+        if (asset == address(numeraireToken)) {
             revert Aera__CannotRemoveNumeraireAsset(asset);
         }
 
@@ -307,11 +326,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         // Effects: remove asset from array.
         _assets.pop();
 
-        // Effects: update numeraire index.
-        if (numeraireId > oldAssetIndex) {
-            numeraireId--;
-        }
-
         // Log removal.
         emit AssetRemoved(asset);
     }
@@ -370,7 +384,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 continue;
             }
 
-            if (i == numeraireId) {
+            if (_assets[i].asset == numeraireToken) {
                 // Numeraire has price 1 by definition.
                 prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,
@@ -521,11 +535,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
 
             _assets[index] = asset;
-
-            // Effects: Update numeraire index.
-            if (index <= numeraireId) {
-                numeraireId++;
-            }
         }
 
         // Effects: adjust the number of ERC4626 assets.
