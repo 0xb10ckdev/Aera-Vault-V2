@@ -33,8 +33,8 @@ contract DeployMeta is DeployScriptBase {
         returns (
             address deployedV2Factory,
             address deployedModulesFactory,
-            address deployedAssetRegistry,
             address deployedVault,
+            address deployedAssetRegistry,
             address deployedHooks
         )
     {
@@ -46,8 +46,8 @@ contract DeployMeta is DeployScriptBase {
         returns (
             address deployedV2Factory,
             address deployedModulesFactory,
-            address deployedAssetRegistry,
             address deployedVault,
+            address deployedAssetRegistry,
             address deployedHooks
         )
     {
