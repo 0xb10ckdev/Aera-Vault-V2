@@ -18,7 +18,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         address indexed owner,
         address indexed vault,
         IAssetRegistry.AssetInformation[] assets,
-        address numeraireToken,
+        address indexed numeraireToken,
         address feeToken
     );
 

@@ -56,7 +56,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         address indexed owner,
         address indexed vault,
         AssetInformation[] assets,
-        address numeraireToken,
+        address indexed numeraireToken,
         address feeToken
     );
 
