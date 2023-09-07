@@ -390,6 +390,7 @@ contract AeraVaultV2 is
     function pause()
         external
         override
+        nonReentrant
         onlyOwnerOrGuardian
         whenNotFinalized
         reserveFees
