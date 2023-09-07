@@ -206,8 +206,8 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         assertEq(assetRegistry.owner(), assetRegistryParameters.owner);
         assertEq(assetRegistry.vault(), address(vault));
         assertEq(
-            address(assetRegistry.numeraireAsset()),
-            address(assetRegistryParameters.numeraireAsset)
+            address(assetRegistry.numeraireToken()),
+            address(assetRegistryParameters.numeraireToken)
         );
         assertEq(
             address(assetRegistry.feeToken()),

@@ -35,7 +35,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     mapping(IERC20 => bool) public isERC4626;
     mapping(IERC20 => uint256) public underlyingIndex;
     IAssetRegistry.AssetInformation[] public assetsInformation;
-    IERC20 public numeraireAsset;
+    IERC20 public numeraireToken;
     IERC20 public feeToken;
     uint256[] public oraclePrices;
     uint256 public nonNumeraireId;
@@ -83,7 +83,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
         if (address(assetRegistry) != address(0)) {
             feeToken = assetRegistry.feeToken();
-            numeraireAsset = assetRegistry.numeraireAsset();
+            numeraireToken = assetRegistry.numeraireToken();
 
             IAssetRegistry.AssetInformation[] memory registeredAssets =
                 assetRegistry.assets();
@@ -102,7 +102,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                 } else {
                     erc20Assets.push(registeredAssets[i].asset);
 
-                    if (registeredAssets[i].asset != numeraireAsset) {
+                    if (registeredAssets[i].asset != numeraireToken) {
                         nonNumeraireId = i;
                     }
                 }
@@ -115,8 +115,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
                 if (assetsInformation[i].isERC4626) {
                     index = underlyingIndex[assets[i]];
                 }
-                if (assets[i] == numeraireAsset) {
-                    oraclePrices.push(_getScaler(numeraireAsset));
+                if (assets[i] == numeraireToken) {
+                    oraclePrices.push(_getScaler(numeraireToken));
                 } else {
                     oraclePrices.push(
                         _getOraclePrice(
@@ -247,11 +247,11 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         }
 
         feeToken = IERC20(_USDC_ADDRESS);
-        numeraireAsset = IERC20(_USDC_ADDRESS);
+        numeraireToken = IERC20(_USDC_ADDRESS);
 
         assetRegistryParameters.owner = address(this);
         assetRegistryParameters.assets = assetsInformation;
-        assetRegistryParameters.numeraireAsset = numeraireAsset;
+        assetRegistryParameters.numeraireToken = numeraireToken;
         assetRegistryParameters.feeToken = feeToken;
 
         hooksParameters.owner = address(this);

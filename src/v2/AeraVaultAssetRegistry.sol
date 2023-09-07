@@ -19,8 +19,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Vault address.
     address public immutable vault;
 
-    /// @notice Numeraire asset.
-    IERC20 public immutable numeraireAsset;
+    /// @notice Numeraire token.
+    IERC20 public immutable numeraireToken;
 
     /// @notice Fee token.
     IERC20 public immutable feeToken;
@@ -50,13 +50,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param owner Owner address.
     /// @param vault Vault address.
     /// @param assets Initial list of registered assets.
-    /// @param numeraireAsset Numeraire asset address.
+    /// @param numeraireToken Numeraire token address.
     /// @param feeToken Fee token address.
     event Created(
         address indexed owner,
         address indexed vault,
         AssetInformation[] assets,
-        address numeraireAsset,
+        address numeraireToken,
         address feeToken
     );
 
@@ -65,7 +65,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__FeeTokenIsERC4626(address feeToken);
-    error Aera__NumeraireAssetIsNotRegistered(address numeraireAsset);
+    error Aera__NumeraireAssetIsNotRegistered(address numeraireToken);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
@@ -93,7 +93,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param owner_ Initial owner address.
     /// @param vault_ Vault address.
     /// @param assets_ Initial list of registered assets.
-    /// @param numeraireAsset_ Numeraire asset address.
+    /// @param numeraireAsset_ Numeraire token address.
     /// @param feeToken_ Fee token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
@@ -121,7 +121,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__NumberOfAssetsExceedsMaximum(MAX_ASSETS);
         }
 
-        // Calculate the numeraire asset index.
+        // Calculate the Numeraire token index.
         uint256 numeraireIndex = 0;
         for (; numeraireIndex < numAssets;) {
             if (assets_[numeraireIndex].asset == numeraireAsset_) {
@@ -153,7 +153,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             revert Aera__FeeTokenIsERC4626(address(feeToken_));
         }
 
-        // Requirements: confirm that numeraire asset is present.
+        // Requirements: confirm that Numeraire token is present.
         if (numeraireIndex >= numAssets) {
             revert Aera__NumeraireAssetIsNotRegistered(
                 address(numeraireAsset_)
@@ -201,7 +201,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
-        numeraireAsset = numeraireAsset_;
+        numeraireToken = numeraireAsset_;
         feeToken = feeToken_;
         sequencer = sequencer_;
 
@@ -265,7 +265,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @dev MUST revert if not called by owner.
     function removeAsset(address asset) external onlyOwner {
         // Requirements: confirm that asset to remove is not numeraire.
-        if (asset == address(numeraireAsset)) {
+        if (asset == address(numeraireToken)) {
             revert Aera__CannotRemoveNumeraireAsset(asset);
         }
 
@@ -384,7 +384,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                 continue;
             }
 
-            if (_assets[i].asset == numeraireAsset) {
+            if (_assets[i].asset == numeraireToken) {
                 // Numeraire has price 1 by definition.
                 prices[index] = AssetPriceReading({
                     asset: _assets[i].asset,

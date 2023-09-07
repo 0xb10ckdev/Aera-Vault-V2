@@ -20,7 +20,7 @@ interface IAssetRegistry {
     }
 
     /// @param asset Asset address.
-    /// @param spotPrice Spot price of an asset in numeraire asset terms.
+    /// @param spotPrice Spot price of an asset in Numeraire token terms.
     struct AssetPriceReading {
         IERC20 asset;
         uint256 spotPrice;
@@ -44,16 +44,16 @@ interface IAssetRegistry {
     /// @dev MUST be present in assets array.
     function feeToken() external view returns (IERC20 feeToken);
 
-    /// @notice Get the index of the numeraire asset in the assets array.
-    /// @return numeraireAsset Numeraire asset address.
+    /// @notice Get the index of the Numeraire token in the assets array.
+    /// @return numeraireToken Numeraire token address.
     /// @dev Represented as an index for efficiency reasons.
     /// @dev MUST be a number between 0 (inclusive) and the length of assets array (exclusive).
-    function numeraireAsset() external view returns (IERC20 numeraireAsset);
+    function numeraireToken() external view returns (IERC20 numeraireToken);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
     /// @return spotPrices Spot prices of non-ERC4626 assets in 18 decimals.
     /// @dev MUST return assets in the same order as in assets but with ERC4626 assets filtered out.
-    /// @dev MUST also include numeraire asset (spot price = 1).
+    /// @dev MUST also include Numeraire token (spot price = 1).
     /// @dev MAY revert if oracle prices for any asset are unreliable at the time.
     function spotPrices()
         external

@@ -18,7 +18,7 @@ contract AeraVaultHooksInvariantTest is TestBaseAeraVaultHooks {
         AssetValue[] memory amounts = new AssetValue[](numAssets);
 
         for (uint256 i = 0; i < numAssets; i++) {
-            // Calculate amount of assets for 1_000_00e6 value in numeraire asset.
+            // Calculate amount of assets for 1_000_00e6 value in Numeraire token.
             amounts[i] = AssetValue({
                 asset: assets[i],
                 value: (1_000_00e6 / oraclePrices[i]) * _getScaler(assets[i])

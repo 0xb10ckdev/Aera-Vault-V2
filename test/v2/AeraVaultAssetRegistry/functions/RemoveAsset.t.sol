@@ -20,14 +20,14 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
                 AeraVaultAssetRegistry
                     .Aera__CannotRemoveNumeraireAsset
                     .selector,
-                numeraireAsset
+                numeraireToken
             )
         );
-        assetRegistry.removeAsset(numeraireAsset);
+        assetRegistry.removeAsset(numeraireToken);
     }
 
     function test_removeAsset_fail_whenRemovalAssetIsFeeToken() public {
-        if (address(feeToken) == numeraireAsset) {
+        if (address(feeToken) == numeraireToken) {
             vm.expectRevert(
                 abi.encodeWithSelector(
                     AeraVaultAssetRegistry

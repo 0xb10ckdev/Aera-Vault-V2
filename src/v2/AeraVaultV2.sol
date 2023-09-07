@@ -614,7 +614,7 @@ contract AeraVaultV2 is
         uint256 newFee = lastValue * feeIndex * fee;
         uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
         uint256 numeraireDecimals =
-            IERC20Metadata(address(assetRegistry.numeraireAsset())).decimals();
+            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
 
         if (numeraireDecimals < feeTokenDecimals) {
             newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
@@ -647,7 +647,7 @@ contract AeraVaultV2 is
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
-    /// @dev It calculates the value in numeraire asset decimals.
+    /// @dev It calculates the value in Numeraire token decimals.
     /// @param erc20SpotPrices Spot prices of ERC20 assets.
     /// @param feeToken Fee token address.
     /// @return vaultValue Current total value.
@@ -686,7 +686,7 @@ contract AeraVaultV2 is
         }
 
         uint256 numeraireDecimals =
-            IERC20Metadata(address(assetRegistry.numeraireAsset())).decimals();
+            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
         uint256 numeraireUnit = 10 ** numeraireDecimals;
 
         if (numeraireUnit != ONE) {
