@@ -846,7 +846,7 @@ contract AeraVaultV2 is
     function _checkGuardianAddress(
         address newGuardian,
         address owner_
-    ) internal view {
+    ) internal pure {
         if (newGuardian == address(0)) {
             revert Aera__GuardianIsZeroAddress();
         }
@@ -861,7 +861,7 @@ contract AeraVaultV2 is
     function _checkFeeRecipientAddress(
         address newFeeRecipient,
         address owner_
-    ) internal view {
+    ) internal pure {
         if (newFeeRecipient == address(0)) {
             revert Aera__FeeRecipientIsZeroAddress();
         }

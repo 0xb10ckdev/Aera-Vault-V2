@@ -9,7 +9,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             address(this),
             address(vault),
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
@@ -24,7 +24,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             address(this),
             address(vault),
             assets,
-            numeraireId,
+            IERC20(numeraireToken),
             feeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
