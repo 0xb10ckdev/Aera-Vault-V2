@@ -432,12 +432,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
         uint256 underlyingIndex = 0;
 
-        for (; underlyingIndex < numAssets; underlyingIndex++) {
+        for (; underlyingIndex < numAssets;) {
             if (
                 underlyingAsset
                     == address(assetsToCheck[underlyingIndex].asset)
             ) {
                 break;
+            }
+
+            unchecked {
+                underlyingIndex++; // gas savings
             }
         }
 

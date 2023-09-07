@@ -249,10 +249,14 @@ contract AeraVaultV2 is
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
 
-        for (uint256 i = 0; i < numAmounts; i++) {
+        for (uint256 i = 0; i < numAmounts;) {
             assetValue = amounts[i];
 
             if (assetValue.value == 0) {
+                unchecked {
+                    i++; // gas savings
+                }
+
                 continue;
             }
 
@@ -261,6 +265,10 @@ contract AeraVaultV2 is
 
             // Log withdrawal for this asset.
             emit Withdraw(msg.sender, assetValue.asset, assetValue.value);
+
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         // Hooks: after transferring assets.
@@ -902,13 +910,19 @@ contract AeraVaultV2 is
     ) internal pure returns (bool isRegistered, uint256 index) {
         uint256 numAssets = registeredAssets.length;
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             if (registeredAssets[i].asset < asset) {
+                unchecked {
+                    i++; // gas savings
+                }
+
                 continue;
             }
+
             if (registeredAssets[i].asset == asset) {
                 return (true, i);
             }
+
             break;
         }
     }
