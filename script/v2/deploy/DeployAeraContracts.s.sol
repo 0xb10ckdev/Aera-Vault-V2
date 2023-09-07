@@ -143,13 +143,6 @@ contract DeployAeraContracts is DeployScriptBase {
         }
     }
 
-    struct AssetInformation {
-        address asset;
-        uint256 heartbeat;
-        bool isERC4626;
-        address oracle;
-    }
-
     function _getAssetRegistryParams(string memory relFilePath)
         internal
         returns (AssetRegistryParameters memory)
