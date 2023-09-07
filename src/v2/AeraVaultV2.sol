@@ -31,6 +31,15 @@ contract AeraVaultV2 is
     ///      or 3.16224% per year in leap years.
     uint256 private constant _MAX_FEE = 10 ** 9;
 
+    /// @notice Number of decimals for fee token.
+    uint256 private immutable _feeTokenDecimals;
+
+    /// @notice Number of decimals for numeraire token.
+    uint256 private immutable _numeraireTokenDecimals;
+
+    /// @notice Fee token used by asset registry.
+    IERC20 private immutable _feeToken;
+
     /// @notice Fee per second in 18 decimal fixed point format.
     uint256 public immutable fee;
 
@@ -154,6 +163,12 @@ contract AeraVaultV2 is
         feeRecipient = feeRecipient_;
         fee = fee_;
         lastFeeCheckpoint = block.timestamp;
+
+        // Effects: cache numeraire and fee token decimals.
+        _feeToken = IAssetRegistry(assetRegistry_).feeToken();
+        _feeTokenDecimals = IERC20Metadata(address(_feeToken)).decimals();
+        _numeraireTokenDecimals =
+            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
 
         // Effects: set new owner.
         _transferOwnership(owner_);
@@ -498,10 +513,8 @@ contract AeraVaultV2 is
             revert Aera__NoClaimableFeesForCaller(msg.sender);
         }
 
-        IERC20 feeToken = assetRegistry.feeToken();
-
         uint256 availableFee =
-            Math.min(feeToken.balanceOf(address(this)), reservedFee);
+            Math.min(_feeToken.balanceOf(address(this)), reservedFee);
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
@@ -514,7 +527,7 @@ contract AeraVaultV2 is
         fees[msg.sender] = reservedFee;
 
         // Interactions: transfer fee to caller.
-        feeToken.safeTransfer(msg.sender, availableFee);
+        _feeToken.safeTransfer(msg.sender, availableFee);
 
         // Log the claim.
         emit Claimed(msg.sender, availableFee, reservedFee, feeTotal);
@@ -532,9 +545,8 @@ contract AeraVaultV2 is
     function value() external view override returns (uint256 vaultValue) {
         IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices =
             assetRegistry.spotPrices();
-        IERC20 feeToken = assetRegistry.feeToken();
 
-        (vaultValue,) = _value(erc20SpotPrices, feeToken);
+        (vaultValue,) = _value(erc20SpotPrices);
     }
 
     /// @inheritdoc IERC165
@@ -590,13 +602,11 @@ contract AeraVaultV2 is
             return;
         }
 
-        IERC20 feeToken = assetRegistry.feeToken();
-
         // Calculate vault value using oracle or backup value if oracle is reverting.
         try assetRegistry.spotPrices() returns (
             IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
         ) {
-            (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
+            (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices);
         } catch (bytes memory reason) {
             if (reason.length == 0) {
                 revert Aera__SpotPricesReverted();
@@ -612,14 +622,11 @@ contract AeraVaultV2 is
         // Calculate new fee for current fee recipient.
         // It calculates the fee in fee token decimals.
         uint256 newFee = lastValue * feeIndex * fee;
-        uint256 feeTokenDecimals = IERC20Metadata(address(feeToken)).decimals();
-        uint256 numeraireDecimals =
-            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
 
-        if (numeraireDecimals < feeTokenDecimals) {
-            newFee = newFee * (10 ** (feeTokenDecimals - numeraireDecimals));
-        } else if (numeraireDecimals > feeTokenDecimals) {
-            newFee = newFee / (10 ** (numeraireDecimals - feeTokenDecimals));
+        if (_numeraireTokenDecimals < _feeTokenDecimals) {
+            newFee = newFee * (10 ** (_feeTokenDecimals - _numeraireTokenDecimals));
+        } else if (_numeraireTokenDecimals > _feeTokenDecimals) {
+            newFee = newFee / (10 ** (_numeraireTokenDecimals - _feeTokenDecimals));
         }
 
         newFee /= lastFeeTokenPrice;
@@ -649,12 +656,10 @@ contract AeraVaultV2 is
     /// @notice Get current total value of assets in vault and price of fee token.
     /// @dev It calculates the value in Numeraire token decimals.
     /// @param erc20SpotPrices Spot prices of ERC20 assets.
-    /// @param feeToken Fee token address.
     /// @return vaultValue Current total value.
     /// @return feeTokenPrice Fee token price.
     function _value(
-        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices,
-        IERC20 feeToken
+        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
     ) internal view returns (uint256 vaultValue, uint256 feeTokenPrice) {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
@@ -675,7 +680,7 @@ contract AeraVaultV2 is
                 balance = assetAmounts[i].value;
             }
 
-            if (assets[i].asset == feeToken) {
+            if (assets[i].asset == _feeToken) {
                 feeTokenPrice = spotPrices[i];
             }
 
@@ -805,7 +810,6 @@ contract AeraVaultV2 is
     {
         uint256 numAssets = assets.length;
 
-        IERC20 feeToken = assetRegistry.feeToken();
         assetAmounts = new AssetValue[](numAssets);
         IAssetRegistry.AssetInformation memory assetInfo;
 
@@ -816,7 +820,7 @@ contract AeraVaultV2 is
                 value: assetInfo.asset.balanceOf(address(this))
             });
 
-            if (assetInfo.asset == feeToken) {
+            if (assetInfo.asset == _feeToken) {
                 assetAmounts[i].value -=
                     Math.min(feeTotal, assetAmounts[i].value);
             }
