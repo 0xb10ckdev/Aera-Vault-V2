@@ -2,12 +2,9 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
-import "@openzeppelin/ERC165Checker.sol";
-import "@openzeppelin/IERC20Metadata.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "./interfaces/IAssetRegistry.sol";
-import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultAssetRegistry
@@ -15,6 +12,9 @@ import {ONE} from "./Constants.sol";
 contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
+
+    /// @notice Time to pass before accepting answers when sequencer comes back up.
+    uint256 public constant GRACE_PERIOD_TIME = 3600;
 
     /// @notice Vault address.
     address public immutable vault;
@@ -32,6 +32,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
+
+    /// @notice Sequencer Uptime Feed address for L2.
+    AggregatorV2V3Interface public sequencer;
 
     /// EVENTS ///
 
@@ -80,6 +83,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
+    error Aera__SequencerIsDown();
+    error Aera__GracePeriodNotOver();
     error Aera__OraclePriceIsInvalid(AssetInformation asset, int256 actual);
     error Aera__OraclePriceIsTooOld(AssetInformation asset, uint256 updatedAt);
 
@@ -90,12 +95,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireId_ The index of the numeraire asset in the assets array.
     /// @param feeToken_ Fee token address.
+    /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
         address vault_,
         AssetInformation[] memory assets_,
         uint256 numeraireId_,
-        IERC20 feeToken_
+        IERC20 feeToken_,
+        AggregatorV2V3Interface sequencer_
     ) Ownable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
@@ -179,10 +186,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        // Effects: set vault, numeraire and fee token.
+        // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
         numeraireId = numeraireId_;
         feeToken = feeToken_;
+        sequencer = sequencer_;
 
         // Effects: set new owner.
         _transferOwnership(owner_);
@@ -325,6 +333,26 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         override
         returns (AssetPriceReading[] memory)
     {
+        int256 answer;
+        uint256 startedAt;
+
+        // Requirements: check that sequencer is up.
+        if (address(sequencer) != address(0)) {
+            (, answer, startedAt,,) = sequencer.latestRoundData();
+
+            // Answer == 0: Sequencer is up
+            // Requirements: check that the sequencer is up.
+            if (answer != 0) {
+                revert Aera__SequencerIsDown();
+            }
+
+            // Requirements: check that the grace period has passed after the
+            //               sequencer is back up.
+            if (block.timestamp < startedAt + GRACE_PERIOD_TIME) {
+                revert Aera__GracePeriodNotOver();
+            }
+        }
+
         // Prepare price array.
         uint256 numAssets = _assets.length;
         AssetPriceReading[] memory prices = new AssetPriceReading[](
@@ -446,12 +474,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
         uint256 underlyingIndex = 0;
 
-        for (; underlyingIndex < numAssets; underlyingIndex++) {
+        for (; underlyingIndex < numAssets;) {
             if (
                 underlyingAsset
                     == address(assetsToCheck[underlyingIndex].asset)
             ) {
                 break;
+            }
+
+            unchecked {
+                underlyingIndex++; // gas savings
             }
         }
 

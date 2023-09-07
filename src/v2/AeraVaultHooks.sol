@@ -3,7 +3,6 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/ERC165.sol";
-import "@openzeppelin/ERC165Checker.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "@openzeppelin/SafeERC20.sol";
 import "@openzeppelin/IERC20IncreaseAllowance.sol";
@@ -17,7 +16,12 @@ import {ONE} from "./Constants.sol";
 /// @title AeraVaultHooks
 /// @notice Default hooks contract which implements several safeguards.
 /// @dev Connected vault MUST only call submit with tokens that can increase allowances with approve and increaseAllowance.
-contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
+contract AeraVaultHooks is
+    IHooks,
+    IAeraVaultHooksEvents,
+    ERC165,
+    Ownable2Step
+{
     using SafeERC20 for IERC20;
 
     /// STORAGE ///
@@ -100,9 +104,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         uint256 numTargetSighashAllowlist = targetSighashAllowlist.length;
 
         // Effects: initialize target sighash allowlist.
-        TargetSighashData memory targetSighash;
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
-            targetSighash = targetSighashAllowlist[i];
+            TargetSighashData memory targetSighash = targetSighashAllowlist[i];
             _targetSighashAllowed[TargetSighashLib.toTargetSighash(
                 targetSighash.target, targetSighash.selector
             )] = true;
@@ -149,7 +152,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         address target,
         bytes4 selector
     ) external onlyOwner {
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(target, selector);
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, selector);
 
         // Requirements: check that current target sighash is set.
         if (!_targetSighashAllowed[targetSighash]) {
@@ -229,18 +233,19 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
         override
         onlyVault
     {
-        uint256 day = block.timestamp / 1 days;
-
+        // Requirements: check that ETH balance is not decreased.
         if (vault.balance < _beforeBalance) {
             revert Aera__ETHBalanceIsDecreased();
         }
 
+        uint256 newMultiplier;
+        uint256 currentMultiplier = cumulativeDailyMultiplier;
+        uint256 day = block.timestamp / 1 days;
+
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
-            uint256 newMultiplier =
-                (currentDay == day ? cumulativeDailyMultiplier : ONE);
-            newMultiplier =
-                newMultiplier * IVault(vault).value() / _beforeValue;
+            newMultiplier = currentDay == day ? currentMultiplier : ONE;
+            newMultiplier = (newMultiplier * IVault(vault).value()) / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
             if (newMultiplier < ONE - maxDailyExecutionLoss) {
@@ -248,11 +253,17 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
             }
 
             // Effects: update the daily multiplier.
-            cumulativeDailyMultiplier = newMultiplier;
+            if (currentMultiplier != newMultiplier) {
+                cumulativeDailyMultiplier = newMultiplier;
+            }
         }
 
-        // Effects: reset day and prior vault value for the next submission.
-        currentDay = day;
+        // Effects: reset current day for the next submission.
+        if (currentDay != day) {
+            currentDay = day;
+        }
+
+        // Effects: reset prior vault value for the next submission.
         _beforeBalance = 0;
         _beforeValue = 0;
 
@@ -328,14 +339,14 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, ERC165, Ownable2Step {
     }
 
     /// @notice Check whether target and sighash combination is allowed.
-    /// @param key Struct containing target contract and sighash.
-    function targetSighashAllowed(TargetSighashData calldata key)
-        public
-        view
-        returns (bool)
-    {
+    /// @param target Address of target.
+    /// @param selector Selector of function.
+    function targetSighashAllowed(
+        address target,
+        bytes4 selector
+    ) external view returns (bool) {
         return _targetSighashAllowed[TargetSighashLib.toTargetSighash(
-            key.target, key.selector
+            target, selector
         )];
     }
 

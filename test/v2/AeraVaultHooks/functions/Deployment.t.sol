@@ -74,7 +74,12 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         assertEq(hooks.cumulativeDailyMultiplier(), _ONE);
 
         for (uint256 i = 0; i < numERC20; i++) {
-            assertTrue(hooks.targetSighashAllowed(targetSighashAllowlist[i]));
+            assertTrue(
+                hooks.targetSighashAllowed(
+                    targetSighashAllowlist[i].target,
+                    targetSighashAllowlist[i].selector
+                )
+            );
         }
     }
 }

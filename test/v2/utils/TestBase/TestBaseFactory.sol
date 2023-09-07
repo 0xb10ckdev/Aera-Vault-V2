@@ -3,6 +3,7 @@ pragma solidity 0.8.21;
 
 import "src/v2/AeraV2Factory.sol";
 import {TestBase} from "test/utils/TestBase.sol";
+import {WrappedNativeMock} from "test/utils/WrappedNativeMock.sol";
 
 contract TestBaseFactory is TestBase {
     address internal constant _WETH_ADDRESS =
@@ -15,6 +16,11 @@ contract TestBaseFactory is TestBase {
     }
 
     function _deployAeraV2Factory() internal {
+        if (_WETH_ADDRESS.code.length == 0) {
+            address weth = address(new WrappedNativeMock());
+            vm.etch(_WETH_ADDRESS, weth.code);
+        }
+
         factory = new AeraV2Factory(_WETH_ADDRESS);
     }
 

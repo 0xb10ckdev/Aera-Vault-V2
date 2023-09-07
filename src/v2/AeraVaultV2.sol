@@ -134,8 +134,8 @@ contract AeraVaultV2 is
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
         _checkHooksAddress(hooks_);
-        _checkGuardianAddress(guardian_);
-        _checkFeeRecipientAddress(feeRecipient_);
+        _checkGuardianAddress(guardian_, owner_);
+        _checkFeeRecipientAddress(feeRecipient_, owner_);
 
         // Requirements: check that initial owner is not zero address.
         if (owner_ == address(0)) {
@@ -144,9 +144,6 @@ contract AeraVaultV2 is
         // Requirements: check if fee is within bounds.
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
-        }
-        if (wrappedNativeToken_ == address(0)) {
-            revert Aera__WrappedNativeTokenIsZeroAddress();
         }
 
         // Effects: initialize vault state.
@@ -187,6 +184,9 @@ contract AeraVaultV2 is
         // Hooks: before transferring assets.
         hooks.beforeDeposit(amounts);
 
+        // Requirements: check that provided amounts are sorted by asset and unique.
+        _checkAmountsSorted(amounts);
+
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
@@ -201,16 +201,6 @@ contract AeraVaultV2 is
             // Requirements: check that deposited assets are registered.
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
-            }
-
-            for (uint256 j = 0; j < numAmounts;) {
-                // Requirements: check that no duplicate assets are provided.
-                if (i != j && assetValue.asset == amounts[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetValue.asset);
-                }
-                unchecked {
-                    j++; // gas savings
-                }
             }
 
             // Interactions: transfer asset from owner to vault.
@@ -246,16 +236,23 @@ contract AeraVaultV2 is
         // Requirements: check the withdraw request.
         _checkWithdrawRequest(assets, amounts);
 
+        // Requirements: check that provided amounts are sorted by asset and unique.
+        _checkAmountsSorted(amounts);
+
         // Hooks: before transferring assets.
         hooks.beforeWithdraw(amounts);
 
         uint256 numAmounts = amounts.length;
         AssetValue memory assetValue;
 
-        for (uint256 i = 0; i < numAmounts; i++) {
+        for (uint256 i = 0; i < numAmounts;) {
             assetValue = amounts[i];
 
             if (assetValue.value == 0) {
+                unchecked {
+                    i++; // gas savings
+                }
+
                 continue;
             }
 
@@ -264,6 +261,10 @@ contract AeraVaultV2 is
 
             // Log withdrawal for this asset.
             emit Withdraw(msg.sender, assetValue.asset, assetValue.value);
+
+            unchecked {
+                i++; // gas savings
+            }
         }
 
         // Hooks: after transferring assets.
@@ -276,8 +277,8 @@ contract AeraVaultV2 is
         address newFeeRecipient
     ) external override onlyOwner whenNotFinalized reserveFees {
         // Requirements: check guardian and fee recipient addresses.
-        _checkGuardianAddress(newGuardian);
-        _checkFeeRecipientAddress(newFeeRecipient);
+        _checkGuardianAddress(newGuardian, owner());
+        _checkFeeRecipientAddress(newFeeRecipient, owner());
 
         // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
@@ -291,6 +292,7 @@ contract AeraVaultV2 is
     function setHooks(address newHooks)
         external
         override
+        nonReentrant
         onlyOwner
         whenNotFinalized
         reserveFees
@@ -364,9 +366,11 @@ contract AeraVaultV2 is
         for (uint256 i = 0; i < numAssetAmounts;) {
             // Effects: transfer registered assets to owner.
             // Excludes reserved fee tokens and native token (e.g., ETH).
-            assetAmounts[i].asset.safeTransfer(
-                msg.sender, assetAmounts[i].value
-            );
+            if (assetAmounts[i].value > 0) {
+                assetAmounts[i].asset.safeTransfer(
+                    msg.sender, assetAmounts[i].value
+                );
+            }
             unchecked {
                 i++; // gas savings
             }
@@ -383,6 +387,7 @@ contract AeraVaultV2 is
     function pause()
         external
         override
+        nonReentrant
         onlyOwnerOrGuardian
         whenNotFinalized
         reserveFees
@@ -412,6 +417,7 @@ contract AeraVaultV2 is
         override
         nonReentrant
         onlyGuardian
+        whenHooksSet
         whenNotFinalized
         whenNotPaused
         reserveFees
@@ -633,7 +639,14 @@ contract AeraVaultV2 is
         feeTotal += newFee;
 
         // Log fee reservation.
-        emit FeesReserved(feeRecipient, newFee, lastFeeCheckpoint, lastValue, lastFeeTokenPrice, feeTotal);
+        emit FeesReserved(
+            feeRecipient,
+            newFee,
+            lastFeeCheckpoint,
+            lastValue,
+            lastFeeTokenPrice,
+            feeTotal
+        );
     }
 
     /// @notice Get current total value of assets in vault and price of fee token.
@@ -682,6 +695,21 @@ contract AeraVaultV2 is
         }
     }
 
+    /// @notice Check that assets in provided amounts are sorted and unique.
+    /// @param amounts Struct details for assets and amounts to withdraw.
+    function _checkAmountsSorted(AssetValue[] memory amounts) internal pure {
+        uint256 numAssets = amounts.length;
+
+        for (uint256 i = 1; i < numAssets;) {
+            if (amounts[i - 1].asset >= amounts[i].asset) {
+                revert Aera__AmountsOrderIsIncorrect(i);
+            }
+            unchecked {
+                i++; // gas savings
+            }
+        }
+    }
+
     /// @notice Check request to withdraw.
     /// @param assets Struct details for asset information from asset registry.
     /// @param amounts Struct details for assets and amounts to withdraw.
@@ -704,15 +732,6 @@ contract AeraVaultV2 is
 
             if (!isRegistered) {
                 revert Aera__AssetIsNotRegistered(assetValue.asset);
-            }
-
-            for (uint256 j = 0; j < numAmounts;) {
-                if (i != j && assetValue.asset == amounts[j].asset) {
-                    revert Aera__AssetIsDuplicated(assetValue.asset);
-                }
-                unchecked {
-                    j++; // gas savings
-                }
             }
 
             if (assetAmounts[assetIndex].value < assetValue.value) {
@@ -799,7 +818,8 @@ contract AeraVaultV2 is
             });
 
             if (assetInfo.asset == feeToken) {
-                assetAmounts[i].value -= Math.min(feeTotal, assetAmounts[i].value);
+                assetAmounts[i].value -=
+                    Math.min(feeTotal, assetAmounts[i].value);
             }
 
             unchecked {
@@ -823,25 +843,30 @@ contract AeraVaultV2 is
 
     /// @notice Check if the address can be a guardian.
     /// @param newGuardian Address to check.
-    function _checkGuardianAddress(address newGuardian) internal view {
+    /// @param owner_ Owner address.
+    function _checkGuardianAddress(
+        address newGuardian,
+        address owner_
+    ) internal view {
         if (newGuardian == address(0)) {
             revert Aera__GuardianIsZeroAddress();
         }
-        if (newGuardian == owner()) {
+        if (newGuardian == owner_) {
             revert Aera__GuardianIsOwner();
         }
     }
 
     /// @notice Check if the address can be a fee recipient.
     /// @param newFeeRecipient Address to check.
-    function _checkFeeRecipientAddress(address newFeeRecipient)
-        internal
-        view
-    {
+    /// @param owner_ Owner address.
+    function _checkFeeRecipientAddress(
+        address newFeeRecipient,
+        address owner_
+    ) internal view {
         if (newFeeRecipient == address(0)) {
             revert Aera__FeeRecipientIsZeroAddress();
         }
-        if (newFeeRecipient == owner()) {
+        if (newFeeRecipient == owner_) {
             revert Aera__FeeRecipientIsOwner();
         }
     }
@@ -894,13 +919,19 @@ contract AeraVaultV2 is
     ) internal pure returns (bool isRegistered, uint256 index) {
         uint256 numAssets = registeredAssets.length;
 
-        for (uint256 i = 0; i < numAssets; i++) {
+        for (uint256 i = 0; i < numAssets;) {
             if (registeredAssets[i].asset < asset) {
+                unchecked {
+                    i++; // gas savings
+                }
+
                 continue;
             }
+
             if (registeredAssets[i].asset == asset) {
                 return (true, i);
             }
+
             break;
         }
     }

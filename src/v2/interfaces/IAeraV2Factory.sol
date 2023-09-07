@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {
-    AssetRegistryParameters,
-    HooksParameters
-} from "../Types.sol";
+import {AssetRegistryParameters, HooksParameters} from "../Types.sol";
 
 /// @title IAeraV2Factory
 /// @notice Interface for the V2 vault factory.
 interface IAeraV2Factory {
     /// @notice Create V2 vault.
-    /// @param salt The salt value to create vault.
+    /// @param saltInput The salt input value to generate salt.
     /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
@@ -22,7 +19,7 @@ interface IAeraV2Factory {
     /// @return deployedAssetRegistry The address of deployed asset registry.
     /// @return deployedHooks The address of deployed hooks.
     function create(
-        bytes32 salt,
+        bytes32 saltInput,
         address owner,
         address guardian,
         address feeRecipient,
@@ -48,11 +45,20 @@ interface IAeraV2Factory {
     ) external returns (address deployed);
 
     /// @notice Calculate deployment address of V2 vault.
-    /// @param salt The salt value to create vault.
-    function computeVaultAddress(bytes32 salt)
-        external
-        view
-        returns (address deployed);
+    /// @param saltInput The salt input value to generate salt.
+    /// @param owner Initial owner address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param description Vault description.
+    function computeVaultAddress(
+        bytes32 saltInput,
+        address owner,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) external view returns (address);
 
     /// @notice Returns the address of wrapped native token.
     function wrappedNativeToken() external view returns (address);

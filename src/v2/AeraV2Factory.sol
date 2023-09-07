@@ -3,6 +3,7 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
 import "@openzeppelin/Ownable2Step.sol";
+import "@openzeppelin/IERC20.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
@@ -52,13 +53,15 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param assets Initial list of registered assets.
     /// @param numeraireId The index of the numeraire asset in the assets array.
     /// @param feeToken Fee token address.
+    /// @param sequencer Sequencer Uptime Feed address for L2.
     event AssetRegistryCreated(
         address indexed assetRegistry,
         address indexed vault,
         address indexed owner,
         IAssetRegistry.AssetInformation[] assets,
         uint256 numeraireId,
-        IERC20 feeToken
+        IERC20 feeToken,
+        AggregatorV2V3Interface sequencer
     );
 
     /// @notice Emitted when the hooks is created.
@@ -80,6 +83,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     error Aera__DescriptionIsEmpty();
     error Aera__WrappedNativeTokenIsZeroAddress();
+    error Aera__InvalidWrappedNativeToken();
 
     /// FUNCTIONS ///
 
@@ -89,14 +93,22 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }
+        if (wrappedNativeToken_.code.length == 0) {
+            revert Aera__InvalidWrappedNativeToken();
+        }
+        try IERC20(wrappedNativeToken_).balanceOf(address(this)) returns (
+            uint256
+        ) {} catch {
+            revert Aera__InvalidWrappedNativeToken();
+        }
 
         wrappedNativeToken = wrappedNativeToken_;
     }
 
     /// @inheritdoc IAeraV2Factory
     function create(
-        bytes32 salt,
-        address owner,
+        bytes32 saltInput,
+        address owner_,
         address guardian,
         address feeRecipient,
         uint256 fee,
@@ -118,6 +130,10 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             revert Aera__DescriptionIsEmpty();
         }
 
+        bytes32 salt = _calculateSalt(
+            saltInput, owner_, guardian, feeRecipient, fee, description
+        );
+
         // Effects: deploy asset registry.
         deployedAssetRegistry = _deployAssetRegistry(
             _computeVaultAddress(salt), assetRegistryParameters
@@ -130,7 +146,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         // Effects: deploy the vault.
         deployedVault = _deployVault(
             salt,
-            owner,
+            owner_,
             deployedAssetRegistry,
             deployedHooks,
             guardian,
@@ -149,13 +165,19 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     }
 
     /// @inheritdoc IAeraV2Factory
-    function computeVaultAddress(bytes32 salt)
-        external
-        view
-        override
-        returns (address)
-    {
-        return _computeVaultAddress(salt);
+    function computeVaultAddress(
+        bytes32 saltInput,
+        address owner_,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) external view override returns (address) {
+        return _computeVaultAddress(
+            _calculateSalt(
+                saltInput, owner_, guardian, feeRecipient, fee, description
+            )
+        );
     }
 
     /// INTERNAL FUNCTIONS ///
@@ -175,7 +197,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
                 vault,
                 assetRegistryParameters.assets,
                 assetRegistryParameters.numeraireId,
-                assetRegistryParameters.feeToken
+                assetRegistryParameters.feeToken,
+                assetRegistryParameters.sequencer
             )
         );
 
@@ -186,7 +209,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             assetRegistryParameters.owner,
             assetRegistryParameters.assets,
             assetRegistryParameters.numeraireId,
-            assetRegistryParameters.feeToken
+            assetRegistryParameters.feeToken,
+            assetRegistryParameters.sequencer
         );
     }
 
@@ -220,7 +244,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Deploy V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner Initial owner address.
+    /// @param owner_ Initial owner address.
     /// @param assetRegistry Asset registry address.
     /// @param hooks Hooks address.
     /// @param guardian Guardian address.
@@ -230,7 +254,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @return deployed The address of deployed vault.
     function _deployVault(
         bytes32 salt,
-        address owner,
+        address owner_,
         address assetRegistry,
         address hooks,
         address guardian,
@@ -239,7 +263,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         string calldata description
     ) internal returns (address deployed) {
         parameters = VaultParameters(
-            owner, assetRegistry, hooks, guardian, feeRecipient, fee
+            owner_, assetRegistry, hooks, guardian, feeRecipient, fee
         );
 
         // Requirements, Effects and Interactions: deploy vault with create2.
@@ -252,7 +276,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             deployed,
             assetRegistry,
             hooks,
-            owner,
+            owner_,
             guardian,
             feeRecipient,
             fee,
@@ -271,6 +295,28 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     {
         return Create2.computeAddress(
             salt, keccak256(type(AeraVaultV2).creationCode)
+        );
+    }
+
+    /// @notice Calculate salt from vault parameters.
+    /// @param saltInput The salt value to create vault.
+    /// @param owner_ Initial owner address.
+    /// @param guardian Guardian address.
+    /// @param feeRecipient Fee recipient address.
+    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param description Vault description.
+    function _calculateSalt(
+        bytes32 saltInput,
+        address owner_,
+        address guardian,
+        address feeRecipient,
+        uint256 fee,
+        string calldata description
+    ) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encodePacked(
+                saltInput, owner_, guardian, feeRecipient, fee, description
+            )
         );
     }
 }

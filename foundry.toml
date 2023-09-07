@@ -10,6 +10,11 @@ fs_permissions = [
 [profile.compiler]
 evm_version="paris"
 
+[profile.production]
+optimizer = true
+runs = 1000
+via_ir = true
+
 [fmt]
 line_length = 79
 multiline_func_header = "params_first"
