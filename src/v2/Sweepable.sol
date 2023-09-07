@@ -7,6 +7,8 @@ import "./interfaces/ISweepable.sol";
 
 /// @title Sweepable.
 /// @notice Aera Sweepable contract.
+/// @dev Allows owner of the contract to restore accidentally send tokens
+//       and the chain's native token.
 contract Sweepable is ISweepable, Ownable2Step {
     using SafeERC20 for IERC20;
 
