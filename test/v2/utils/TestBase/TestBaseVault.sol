@@ -49,9 +49,10 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         } else {
             vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 17642400);
 
+            _deployAeraV2Factory();
+
             _init();
 
-            _deployAeraV2Factory();
             _deployAeraV2Contracts();
         }
     }
@@ -249,11 +250,13 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         feeToken = IERC20(_USDC_ADDRESS);
         numeraireToken = IERC20(_USDC_ADDRESS);
 
+        assetRegistryParameters.factory = address(modulesFactory);
         assetRegistryParameters.owner = address(this);
         assetRegistryParameters.assets = assetsInformation;
         assetRegistryParameters.numeraireToken = numeraireToken;
         assetRegistryParameters.feeToken = feeToken;
 
+        hooksParameters.factory = address(modulesFactory);
         hooksParameters.owner = address(this);
         hooksParameters.maxDailyExecutionLoss = _MAX_DAILY_EXECUTION_LOSS;
         hooksParameters.targetSighashAllowlist = targetSighashAllowlist;

@@ -219,13 +219,19 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             _MAX_FEE,
             "Test Vault",
             AssetRegistryParameters(
+                address(modulesFactory),
                 address(this),
                 assets,
                 IERC20(numeraireToken),
                 feeToken,
                 AggregatorV2V3Interface(address(0))
             ),
-            HooksParameters(address(this), 0.1e18, targetSighashAllowlist)
+            HooksParameters(
+                address(modulesFactory),
+                address(this),
+                0.1e18,
+                targetSighashAllowlist
+            )
         );
 
         assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);
