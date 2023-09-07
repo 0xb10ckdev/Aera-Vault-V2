@@ -598,6 +598,7 @@ contract AeraVaultV2 is
         ) {
             (lastValue, lastFeeTokenPrice) = _value(erc20SpotPrices, feeToken);
         } catch (bytes memory reason) {
+            // Check if there is a clear reason for the revert.
             if (reason.length == 0) {
                 revert Aera__SpotPricesReverted();
             }

@@ -79,7 +79,7 @@ interface IVaultEvents {
         uint256 feeTotal
     );
 
-    /// @notice Emitted when getting spot prices from asset registry is reverted.
+    /// @notice Emitted when the call to get spot prices from the asset registry reverts.
     /// @param reason Revert reason.
     event SpotPricesReverted(bytes reason);
 }
