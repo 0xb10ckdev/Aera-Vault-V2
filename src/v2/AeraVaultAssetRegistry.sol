@@ -13,6 +13,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
+    /// @notice Time to pass before accepting answers when sequencer comes back up.
+    uint256 public constant GRACE_PERIOD_TIME = 3600;
+
     /// @notice Vault address.
     address public immutable vault;
 
@@ -29,6 +32,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
+
+    /// @notice Sequencer Uptime Feed address for L2.
+    AggregatorV2V3Interface public sequencer;
 
     /// EVENTS ///
 
@@ -77,8 +83,10 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     error Aera__CannotRemoveNumeraireAsset(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
-    error Aera__OraclePriceIsInvalid(uint256 index, int256 actual);
-    error Aera__OraclePriceIsTooOld(uint256 index, uint256 updatedAt);
+    error Aera__SequencerIsDown();
+    error Aera__GracePeriodNotOver();
+    error Aera__OraclePriceIsInvalid(AssetInformation asset, int256 actual);
+    error Aera__OraclePriceIsTooOld(AssetInformation asset, uint256 updatedAt);
 
     /// FUNCTIONS ///
 
@@ -87,12 +95,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireAsset_ Numeraire asset address.
     /// @param feeToken_ Fee token address.
+    /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
         address vault_,
         AssetInformation[] memory assets_,
         IERC20 numeraireAsset_,
-        IERC20 feeToken_
+        IERC20 feeToken_,
+        AggregatorV2V3Interface sequencer_
     ) Ownable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
@@ -189,10 +199,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             }
         }
 
-        // Effects: set vault, numeraire and fee token.
+        // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
         numeraireAsset = numeraireAsset_;
         feeToken = feeToken_;
+        sequencer = sequencer_;
 
         // Effects: set new owner.
         _transferOwnership(owner_);
@@ -336,6 +347,26 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         override
         returns (AssetPriceReading[] memory)
     {
+        int256 answer;
+        uint256 startedAt;
+
+        // Requirements: check that sequencer is up.
+        if (address(sequencer) != address(0)) {
+            (, answer, startedAt,,) = sequencer.latestRoundData();
+
+            // Answer == 0: Sequencer is up
+            // Requirements: check that the sequencer is up.
+            if (answer != 0) {
+                revert Aera__SequencerIsDown();
+            }
+
+            // Requirements: check that the grace period has passed after the
+            //               sequencer is back up.
+            if (block.timestamp < startedAt + GRACE_PERIOD_TIME) {
+                revert Aera__GracePeriodNotOver();
+            }
+        }
+
         // Prepare price array.
         uint256 numAssets = _assets.length;
         AssetPriceReading[] memory prices = new AssetPriceReading[](
@@ -344,8 +375,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
 
         uint256 oracleDecimals;
         uint256 price;
-        int256 answer;
-        uint256 updatedAt;
         uint256 index = 0;
         for (uint256 i = 0; i < numAssets;) {
             if (_assets[i].isERC4626) {
@@ -362,21 +391,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
                     spotPrice: ONE
                 });
             } else {
-                (, answer,, updatedAt,) = _assets[i].oracle.latestRoundData();
-
-                // Check price staleness
-                if (answer <= 0) {
-                    revert Aera__OraclePriceIsInvalid(i, answer);
-                }
-                if (
-                    _assets[i].heartbeat > 0
-                        && updatedAt + _assets[i].heartbeat + 1 hours
-                            < block.timestamp
-                ) {
-                    revert Aera__OraclePriceIsTooOld(i, updatedAt);
-                }
-
-                price = uint256(answer);
+                price = _checkOraclePrice(_assets[i]);
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (oracleDecimals < 18) {
@@ -417,7 +432,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
     /// @notice Ensure non-zero oracle address for ERC20
     ///         and zero oracle address for ERC4626.
     /// @param asset Asset details to check
-    function _checkAssetOracle(AssetInformation memory asset) internal pure {
+    function _checkAssetOracle(AssetInformation memory asset) internal view {
         if (asset.isERC4626) {
             // ERC4626 asset should not have a specified oracle.
             if (address(asset.oracle) != address(0)) {
@@ -430,7 +445,34 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
             if (address(asset.oracle) == address(0)) {
                 revert Aera__ERC20OracleIsZeroAddress(address(asset.asset));
             }
+
+            // Requirements: validate oracle price.
+            _checkOraclePrice(asset);
         }
+    }
+
+    /// @notice Ensure oracle returns valid value and it's up to date.
+    /// @param asset Asset details to check.
+    /// @return price Valid oracle price.
+    function _checkOraclePrice(AssetInformation memory asset)
+        internal
+        view
+        returns (uint256 price)
+    {
+        (, int256 answer,, uint256 updatedAt,) = asset.oracle.latestRoundData();
+
+        // Check price staleness
+        if (answer <= 0) {
+            revert Aera__OraclePriceIsInvalid(asset, answer);
+        }
+        if (
+            asset.heartbeat > 0
+                && updatedAt + asset.heartbeat + 1 hours < block.timestamp
+        ) {
+            revert Aera__OraclePriceIsTooOld(asset, updatedAt);
+        }
+
+        price = uint256(answer);
     }
 
     /// @notice Check whether the underlying asset is listed as an ERC20.
@@ -446,12 +488,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
         uint256 underlyingIndex = 0;
 
-        for (; underlyingIndex < numAssets; underlyingIndex++) {
+        for (; underlyingIndex < numAssets;) {
             if (
                 underlyingAsset
                     == address(assetsToCheck[underlyingIndex].asset)
             ) {
                 break;
+            }
+
+            unchecked {
+                underlyingIndex++; // gas savings
             }
         }
 

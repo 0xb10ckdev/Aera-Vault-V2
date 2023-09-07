@@ -36,7 +36,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -53,7 +54,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -68,7 +70,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             address(0),
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -89,7 +92,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -113,7 +117,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -132,7 +137,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(address(1)),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -153,7 +159,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -170,7 +177,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -188,7 +196,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -207,7 +216,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -229,7 +239,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
                     vaultAddress,
                     assets, 
                     IERC20(numeraireAsset),
-                    feeToken
+                    feeToken,
+            AggregatorV2V3Interface(address(0))
                 );
                 assets[i].oracle = AggregatorV2V3Interface(address(0));
             }
@@ -268,7 +279,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -278,7 +290,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
             vaultAddress,
             assets,
             IERC20(numeraireAsset),
-            feeToken
+            feeToken,
+            AggregatorV2V3Interface(address(0))
         );
 
         assertEq(assetRegistry.vault(), vaultAddress);

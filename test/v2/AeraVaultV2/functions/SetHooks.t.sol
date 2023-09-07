@@ -58,7 +58,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
         emit SpotPricesReverted(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
-                nonNumeraireId,
+                assetsInformation[nonNumeraireId],
                 -1
             )
         );

@@ -4,6 +4,35 @@ pragma solidity 0.8.21;
 import "../TestBaseAssetRegistry.sol";
 
 contract SpotPricesTest is TestBaseAssetRegistry {
+    function test_spotPrices_fail_whenSequencerIsDown() public {
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            address(vault),
+            assets,
+            numeraireId,
+            feeToken,
+            AggregatorV2V3Interface(address(new OracleMock(18)))
+        );
+        OracleMock(address(assetRegistry.sequencer())).setLatestAnswer(1);
+
+        vm.expectRevert(AeraVaultAssetRegistry.Aera__SequencerIsDown.selector);
+        assetRegistry.spotPrices();
+    }
+
+    function test_spotPrices_fail_whenGracePeriodNotOver() public {
+        assetRegistry = new AeraVaultAssetRegistry(
+            address(this),
+            address(vault),
+            assets,
+            numeraireId,
+            feeToken,
+            AggregatorV2V3Interface(address(new OracleMock(18)))
+        );
+
+        vm.expectRevert(AeraVaultAssetRegistry.Aera__GracePeriodNotOver.selector);
+        assetRegistry.spotPrices();
+    }
+
     function test_spotPrices_fail_whenOraclePriceIsInvalid() public {
         deployCodeTo(
             "OracleMock.sol",
@@ -15,7 +44,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsInvalid.selector,
-                nonNumeraireId,
+                assets[nonNumeraireId],
                 0
             )
         );
@@ -37,7 +66,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry.Aera__OraclePriceIsTooOld.selector,
-                nonNumeraireId,
+                assets[nonNumeraireId],
                 OracleMock(address(assets[nonNumeraireId].oracle)).updatedAt()
             )
         );

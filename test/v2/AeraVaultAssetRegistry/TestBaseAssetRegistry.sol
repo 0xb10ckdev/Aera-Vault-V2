@@ -219,7 +219,11 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             _MAX_FEE,
             "Test Vault",
             AssetRegistryParameters(
-                address(this), assets, IERC20(numeraireAsset), feeToken
+                address(this),
+                assets,
+                IERC20(numeraireAsset),
+                feeToken,
+                AggregatorV2V3Interface(address(0))
             ),
             HooksParameters(address(this), 0.1e18, targetSighashAllowlist)
         );

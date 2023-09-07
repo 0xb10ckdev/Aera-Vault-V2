@@ -17,7 +17,9 @@ interface IVaultEvents {
     /// @param owner Owner address.
     /// @param asset Withdrawn asset.
     /// @param amount Withdrawn asset amount.
-    event Withdraw(address indexed owner, IERC20 indexed asset, uint256 amount);
+    event Withdraw(
+        address indexed owner, IERC20 indexed asset, uint256 amount
+    );
 
     /// @notice Emitted when guardian is set.
     /// @param guardian Address of new guardian.
@@ -55,7 +57,10 @@ interface IVaultEvents {
     /// @param unclaimedFee Unclaimed amount of fee token (unclaimed because Vault does not have enough balance of feeToken).
     /// @param feeTotal New total reserved fee value.
     event Claimed(
-        address indexed feeRecipient, uint256 claimedFee, uint256 unclaimedFee, uint256 feeTotal
+        address indexed feeRecipient,
+        uint256 claimedFee,
+        uint256 unclaimedFee,
+        uint256 feeTotal
     );
 
     /// @notice Emitted when new fees are reserved for recipient.

@@ -4,6 +4,8 @@ pragma solidity ^0.8.21;
 import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
+import {AggregatorV2V3Interface} from
+    "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import {AeraVaultAssetRegistry} from "src/v2/AeraVaultAssetRegistry.sol";
 import {AeraVaultHooks} from "src/v2/AeraVaultHooks.sol";
 import {AeraVaultV2} from "src/v2/AeraVaultV2.sol";
@@ -154,12 +156,14 @@ contract DeployAeraContracts is DeployScriptBase {
             abi.decode(rawAssets, (IAssetRegistry.AssetInformation[]));
         address numeraireAsset = json.readAddress(".numeraireAsset");
         address feeToken = json.readAddress(".feeToken");
+        address sequencer = json.readAddress(".sequencer");
 
         return AssetRegistryParameters(
             owner == address(0) ? _deployerAddress : owner,
             assets,
             IERC20(numeraireAsset),
-            IERC20(feeToken)
+            IERC20(feeToken),
+            AggregatorV2V3Interface(sequencer)
         );
     }
 
@@ -321,7 +325,8 @@ contract DeployAeraContracts is DeployScriptBase {
         for (uint256 i = 0; i < numTargetSighashAllowlist; i++) {
             assertTrue(
                 hooks.targetSighashAllowed(
-                    hooksParameters.targetSighashAllowlist[i]
+                    hooksParameters.targetSighashAllowlist[i].target,
+                    hooksParameters.targetSighashAllowlist[i].selector
                 )
             );
         }
