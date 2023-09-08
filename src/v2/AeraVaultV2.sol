@@ -497,6 +497,10 @@ contract AeraVaultV2 is
             }
         }
 
+        if (address(this).balance > 0) {
+            wrappedNativeToken.call{value: address(this).balance}("");
+        }
+
         // Hooks: after executing operations.
         hooks.afterSubmit(operations);
 
