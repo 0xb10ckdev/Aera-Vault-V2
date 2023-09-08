@@ -34,6 +34,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     AeraVaultV2 public vault;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
+    IERC20 public wrappedNativeToken;
     address public numeraireToken;
     address public nonNumeraireToken;
     address public nonNumeraireERC4626Asset;
@@ -165,8 +166,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             assetRegistry.assets();
 
         numAssets = registeredAssets.length;
-        feeToken = assetRegistry.feeToken();
         numeraireToken = address(assetRegistry.numeraireToken());
+        feeToken = assetRegistry.feeToken();
+        wrappedNativeToken = assetRegistry.wrappedNativeToken();
 
         for (uint256 i = 0; i < numAssets; i++) {
             assets.push(registeredAssets[i]);
@@ -222,6 +224,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 assets,
                 IERC20(numeraireToken),
                 feeToken,
+                wrappedNativeToken,
                 AggregatorV2V3Interface(address(0))
             ),
             HooksParameters(
@@ -289,6 +292,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 numeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireToken) {
                 nonNumeraireId = i;
+                wrappedNativeToken = assets[i].asset;
             } else if (address(assets[i].asset) == nonNumeraireERC4626Asset) {
                 nonNumeraireERC4626Id = i;
             }

@@ -68,7 +68,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__NumeraireTokenIsNotRegistered(address numeraireToken);
-    error Aera__NumeraireTokenIsMarkedAsERC4626();
+    error Aera__NumeraireTokenIsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__FeeTokenIsERC4626(address feeToken);
@@ -180,7 +180,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Requirements: confirm that numeraire is not an ERC4626 asset.
         if (assets_[numeraireIndex].isERC4626) {
-            revert Aera__NumeraireTokenIsMarkedAsERC4626();
+            revert Aera__NumeraireTokenIsERC4626();
         }
 
         // Requirements: confirm that numeraire does not have a specified oracle.
