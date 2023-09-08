@@ -31,7 +31,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
     address public numeraireToken;
-    address public nonNumeraireAsset;
+    address public nonNumeraireToken;
     address public nonNumeraireERC4626Asset;
     uint256 public numeraireId;
     uint256 public nonNumeraireId;
@@ -174,7 +174,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                     && address(registeredAssets[i].asset) != numeraireToken
             ) {
                 nonNumeraireId = i;
-                nonNumeraireAsset = address(registeredAssets[i].asset);
+                nonNumeraireToken = address(registeredAssets[i].asset);
             }
             if (
                 registeredAssets[i].isERC4626
@@ -249,7 +249,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 numeraireToken = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
             } else if (i == (numeraireSetIdx + 1) % numERC20) {
-                nonNumeraireAsset = address(asset.asset);
+                nonNumeraireToken = address(asset.asset);
             } else if (i == (numeraireSetIdx + 2) % numERC20) {
                 feeToken = asset.asset;
             }
@@ -283,7 +283,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
             if (address(assets[i].asset) == numeraireToken) {
                 numeraireId = i;
-            } else if (address(assets[i].asset) == nonNumeraireAsset) {
+            } else if (address(assets[i].asset) == nonNumeraireToken) {
                 nonNumeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireERC4626Asset) {
                 nonNumeraireERC4626Id = i;

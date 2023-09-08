@@ -65,7 +65,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__FeeTokenIsERC4626(address feeToken);
-    error Aera__NumeraireAssetIsNotRegistered(address numeraireToken);
+    error Aera__NumeraireTokenIsNotRegistered(address numeraireToken);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__ERC20OracleIsZeroAddress(address asset);
@@ -76,11 +76,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     );
     error Aera__UnderlyingAssetIsItselfERC4626();
     error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
-    error Aera__NumeraireAssetIsMarkedAsERC4626();
+    error Aera__NumeraireTokenIsMarkedAsERC4626();
     error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__AssetIsAlreadyRegistered(uint256 index);
     error Aera__AssetNotRegistered(address asset);
-    error Aera__CannotRemoveNumeraireAsset(address asset);
+    error Aera__CannotRemoveNumeraireToken(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
     error Aera__VaultIsZeroAddress();
     error Aera__SequencerIsDown();
@@ -93,14 +93,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @param owner_ Initial owner address.
     /// @param vault_ Vault address.
     /// @param assets_ Initial list of registered assets.
-    /// @param numeraireAsset_ Numeraire token address.
+    /// @param numeraireToken_ Numeraire token address.
     /// @param feeToken_ Fee token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
         address vault_,
         AssetInformation[] memory assets_,
-        IERC20 numeraireAsset_,
+        IERC20 numeraireToken_,
         IERC20 feeToken_,
         AggregatorV2V3Interface sequencer_
     ) Sweepable() Ownable() {
@@ -124,7 +124,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         // Calculate the Numeraire token index.
         uint256 numeraireIndex = 0;
         for (; numeraireIndex < numAssets;) {
-            if (assets_[numeraireIndex].asset == numeraireAsset_) {
+            if (assets_[numeraireIndex].asset == numeraireToken_) {
                 break;
             }
             unchecked {
@@ -155,14 +155,14 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Requirements: confirm that Numeraire token is present.
         if (numeraireIndex >= numAssets) {
-            revert Aera__NumeraireAssetIsNotRegistered(
-                address(numeraireAsset_)
+            revert Aera__NumeraireTokenIsNotRegistered(
+                address(numeraireToken_)
             );
         }
 
         // Requirements: confirm that numeraire is not an ERC4626 asset.
         if (assets_[numeraireIndex].isERC4626) {
-            revert Aera__NumeraireAssetIsMarkedAsERC4626();
+            revert Aera__NumeraireTokenIsMarkedAsERC4626();
         }
 
         // Requirements: confirm that numeraire does not have a specified oracle.
@@ -201,7 +201,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Effects: set vault, numeraire, fee token and sequencer uptime feed.
         vault = vault_;
-        numeraireToken = numeraireAsset_;
+        numeraireToken = numeraireToken_;
         feeToken = feeToken_;
         sequencer = sequencer_;
 
@@ -213,7 +213,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
             owner_,
             vault_,
             assets_,
-            address(numeraireAsset_),
+            address(numeraireToken_),
             address(feeToken_)
         );
     }
@@ -266,7 +266,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     function removeAsset(address asset) external onlyOwner {
         // Requirements: confirm that asset to remove is not numeraire.
         if (asset == address(numeraireToken)) {
-            revert Aera__CannotRemoveNumeraireAsset(asset);
+            revert Aera__CannotRemoveNumeraireToken(asset);
         }
 
         // Requirements: check that asset to remove is not fee token.

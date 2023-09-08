@@ -122,12 +122,12 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenNumeraireAssetIsNotRegistered(
+    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsNotRegistered(
     ) public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry
-                    .Aera__NumeraireAssetIsNotRegistered
+                    .Aera__NumeraireTokenIsNotRegistered
                     .selector,
                 address(1)
             )
@@ -164,12 +164,12 @@ contract DeploymentTest is TestBaseAssetRegistry {
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenNumeraireAssetIsMarkedAsERC4626(
+    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsMarkedAsERC4626(
     ) public {
         assets[numeraireId].isERC4626 = true;
         vm.expectRevert(
             AeraVaultAssetRegistry
-                .Aera__NumeraireAssetIsMarkedAsERC4626
+                .Aera__NumeraireTokenIsMarkedAsERC4626
                 .selector
         );
         new AeraVaultAssetRegistry(

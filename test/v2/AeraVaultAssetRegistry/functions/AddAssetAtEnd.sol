@@ -14,7 +14,7 @@ contract AddAssetAtEnd is AddAssetTest {
         vm.etch(newERC20Address, address(newERC20Asset.asset).code);
         newERC20Asset.asset = IERC20(newERC20Address);
 
-        (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, 51);
+        (, newERC4626Asset) = _createAsset(true, nonNumeraireToken, 51);
         vm.etch(newERC4626Address, address(newERC4626Asset.asset).code);
         newERC4626Asset.asset = IERC20(newERC4626Address);
     }

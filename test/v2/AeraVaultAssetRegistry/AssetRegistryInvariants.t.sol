@@ -51,7 +51,7 @@ contract AssetRegistryInvariantTest is TestBaseAssetRegistry {
         }
     }
 
-    function invariant_numeraireAsset() public {
+    function invariant_numeraireToken() public {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 

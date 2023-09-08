@@ -17,7 +17,7 @@ contract AddAssetTest is TestBaseAssetRegistry {
         // this high number (50) is just to make sure we didn't already
         // create this asset previously, and so ensures the address is different
         (, newERC20Asset) = _createAsset(false, address(0), 50);
-        (, newERC4626Asset) = _createAsset(true, nonNumeraireAsset, 50);
+        (, newERC4626Asset) = _createAsset(true, nonNumeraireToken, 50);
     }
 
     function test_addAsset_fail_whenCallerIsNotOwner() public {
