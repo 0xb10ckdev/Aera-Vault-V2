@@ -154,8 +154,8 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         assertEq(hooks.owner(), hooksParameters.owner);
         assertEq(address(hooks.vault()), address(vault));
         assertEq(
-            hooks.maxDailyExecutionLoss(),
-            hooksParameters.maxDailyExecutionLoss
+            hooks.minDailyValue(),
+            hooksParameters.minDailyValue
         );
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), _ONE);

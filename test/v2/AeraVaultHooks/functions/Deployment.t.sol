@@ -11,7 +11,7 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         new AeraVaultHooks(
             address(this),
             address(0),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             new TargetSighashData[](0)
         );
     }
@@ -25,17 +25,17 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         new AeraVaultHooks(
             address(0),
             address(1),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             new TargetSighashData[](0)
         );
     }
 
-    function test_aeraVaultHooksDeployment_fail_whenMaxDailyExecutionLossIsGreaterThanOne(
+    function test_aeraVaultHooksDeployment_fail_whenMinDailyValueIsGreaterThanOne(
     ) public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultHooks
-                    .Aera__MaxDailyExecutionLossIsGreaterThanOne
+                    .Aera__MinDailyValueIsNotLessThanOne
                     .selector
             )
         );
@@ -44,6 +44,24 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
             address(this),
             address(vault),
             1.1e18,
+            new TargetSighashData[](0)
+        );
+    }
+
+    function test_aeraVaultHooksDeployment_fail_whenMinDailyValueIsSmallerThanHalf(
+    ) public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultHooks
+                    .Aera__MinDailyValueTooLow
+                    .selector
+            )
+        );
+
+        new AeraVaultHooks(
+            address(this),
+            address(vault),
+            0.4e18,
             new TargetSighashData[](0)
         );
     }
@@ -64,12 +82,12 @@ contract DeploymentTest is TestBaseAeraVaultHooks {
         hooks = new AeraVaultHooks(
             address(this),
             address(vault),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             targetSighashAllowlist
         );
 
         assertEq(address(hooks.vault()), address(vault));
-        assertEq(hooks.maxDailyExecutionLoss(), _MAX_DAILY_EXECUTION_LOSS);
+        assertEq(hooks.minDailyValue(), _MIN_DAILY_VALUE);
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), _ONE);
 

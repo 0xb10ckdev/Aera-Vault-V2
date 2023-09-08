@@ -14,11 +14,11 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
         assetRegistry.removeAsset(address(assets[nonNumeraireId].asset));
     }
 
-    function test_removeAsset_fail_whenRemovalAssetIsNumeraireAsset() public {
+    function test_removeAsset_fail_whenRemovalAssetIsNumeraireToken() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry
-                    .Aera__CannotRemoveNumeraireAsset
+                    .Aera__CannotRemoveNumeraireToken
                     .selector,
                 numeraireToken
             )
@@ -31,7 +31,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
             vm.expectRevert(
                 abi.encodeWithSelector(
                     AeraVaultAssetRegistry
-                        .Aera__CannotRemoveNumeraireAsset
+                        .Aera__CannotRemoveNumeraireToken
                         .selector,
                     feeToken
                 )

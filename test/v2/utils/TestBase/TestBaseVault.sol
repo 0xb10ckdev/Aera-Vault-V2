@@ -25,7 +25,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     address internal constant _ETH_USD_ORACLE =
         0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     uint256 internal constant _MAX_FEE = 10 ** 9;
-    uint256 internal constant _MAX_DAILY_EXECUTION_LOSS = 0.1e18;
+    uint256 internal constant _MIN_DAILY_VALUE = 0.9e18;
     address internal _GUARDIAN = address(0x123456);
     address internal _FEE_RECIPIENT = address(0x7890ab);
 
@@ -264,7 +264,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
         hooksParameters.factory = address(modulesFactory);
         hooksParameters.owner = address(this);
-        hooksParameters.maxDailyExecutionLoss = _MAX_DAILY_EXECUTION_LOSS;
+        hooksParameters.minDailyValue = _MIN_DAILY_VALUE;
         hooksParameters.targetSighashAllowlist = targetSighashAllowlist;
     }
 

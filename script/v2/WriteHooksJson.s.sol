@@ -57,10 +57,6 @@ contract WriteHooksJson is Script, Test {
         } else {
             revert("unsupported chain");
         }
-        string memory path = string.concat(
-            vm.projectRoot(), "/config/AeraVaultAddTargetSighashes.json"
-        );
-        string memory json = vm.readFile(path);
 
         for (uint256 i = 0; i < whitelistedERC20Targets.length; i++) {
             targetSighashes.push(
@@ -144,15 +140,16 @@ contract WriteHooksJson is Script, Test {
             );
         }
 
-        path = string.concat(vm.projectRoot(), "/config/AeraVaultHooks.json");
-        json = vm.readFile(path);
+        string memory path =
+            string.concat(vm.projectRoot(), "/config/AeraVaultHooks.json");
+        string memory json = vm.readFile(path);
 
         address owner = json.readAddress(".owner");
-        uint256 maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
+        uint256 minDailyValue = json.readUint(".minDailyValue");
 
         vm.serializeAddress("Hooks", "owner", owner);
         vm.serializeUint(
-            "Hooks", "maxDailyExecutionLoss", maxDailyExecutionLoss
+            "Hooks", "minDailyValue", minDailyValue
         );
         vm.writeJson(
             vm.serializeBytes32(

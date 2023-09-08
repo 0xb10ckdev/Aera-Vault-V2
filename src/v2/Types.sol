@@ -84,12 +84,12 @@ struct AssetRegistryParameters {
 /// @notice Hooks parameters for hooks deployment.
 /// @param factory Hooks factory address.
 /// @param owner Initial owner address.
-/// @param maxDailyExecutionLoss The fraction of value that the vault can
-///                               lose per day in the course of submissions.
+/// @param minDailyValue The fraction of value that the vault has to retain per day
+///                      in the course of submissions.
 /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
 struct HooksParameters {
     address factory;
     address owner;
-    uint256 maxDailyExecutionLoss;
+    uint256 minDailyValue;
     TargetSighashData[] targetSighashAllowlist;
 }

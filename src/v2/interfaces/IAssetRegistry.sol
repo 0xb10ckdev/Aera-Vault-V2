@@ -9,14 +9,14 @@ import "@openzeppelin/IERC20.sol";
 /// @dev Any implementation MUST also implement Ownable2Step and ERC165.
 interface IAssetRegistry {
     /// @param asset Asset address.
+    /// @param heartbeat Frequency of oracle price updates.
     /// @param isERC4626 True if yield-bearing asset, false if just an ERC20 asset.
     /// @param oracle If applicable, oracle address for asset.
-    /// @param heartbeat Frequency of oracle price updates.
     struct AssetInformation {
         IERC20 asset;
+        uint256 heartbeat;
         bool isERC4626;
         AggregatorV2V3Interface oracle;
-        uint256 heartbeat;
     }
 
     /// @param asset Asset address.

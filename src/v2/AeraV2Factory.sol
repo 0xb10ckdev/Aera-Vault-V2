@@ -2,9 +2,8 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
-import "@openzeppelin/Ownable2Step.sol";
-import "@openzeppelin/IERC20.sol";
 import "./AeraVaultV2.sol";
+import "./Sweepable.sol";
 import "./interfaces/IAeraV2Factory.sol";
 import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
 import "./interfaces/IAeraVaultHooksFactory.sol";
@@ -13,7 +12,7 @@ import {Parameters} from "./Types.sol";
 /// @title AeraV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
 /// @dev Only one instance of the factory will be required per chain.
-contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
+contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @notice The address of wrapped native token.
     address public immutable wrappedNativeToken;
 
@@ -68,14 +67,14 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param hooks Hooks address.
     /// @param vault Vault address.
     /// @param owner Initial owner address.
-    /// @param maxDailyExecutionLoss The fraction of value that the vault can
-    ///                               lose per day in the course of submissions.
+    /// @param minDailyValue The fraction of value that the vault has to retain per day
+    ///                      in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     event HooksCreated(
         address indexed hooks,
         address indexed vault,
         address indexed owner,
-        uint256 maxDailyExecutionLoss,
+        uint256 minDailyValue,
         TargetSighashData[] targetSighashAllowlist
     );
 
@@ -90,7 +89,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Initialize the factory contract.
     /// @param wrappedNativeToken_ The address of wrapped native token.
-    constructor(address wrappedNativeToken_) Ownable() {
+    constructor(address wrappedNativeToken_) Sweepable() Ownable() {
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }
@@ -217,7 +216,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             salt,
             hooksParameters.owner,
             vault,
-            hooksParameters.maxDailyExecutionLoss,
+            hooksParameters.minDailyValue,
             hooksParameters.targetSighashAllowlist
         );
 
@@ -226,7 +225,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             deployed,
             vault,
             hooksParameters.owner,
-            hooksParameters.maxDailyExecutionLoss,
+            hooksParameters.minDailyValue,
             hooksParameters.targetSighashAllowlist
         );
     }

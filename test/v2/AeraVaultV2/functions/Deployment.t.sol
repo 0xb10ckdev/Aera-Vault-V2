@@ -31,7 +31,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             Create2.computeAddress(
                 bytes32(_ONE), keccak256(type(AeraVaultV2).creationCode)
             ),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             targetSighashAllowlist
         );
     }
@@ -205,7 +205,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         hooks = new AeraVaultHooks(
             address(this),
             address(vault),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             targetSighashAllowlist
         );
 
