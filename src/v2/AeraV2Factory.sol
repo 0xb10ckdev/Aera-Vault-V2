@@ -84,6 +84,8 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     error Aera__WrappedNativeTokenIsZeroAddress();
     error Aera__InvalidWrappedNativeToken();
     error Aera__VaultAddressMismatch(address deployed, address computed);
+    error Aera__GuardianIsAssetRegistryOwner();
+    error Aera__GuardianIsHooksOwner();
 
     /// FUNCTIONS ///
 
@@ -127,9 +129,18 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             revert Aera__DescriptionIsEmpty();
         }
 
-        bytes32 salt = _calculateSalt(saltInput, description, vaultParameters);
+        bytes32 salt = _calculateSalt(saltInput, vaultParameters, description);
 
         address computedVault = _computeVaultAddress(salt);
+
+        // Requirements: check that guardian is disaffiliated from hooks/asset registry.
+        address guardian = vaultParameters.guardian;
+        if (guardian == assetRegistryParameters.owner) {
+            revert Aera__GuardianIsAssetRegistryOwner();
+        }
+        if (guardian == hooksParameters.owner) {
+            revert Aera__GuardianIsHooksOwner();
+        }
 
         // Effects: deploy asset registry.
         deployedAssetRegistry =
@@ -160,7 +171,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         VaultParameters calldata vaultParameters
     ) external view override returns (address) {
         return _computeVaultAddress(
-            _calculateSalt(saltInput, description, vaultParameters)
+            _calculateSalt(saltInput, vaultParameters, description)
         );
     }
 
@@ -287,12 +298,12 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
 
     /// @notice Calculate salt from vault parameters.
     /// @param saltInput The salt value to create vault.
-    /// @param description Vault description.
     /// @param vaultParameters Struct details for vault deployment.
+    /// @param description Vault description.
     function _calculateSalt(
         bytes32 saltInput,
-        string calldata description,
-        VaultParameters memory vaultParameters
+        VaultParameters memory vaultParameters,
+        string calldata description
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
