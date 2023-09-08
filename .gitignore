@@ -13,6 +13,7 @@ config/AeraVaultV2.json
 config/AeraV2Factory.json
 config/Deployments.json
 config/AeraVaultDeposit.json
+config/AeraVaultWithdraw.json
 config/AeraVaultAddTargetSighashes.json
 
 coverage*
