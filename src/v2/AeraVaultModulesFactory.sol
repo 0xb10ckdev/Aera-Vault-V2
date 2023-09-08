@@ -16,10 +16,8 @@ contract AeraVaultModulesFactory is
     IAeraVaultHooksFactory,
     Ownable2Step
 {
-    /// STORAGE ///
-
     /// @notice The address of the v2 factory.
-    address public v2Factory;
+    address public immutable v2Factory;
 
     /// EVENTS ///
 
