@@ -9,7 +9,7 @@ import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
 import "./interfaces/IAeraVaultHooksFactory.sol";
 
 /// @title AeraVaultModulesFactory
-/// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
+/// @notice Used to create new asset registry and hooks.
 /// @dev Only one instance of the factory will be required per chain.
 contract AeraVaultModulesFactory is
     IAeraVaultAssetRegistryFactory,
