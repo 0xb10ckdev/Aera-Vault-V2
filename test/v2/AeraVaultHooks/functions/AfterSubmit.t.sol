@@ -34,7 +34,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
 
     function test_afterSubmit_fail_whenETHBalanceIsDecreased() public {
         Operation[] memory operations = new Operation[](1);
-        // Set nonempty bytecode at contract address 1.
+        // Set nonempty bytecode at contract address(20).
         vm.etch(address(20), hex"00");
         operations[0] =
             Operation({target: address(20), value: 1, data: hex"00000000"});
