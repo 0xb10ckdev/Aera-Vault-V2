@@ -11,7 +11,7 @@ interface IAeraV2Factory {
     /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @param assetRegistryParameters Struct details for asset registry deployment.
     /// @param hooksParameters Struct details for hooks deployment.
@@ -40,7 +40,7 @@ interface IAeraV2Factory {
     /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     function computeVaultAddress(
         bytes32 saltInput,
@@ -60,7 +60,7 @@ interface IAeraV2Factory {
     /// @return hooks Hooks address.
     /// @return guardian Guardian address.
     /// @return feeRecipient Fee recipient address.
-    /// @return fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @return fee Fees accrued per second, denoted in 18 decimal fixed point format.
     function parameters()
         external
         view

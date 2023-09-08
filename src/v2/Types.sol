@@ -43,7 +43,7 @@ struct TargetSighashData {
 /// @param hooks Hooks address.
 /// @param guardian Guardian address.
 /// @param feeRecipient Fee recipient address.
-/// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+/// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
 struct VaultParameters {
     address owner;
     address assetRegistry;

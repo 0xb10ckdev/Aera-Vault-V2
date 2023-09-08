@@ -31,7 +31,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @param wrappedNativeToken The address of wrapped native token.
     event VaultCreated(
@@ -248,7 +248,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param hooks Hooks address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function _deployVault(
@@ -302,7 +302,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @param owner_ Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     function _calculateSalt(
         bytes32 saltInput,
