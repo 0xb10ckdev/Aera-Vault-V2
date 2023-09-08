@@ -40,6 +40,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     uint256[] public oraclePrices;
     uint256 public nonNumeraireId;
     TargetSighashData[] public targetSighashAllowlist;
+    VaultParameters public vaultParameters;
     AssetRegistryParameters public assetRegistryParameters;
     HooksParameters public hooksParameters;
 
@@ -49,9 +50,10 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         } else {
             vm.createSelectFork(vm.envString("ETH_NODE_URI_MAINNET"), 17642400);
 
+            _deployAeraV2Factory();
+
             _init();
 
-            _deployAeraV2Factory();
             _deployAeraV2Contracts();
         }
     }
@@ -249,11 +251,18 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
         feeToken = IERC20(_USDC_ADDRESS);
         numeraireToken = IERC20(_USDC_ADDRESS);
 
+        vaultParameters.owner = address(this);
+        vaultParameters.guardian = _GUARDIAN;
+        vaultParameters.feeRecipient = _FEE_RECIPIENT;
+        vaultParameters.fee = _MAX_FEE;
+
+        assetRegistryParameters.factory = address(modulesFactory);
         assetRegistryParameters.owner = address(this);
         assetRegistryParameters.assets = assetsInformation;
         assetRegistryParameters.numeraireToken = numeraireToken;
         assetRegistryParameters.feeToken = feeToken;
 
+        hooksParameters.factory = address(modulesFactory);
         hooksParameters.owner = address(this);
         hooksParameters.minDailyValue = _MIN_DAILY_VALUE;
         hooksParameters.targetSighashAllowlist = targetSighashAllowlist;
@@ -301,11 +310,8 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
             address deployedHooks
         ) = factory.create(
             bytes32(0),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
             "Test Vault",
+            vaultParameters,
             assetRegistryParameters,
             hooksParameters
         );

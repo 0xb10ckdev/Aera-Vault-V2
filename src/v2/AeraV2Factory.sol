@@ -2,12 +2,12 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
-import "./AeraVaultAssetRegistry.sol";
-import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
 import "./Sweepable.sol";
 import "./interfaces/IAeraV2Factory.sol";
-import {VaultParameters} from "./Types.sol";
+import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
+import "./interfaces/IAeraVaultHooksFactory.sol";
+import {Parameters} from "./Types.sol";
 
 /// @title AeraV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
@@ -19,7 +19,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// STORAGE ///
 
     /// @notice Vault parameters for vault deployment.
-    VaultParameters public override parameters;
+    Parameters public override parameters;
 
     /// EVENTS ///
 
@@ -30,7 +30,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @param owner Initial owner address.
     /// @param guardian Guardian address.
     /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
     /// @param wrappedNativeToken The address of wrapped native token.
     event VaultCreated(
@@ -83,6 +83,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     error Aera__DescriptionIsEmpty();
     error Aera__WrappedNativeTokenIsZeroAddress();
     error Aera__InvalidWrappedNativeToken();
+    error Aera__VaultAddressMismatch(address deployed, address computed);
 
     /// FUNCTIONS ///
 
@@ -107,11 +108,8 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @inheritdoc IAeraV2Factory
     function create(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
         string calldata description,
+        VaultParameters calldata vaultParameters,
         AssetRegistryParameters calldata assetRegistryParameters,
         HooksParameters calldata hooksParameters
     )
@@ -129,76 +127,66 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             revert Aera__DescriptionIsEmpty();
         }
 
-        bytes32 salt = _calculateSalt(
-            saltInput, owner_, guardian, feeRecipient, fee, description
-        );
+        bytes32 salt = _calculateSalt(saltInput, description, vaultParameters);
+
+        address computedVault = _computeVaultAddress(salt);
 
         // Effects: deploy asset registry.
-        deployedAssetRegistry = _deployAssetRegistry(
-            _computeVaultAddress(salt), assetRegistryParameters
-        );
+        deployedAssetRegistry =
+            _deployAssetRegistry(salt, computedVault, assetRegistryParameters);
 
         // Effects: deploy first instance of hooks.
-        deployedHooks =
-            _deployHooks(_computeVaultAddress(salt), hooksParameters);
+        deployedHooks = _deployHooks(salt, computedVault, hooksParameters);
 
         // Effects: deploy the vault.
         deployedVault = _deployVault(
             salt,
-            owner_,
             deployedAssetRegistry,
             deployedHooks,
-            guardian,
-            feeRecipient,
-            fee,
-            description
+            description,
+            vaultParameters
         );
-    }
 
-    /// @inheritdoc IAeraV2Factory
-    function deployHooks(
-        address vault,
-        HooksParameters memory hooksParameters
-    ) external returns (address) {
-        return _deployHooks(vault, hooksParameters);
+        // Invariants: check that deployed address matches computed address.
+        if (deployedVault != computedVault) {
+            revert Aera__VaultAddressMismatch(deployedVault, computedVault);
+        }
     }
 
     /// @inheritdoc IAeraV2Factory
     function computeVaultAddress(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters calldata vaultParameters
     ) external view override returns (address) {
         return _computeVaultAddress(
-            _calculateSalt(
-                saltInput, owner_, guardian, feeRecipient, fee, description
-            )
+            _calculateSalt(saltInput, description, vaultParameters)
         );
     }
 
     /// INTERNAL FUNCTIONS ///
 
     /// @notice Deploy asset registry.
+    /// @param salt The salt value to deploy asset registry.
     /// @param vault Vault address.
     /// @param assetRegistryParameters Struct details for asset registry deployment.
     /// @return deployed The address of deployed asset registry.
     function _deployAssetRegistry(
+        bytes32 salt,
         address vault,
         AssetRegistryParameters memory assetRegistryParameters
     ) internal returns (address deployed) {
         // Effects: deploy asset registry.
-        deployed = address(
-            new AeraVaultAssetRegistry(
-                assetRegistryParameters.owner,
-                vault,
-                assetRegistryParameters.assets,
-                assetRegistryParameters.numeraireToken,
-                assetRegistryParameters.feeToken,
-                assetRegistryParameters.sequencer
-            )
+        deployed = IAeraVaultAssetRegistryFactory(
+            assetRegistryParameters.factory
+        ).deployAssetRegistry(
+            salt,
+            assetRegistryParameters.owner,
+            vault,
+            assetRegistryParameters.assets,
+            assetRegistryParameters.numeraireToken,
+            assetRegistryParameters.feeToken,
+            assetRegistryParameters.sequencer
         );
 
         // Log asset registry creation.
@@ -214,21 +202,22 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     }
 
     /// @notice Deploy hooks.
+    /// @param salt The salt value to deploy hooks.
     /// @param vault Vault address.
     /// @param hooksParameters Struct details for hooks deployment.
     /// @return deployed The address of deployed hooks.
     function _deployHooks(
+        bytes32 salt,
         address vault,
         HooksParameters memory hooksParameters
     ) internal returns (address deployed) {
         // Effects: deploy hooks.
-        deployed = address(
-            new AeraVaultHooks(
-                hooksParameters.owner,
-                vault,
-                hooksParameters.minDailyValue,
-                hooksParameters.targetSighashAllowlist
-            )
+        deployed = IAeraVaultHooksFactory(hooksParameters.factory).deployHooks(
+            salt,
+            hooksParameters.owner,
+            vault,
+            hooksParameters.minDailyValue,
+            hooksParameters.targetSighashAllowlist
         );
 
         // Log hooks creation.
@@ -243,26 +232,25 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
 
     /// @notice Deploy V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner_ Initial owner address.
     /// @param assetRegistry Asset registry address.
     /// @param hooks Hooks address.
-    /// @param guardian Guardian address.
-    /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
+    /// @param vaultParameters Struct details for vault deployment.
     /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function _deployVault(
         bytes32 salt,
-        address owner_,
         address assetRegistry,
         address hooks,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters memory vaultParameters
     ) internal returns (address deployed) {
-        parameters = VaultParameters(
-            owner_, assetRegistry, hooks, guardian, feeRecipient, fee
+        parameters = Parameters(
+            vaultParameters.owner,
+            assetRegistry,
+            hooks,
+            vaultParameters.guardian,
+            vaultParameters.feeRecipient,
+            vaultParameters.fee
         );
 
         // Requirements, Effects and Interactions: deploy vault with create2.
@@ -275,10 +263,10 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             deployed,
             assetRegistry,
             hooks,
-            owner_,
-            guardian,
-            feeRecipient,
-            fee,
+            vaultParameters.owner,
+            vaultParameters.guardian,
+            vaultParameters.feeRecipient,
+            vaultParameters.fee,
             description,
             wrappedNativeToken
         );
@@ -299,22 +287,21 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
 
     /// @notice Calculate salt from vault parameters.
     /// @param saltInput The salt value to create vault.
-    /// @param owner_ Initial owner address.
-    /// @param guardian Guardian address.
-    /// @param feeRecipient Fee recipient address.
-    /// @param fee Fee accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
+    /// @param vaultParameters Struct details for vault deployment.
     function _calculateSalt(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters memory vaultParameters
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
-                saltInput, owner_, guardian, feeRecipient, fee, description
+                saltInput,
+                vaultParameters.owner,
+                vaultParameters.guardian,
+                vaultParameters.feeRecipient,
+                vaultParameters.fee,
+                description
             )
         );
     }

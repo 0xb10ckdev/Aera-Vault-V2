@@ -7,7 +7,11 @@ import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraV2Factory.sol";
-import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
+import {
+    AssetRegistryParameters,
+    HooksParameters,
+    VaultParameters
+} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {ERC20Mock} from "test/utils/ERC20Mock.sol";
 import {ERC4626Mock} from "test/utils/ERC4626Mock.sol";
@@ -194,11 +198,8 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
         address vaultAddress = factory.computeVaultAddress(
             bytes32(0),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            VaultParameters(address(this), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE)
         );
 
         vm.expectEmit(true, false, false, true);
@@ -213,19 +214,22 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         (address deployedVault, address deployedAssetRegistry,) = factory
             .create(
             bytes32(0),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
             "Test Vault",
+            VaultParameters(address(this), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE),
             AssetRegistryParameters(
+                address(modulesFactory),
                 address(this),
                 assets,
                 IERC20(numeraireToken),
                 feeToken,
                 AggregatorV2V3Interface(address(0))
             ),
-            HooksParameters(address(this), 0.9e18, targetSighashAllowlist)
+            HooksParameters(
+                address(modulesFactory),
+                address(this),
+                0.9e18,
+                targetSighashAllowlist
+            )
         );
 
         assetRegistry = AeraVaultAssetRegistry(deployedAssetRegistry);

@@ -46,122 +46,67 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
         vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(_USER);
-        factory.create(
-            bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenGuardianIsZeroAddress()
         public
     {
-        vm.expectRevert(IVault.Aera__GuardianIsZeroAddress.selector);
+        vaultParameters.guardian = address(0);
 
-        factory.create(
-            bytes32(_ONE),
-            address(this),
-            address(0),
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        vm.expectRevert(IVault.Aera__GuardianIsZeroAddress.selector);
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenGuardianIsOwner() public {
+        vaultParameters.guardian = address(this);
+
         vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
-        factory.create(
-            bytes32(_ONE),
-            address(factory),
-            address(factory),
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenOwnerIsZeroAddress() public {
+        vaultParameters.owner = address(0);
+
         vm.expectRevert(IVault.Aera__InitialOwnerIsZeroAddress.selector);
-        factory.create(
-            bytes32(_ONE),
-            address(0),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenFeeRecipientIsZeroAddress()
         public
     {
+        vaultParameters.feeRecipient = address(0);
+
         vm.expectRevert(IVault.Aera__FeeRecipientIsZeroAddress.selector);
-        factory.create(
-            bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            address(0),
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenFeeRecipientIsOwner()
         public
     {
+        vaultParameters.feeRecipient = address(this);
+
         vm.expectRevert(IVault.Aera__FeeRecipientIsOwner.selector);
-        factory.create(
-            bytes32(_ONE),
-            address(factory),
-            _GUARDIAN,
-            address(factory),
-            _MAX_FEE,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenFeeIsAboveMax() public {
+        vaultParameters.fee = _MAX_FEE + 1;
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 IVault.Aera__FeeIsAboveMax.selector, _MAX_FEE + 1, _MAX_FEE
             )
         );
-        factory.create(
-            bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE + 1,
-            "Test Vault",
-            assetRegistryParameters,
-            hooksParameters
-        );
+        _deployAeraV2Contracts();
     }
 
     function test_createAeraV2Contracts_fail_whenDescriptionIsEmpty() public {
         vm.expectRevert(AeraV2Factory.Aera__DescriptionIsEmpty.selector);
         factory.create(
             bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
             "",
+            vaultParameters,
             assetRegistryParameters,
             hooksParameters
         );
@@ -169,12 +114,7 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
 
     function test_createAeraV2Contracts_success() public {
         address predict = factory.computeVaultAddress(
-            bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            bytes32(_ONE), "Test Vault", vaultParameters
         );
 
         (
@@ -183,11 +123,8 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
             address deployedHooks
         ) = factory.create(
             bytes32(_ONE),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
             "Test Vault",
+            vaultParameters,
             assetRegistryParameters,
             hooksParameters
         );
