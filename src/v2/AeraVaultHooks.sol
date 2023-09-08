@@ -56,6 +56,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     error Aera__CallerIsNotVault();
     error Aera__VaultIsZeroAddress();
     error Aera__ETHBalanceIsDecreased();
+    error Aera__HooksOwnerIsGuardian();
+    error Aera__HooksOwnerIsVault();
     error Aera__MinDailyValueTooLow();
     error Aera__MinDailyValueIsNotLessThanOne();
     error Aera__NoCodeAtTarget(address target);
@@ -96,6 +98,9 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         if (owner_ == address(0)) {
             revert Aera__HooksInitialOwnerIsZeroAddress();
         }
+
+        // Requirements: check that hooks initial owner is disaffiliated.
+        _checkHooksOwner(owner_, vault_);
 
         // Requirements: check that minimum daily value doesn't mandate vault growth.
         if (minDailyValue_ >= ONE) {
@@ -366,5 +371,28 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     {
         return selector == IERC20.approve.selector
             || selector == IERC20IncreaseAllowance.increaseAllowance.selector;
+    }
+
+    /// @notice Check that owner is not the vault or the guardian.
+    /// @param owner_ Hooks owner address.
+    /// @param vault_ Vault address. 
+    function _checkHooksOwner(address owner_, address vault_) internal view {
+        if (owner_ == vault_) {
+            revert Aera__HooksOwnerIsVault();
+        }
+
+        address guardian = IVault(vault_).guardian();
+        if (owner_ == guardian) {
+            revert Aera__HooksOwnerIsGuardian();
+        }
+    }
+
+    /// @inheritdoc Ownable2Step
+    function transferOwnership(address newOwner) public override onlyOwner {
+        // Requirements: check that new owner is disaffiliated from existing roles. 
+        _checkHooksOwner(newOwner, vault);
+
+        // Effects: initiate ownership transfer.
+        super.transferOwnership(newOwner);
     }
 }

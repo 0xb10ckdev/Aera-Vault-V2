@@ -5,6 +5,7 @@ import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/IERC4626.sol";
 import "./Sweepable.sol";
 import "./interfaces/IAssetRegistry.sol";
+import "./interfaces/IVault.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultAssetRegistry
@@ -68,6 +69,8 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     error Aera__NumeraireTokenIsNotRegistered(address numeraireToken);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
+    error Aera__AssetRegistryOwnerIsGuardian();
+    error Aera__AssetRegistryOwnerIsVault();
     error Aera__ERC20OracleIsZeroAddress(address asset);
     error Aera__OracleHeartbeatIsZero(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
@@ -113,6 +116,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
         }
+
+        // Requirements: check that asset registry initial owner is disaffiliated.
+        _checkAssetRegistryOwner(owner_, vault_);
 
         uint256 numAssets = assets_.length;
 
@@ -544,5 +550,28 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Log asset added.
         emit AssetAdded(address(asset.asset), asset);
+    }
+
+    /// @notice Check that owner is not the vault or the guardian.
+    /// @param owner_ Asset registry owner address.
+    /// @param vault_ Vault address. 
+    function _checkAssetRegistryOwner(address owner_, address vault_) internal view {
+        if (owner_ == vault_) {
+            revert Aera__AssetRegistryOwnerIsVault();
+        }
+
+        address guardian = IVault(vault_).guardian();
+        if (owner_ == guardian) {
+            revert Aera__AssetRegistryOwnerIsGuardian();
+        }
+    }
+
+    /// @inheritdoc Ownable2Step
+    function transferOwnership(address newOwner) public override onlyOwner {
+        // Requirements: check that new owner is disaffiliated from existing roles. 
+        _checkAssetRegistryOwner(newOwner, vault);
+
+        // Effects: initiate ownership transfer.
+        super.transferOwnership(newOwner);
     }
 }
