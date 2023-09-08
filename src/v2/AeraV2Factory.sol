@@ -84,6 +84,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     error Aera__DescriptionIsEmpty();
     error Aera__WrappedNativeTokenIsZeroAddress();
     error Aera__InvalidWrappedNativeToken();
+    error Aera__VaultAddressMismatch(address deployed, address computed);
 
     /// FUNCTIONS ///
 
@@ -129,17 +130,14 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
         bytes32 salt = _calculateSalt(saltInput, description, vaultParameters);
 
-        {
-            address vaultAddress = _computeVaultAddress(salt);
+        address computedVault = _computeVaultAddress(salt);
 
-            // Effects: deploy asset registry.
-            deployedAssetRegistry = _deployAssetRegistry(
-                salt, vaultAddress, assetRegistryParameters
-            );
+        // Effects: deploy asset registry.
+        deployedAssetRegistry =
+            _deployAssetRegistry(salt, computedVault, assetRegistryParameters);
 
-            // Effects: deploy first instance of hooks.
-            deployedHooks = _deployHooks(salt, vaultAddress, hooksParameters);
-        }
+        // Effects: deploy first instance of hooks.
+        deployedHooks = _deployHooks(salt, computedVault, hooksParameters);
 
         // Effects: deploy the vault.
         deployedVault = _deployVault(
@@ -149,6 +147,11 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             description,
             vaultParameters
         );
+
+        // Invariants: check that deployed address matches computed address.
+        if (deployedVault != computedVault) {
+            revert Aera__VaultAddressMismatch(deployedVault, computedVault);
+        }
     }
 
     /// @inheritdoc IAeraV2Factory
