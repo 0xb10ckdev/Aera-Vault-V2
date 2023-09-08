@@ -13,7 +13,7 @@ contract SetHooksTest is TestBaseAeraVaultV2 {
         newHooks = new AeraVaultHooks(
             address(this),
             address(vault),
-            _MAX_DAILY_EXECUTION_LOSS,
+            _MIN_DAILY_VALUE,
             targetSighashAllowlist
         );
     }

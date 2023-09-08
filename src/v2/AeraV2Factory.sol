@@ -67,14 +67,14 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @param hooks Hooks address.
     /// @param vault Vault address.
     /// @param owner Initial owner address.
-    /// @param maxDailyExecutionLoss The fraction of value that the vault can
-    ///                               lose per day in the course of submissions.
+    /// @param minDailyValue The fraction of value that the vault has to retain per day
+    ///                      in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     event HooksCreated(
         address indexed hooks,
         address indexed vault,
         address indexed owner,
-        uint256 maxDailyExecutionLoss,
+        uint256 minDailyValue,
         TargetSighashData[] targetSighashAllowlist
     );
 
@@ -226,7 +226,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             new AeraVaultHooks(
                 hooksParameters.owner,
                 vault,
-                hooksParameters.maxDailyExecutionLoss,
+                hooksParameters.minDailyValue,
                 hooksParameters.targetSighashAllowlist
             )
         );
@@ -236,7 +236,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             deployed,
             vault,
             hooksParameters.owner,
-            hooksParameters.maxDailyExecutionLoss,
+            hooksParameters.minDailyValue,
             hooksParameters.targetSighashAllowlist
         );
     }

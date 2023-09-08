@@ -204,7 +204,7 @@ contract DeployAeraContracts is DeployScriptBase {
         string memory json = vm.readFile(path);
 
         address owner = json.readAddress(".owner");
-        uint256 maxDailyExecutionLoss = json.readUint(".maxDailyExecutionLoss");
+        uint256 minDailyValue = json.readUint(".minDailyValue");
 
         bytes32[] memory allowlistRaw =
             json.readBytes32Array(".targetSighashAllowlist");
@@ -224,7 +224,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
         return HooksParameters(
             owner == address(0) ? _deployerAddress : owner,
-            maxDailyExecutionLoss,
+            minDailyValue,
             targetSighashAllowlist
         );
     }
@@ -315,8 +315,8 @@ contract DeployAeraContracts is DeployScriptBase {
 
         assertEq(address(hooks.vault()), vault);
         assertEq(
-            hooks.maxDailyExecutionLoss(),
-            hooksParameters.maxDailyExecutionLoss
+            hooks.minDailyValue(),
+            hooksParameters.minDailyValue
         );
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), 1e18);

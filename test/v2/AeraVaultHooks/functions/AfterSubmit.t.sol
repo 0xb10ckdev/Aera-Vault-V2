@@ -49,7 +49,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         vault.submit(operations);
     }
 
-    function test_afterSubmit_fail_whenExceedsMaxDailyExecutionLossOnCurrentDay(
+    function test_afterSubmit_fail_whenBelowMinDailyValueOnCurrentDay(
     ) public {
         uint256 numAssets = assets.length;
 
@@ -68,14 +68,14 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         }
 
         vm.expectRevert(
-            AeraVaultHooks.Aera__ExceedsMaxDailyExecutionLoss.selector
+            AeraVaultHooks.Aera__VaultValueBelowMinDailyValue.selector
         );
 
         vm.prank(_GUARDIAN);
         vault.submit(operations);
     }
 
-    function test_afterSubmit_fail_whenExceedsMaxDailyExecutionLossOnNextDay()
+    function test_afterSubmit_fail_whenBelowMinDailyValueOnNextDay()
         public
     {
         uint256 numAssets = assets.length;
@@ -109,7 +109,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         }
 
         vm.expectRevert(
-            AeraVaultHooks.Aera__ExceedsMaxDailyExecutionLoss.selector
+            AeraVaultHooks.Aera__VaultValueBelowMinDailyValue.selector
         );
 
         vm.prank(_GUARDIAN);
