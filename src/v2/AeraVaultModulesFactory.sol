@@ -61,7 +61,7 @@ contract AeraVaultModulesFactory is
 
     /// MODIFIERS ///
 
-    /// @dev Throws if called by any account other than the vault.
+    /// @dev Throws if called by any account other than the owner or v2 factory.
     modifier onlyOwnerOrV2Factory() {
         if (msg.sender != owner() && msg.sender != v2Factory) {
             revert Aera_CallerIsNeitherOwnerOrV2Factory();
