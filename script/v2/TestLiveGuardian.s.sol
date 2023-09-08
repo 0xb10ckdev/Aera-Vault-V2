@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
+import {console2} from "forge-std/console2.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation} from "src/v2/Types.sol";
 import "src/v2/AeraVaultV2.sol";
+import "src/v2/interfaces/IAssetRegistry.sol";
 import "forge-std/console.sol";
-
-struct OperationAlpha {
-    bytes data;
-    address target;
-    uint256 value;
-}
 
 contract TestGuardian is Test {
     using stdJson for string;
@@ -23,9 +19,18 @@ contract TestGuardian is Test {
     function run() public {
         _loadOperations();
         vault = AeraVaultV2(payable(vaultAddress));
-        vm.startPrank(vault.guardian());
+        address guardian = vault.guardian();
+        IERC20 feeToken = IAssetRegistry(vault.assetRegistry()).feeToken();
+        vm.startPrank(guardian);
         vault.submit(operations);
-        vault.claim();
+        uint256 fees = Math.min(feeToken.balanceOf(address(vault)), vault.fees(guardian));
+        console2.log("Available fees for guardian", fees);
+        if (fees > 0) {
+            uint256 beforeBalance = feeToken.balanceOf(guardian);
+            vault.claim();
+            uint256 afterBalance = feeToken.balanceOf(guardian);
+            console2.log("Claimed fees", afterBalance - beforeBalance);
+        }
         vm.stopPrank();
     }
 
