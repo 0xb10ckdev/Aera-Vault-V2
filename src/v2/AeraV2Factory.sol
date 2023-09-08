@@ -8,7 +8,7 @@ import "./AeraVaultV2.sol";
 import "./interfaces/IAeraV2Factory.sol";
 import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
 import "./interfaces/IAeraVaultHooksFactory.sol";
-import {VaultParameters} from "./Types.sol";
+import {Parameters} from "./Types.sol";
 
 /// @title AeraV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
@@ -20,7 +20,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// STORAGE ///
 
     /// @notice Vault parameters for vault deployment.
-    VaultParameters public override parameters;
+    Parameters public override parameters;
 
     /// EVENTS ///
 
@@ -108,11 +108,8 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
     /// @inheritdoc IAeraV2Factory
     function create(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
         string calldata description,
+        VaultParameters calldata vaultParameters,
         AssetRegistryParameters calldata assetRegistryParameters,
         HooksParameters calldata hooksParameters
     )
@@ -130,9 +127,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             revert Aera__DescriptionIsEmpty();
         }
 
-        bytes32 salt = _calculateSalt(
-            saltInput, owner_, guardian, feeRecipient, fee, description
-        );
+        bytes32 salt = _calculateSalt(saltInput, description, vaultParameters);
 
         {
             address vaultAddress = _computeVaultAddress(salt);
@@ -149,29 +144,21 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
         // Effects: deploy the vault.
         deployedVault = _deployVault(
             salt,
-            owner_,
             deployedAssetRegistry,
             deployedHooks,
-            guardian,
-            feeRecipient,
-            fee,
-            description
+            description,
+            vaultParameters
         );
     }
 
     /// @inheritdoc IAeraV2Factory
     function computeVaultAddress(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters calldata vaultParameters
     ) external view override returns (address) {
         return _computeVaultAddress(
-            _calculateSalt(
-                saltInput, owner_, guardian, feeRecipient, fee, description
-            )
+            _calculateSalt(saltInput, description, vaultParameters)
         );
     }
 
@@ -243,26 +230,25 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Deploy V2 vault.
     /// @param salt The salt value to create vault.
-    /// @param owner_ Initial owner address.
     /// @param assetRegistry Asset registry address.
     /// @param hooks Hooks address.
-    /// @param guardian Guardian address.
-    /// @param feeRecipient Fee recipient address.
-    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
+    /// @param vaultParameters Struct details for vault deployment.
     /// @param description Vault description.
     /// @return deployed The address of deployed vault.
     function _deployVault(
         bytes32 salt,
-        address owner_,
         address assetRegistry,
         address hooks,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters memory vaultParameters
     ) internal returns (address deployed) {
-        parameters = VaultParameters(
-            owner_, assetRegistry, hooks, guardian, feeRecipient, fee
+        parameters = Parameters(
+            vaultParameters.owner,
+            assetRegistry,
+            hooks,
+            vaultParameters.guardian,
+            vaultParameters.feeRecipient,
+            vaultParameters.fee
         );
 
         // Requirements, Effects and Interactions: deploy vault with create2.
@@ -275,10 +261,10 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
             deployed,
             assetRegistry,
             hooks,
-            owner_,
-            guardian,
-            feeRecipient,
-            fee,
+            vaultParameters.owner,
+            vaultParameters.guardian,
+            vaultParameters.feeRecipient,
+            vaultParameters.fee,
             description,
             wrappedNativeToken
         );
@@ -299,22 +285,21 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Calculate salt from vault parameters.
     /// @param saltInput The salt value to create vault.
-    /// @param owner_ Initial owner address.
-    /// @param guardian Guardian address.
-    /// @param feeRecipient Fee recipient address.
-    /// @param fee Fees accrued per second, denoted in 18 decimal fixed point format.
     /// @param description Vault description.
+    /// @param vaultParameters Struct details for vault deployment.
     function _calculateSalt(
         bytes32 saltInput,
-        address owner_,
-        address guardian,
-        address feeRecipient,
-        uint256 fee,
-        string calldata description
+        string calldata description,
+        VaultParameters memory vaultParameters
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
-                saltInput, owner_, guardian, feeRecipient, fee, description
+                saltInput,
+                vaultParameters.owner,
+                vaultParameters.guardian,
+                vaultParameters.feeRecipient,
+                vaultParameters.fee,
+                description
             )
         );
     }

@@ -105,11 +105,8 @@ contract DeployAeraContracts is DeployScriptBase {
             aeraV2Factory
         ).create(
             saltInput,
-            vaultParameters.owner,
-            vaultParameters.guardian,
-            vaultParameters.feeRecipient,
-            vaultParameters.fee,
             description,
+            vaultParameters,
             assetRegistryParameters,
             hooksParameters
         );
@@ -162,8 +159,6 @@ contract DeployAeraContracts is DeployScriptBase {
 
         vaultParameters = VaultParameters(
             owner == address(0) ? _deployerAddress : owner,
-            address(0),
-            address(0),
             guardian,
             feeRecipient,
             fee

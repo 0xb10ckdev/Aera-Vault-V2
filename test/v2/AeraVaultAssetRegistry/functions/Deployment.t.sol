@@ -11,11 +11,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
 
         vaultAddress = factory.computeVaultAddress(
             bytes32(0),
-            address(this),
-            _GUARDIAN,
-            _FEE_RECIPIENT,
-            _MAX_FEE,
-            "Test Vault"
+            "Test Vault",
+            VaultParameters(address(this), _GUARDIAN, _FEE_RECIPIENT, _MAX_FEE)
         );
     }
 

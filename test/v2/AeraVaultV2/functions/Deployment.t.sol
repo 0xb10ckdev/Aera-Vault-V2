@@ -4,13 +4,13 @@ pragma solidity 0.8.21;
 import "../TestBaseAeraVaultV2.sol";
 import "lib/forge-std/src/StdStorage.sol";
 import "@openzeppelin/Create2.sol";
-import {VaultParameters} from "src/v2/Types.sol";
+import {Parameters} from "src/v2/Types.sol";
 
 contract DeploymentTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
 
     address public wrappedNativeToken = _WETH_ADDRESS;
-    VaultParameters public parameters;
+    Parameters public parameters;
 
     function setUp() public override {
         super.setUp();
@@ -223,7 +223,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
         address feeRecipient,
         uint256 fee
     ) internal returns (AeraVaultV2 deployed) {
-        parameters = VaultParameters(
+        parameters = Parameters(
             owner, assetRegistry, hooks, guardian, feeRecipient, fee
         );
 
