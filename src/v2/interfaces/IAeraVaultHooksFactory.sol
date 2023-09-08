@@ -10,15 +10,15 @@ interface IAeraVaultHooksFactory {
     /// @param salt The salt value to deploy hooks.
     /// @param owner Initial owner address.
     /// @param vault Vault address.
-    /// @param maxDailyExecutionLoss The fraction of value that the vault can
-    ///                              lose per day in the course of submissions.
+    /// @param minDailyValue The minimum fraction of value that the vault has to retain
+    ///                      during the day in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     /// @return deployed The address of deployed hooks.
     function deployHooks(
         bytes32 salt,
         address owner,
         address vault,
-        uint256 maxDailyExecutionLoss,
+        uint256 minDailyValue,
         TargetSighashData[] memory targetSighashAllowlist
     ) external returns (address deployed);
 }

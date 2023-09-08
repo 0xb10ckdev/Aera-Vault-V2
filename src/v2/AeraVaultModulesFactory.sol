@@ -43,14 +43,14 @@ contract AeraVaultModulesFactory is
     /// @param hooks Hooks address.
     /// @param vault Vault address.
     /// @param owner Initial owner address.
-    /// @param maxDailyExecutionLoss The fraction of value that the vault can
-    ///                               lose per day in the course of submissions.
+    /// @param minDailyValue The minimum fraction of value that the vault has to retain
+    ///                      during the day in the course of submissions.
     /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
     event HooksCreated(
         address indexed hooks,
         address indexed vault,
         address indexed owner,
-        uint256 maxDailyExecutionLoss,
+        uint256 minDailyValue,
         TargetSighashData[] targetSighashAllowlist
     );
 
@@ -118,7 +118,7 @@ contract AeraVaultModulesFactory is
         bytes32 salt,
         address owner_,
         address vault,
-        uint256 maxDailyExecutionLoss,
+        uint256 minDailyValue,
         TargetSighashData[] memory targetSighashAllowlist
     ) external override onlyOwnerOrV2Factory returns (address deployed) {
         // Effects: deploy hooks.
@@ -126,7 +126,7 @@ contract AeraVaultModulesFactory is
             new AeraVaultHooks{salt:salt}(
                 owner_,
                 vault,
-                maxDailyExecutionLoss,
+                minDailyValue,
                 targetSighashAllowlist
             )
         );
@@ -136,7 +136,7 @@ contract AeraVaultModulesFactory is
             deployed,
             vault,
             owner_,
-            maxDailyExecutionLoss,
+            minDailyValue,
             targetSighashAllowlist
         );
     }
