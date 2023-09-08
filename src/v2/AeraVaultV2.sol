@@ -565,6 +565,20 @@ contract AeraVaultV2 is
         revert Aera__CannotRenounceOwnership();
     }
 
+    /// @inheritdoc Ownable2Step
+    function transferOwnership(address newOwner) public override onlyOwner {
+        // Requirements: check that new owner is disaffiliated from existing roles. 
+        if (newOwner == guardian) {
+            revert Aera__GuardianIsOwner();
+        }
+        if (newOwner == feeRecipient) {
+            revert Aera__FeeRecipientIsOwner();
+        }
+
+        // Effects: initiate ownership transfer.
+        super.transferOwnership(newOwner);
+    }
+
     /// @notice Only accept native token from the wrapped native token contract
     ///         when burning wrapped native tokens.
     receive() external payable {

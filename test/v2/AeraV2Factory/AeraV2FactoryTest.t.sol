@@ -61,7 +61,7 @@ contract AeraV2FactoryTest is TestBaseVault, IVaultEvents {
     function test_createAeraV2Contracts_fail_whenGuardianIsOwner() public {
         vaultParameters.guardian = address(this);
 
-        vm.expectRevert(IVault.Aera__GuardianIsOwner.selector);
+        vm.expectRevert(AeraV2Factory.Aera__GuardianIsAssetRegistryOwner.selector);
         _deployAeraV2Contracts();
     }
 
