@@ -56,7 +56,7 @@ contract AeraVaultModulesFactory is
 
     /// MODIFIERS ///
 
-    error Aera__CallerIsNotOwnerAndV2Factory();
+    error Aera_CallerIsNeitherOwnerOrV2Factory();
     error Aera__V2FactoryIsZeroAddress();
 
     /// MODIFIERS ///
@@ -64,7 +64,7 @@ contract AeraVaultModulesFactory is
     /// @dev Throws if called by any account other than the vault.
     modifier onlyOwnerOrV2Factory() {
         if (msg.sender != owner() && msg.sender != v2Factory) {
-            revert Aera__CallerIsNotOwnerAndV2Factory();
+            revert Aera_CallerIsNeitherOwnerOrV2Factory();
         }
         _;
     }
