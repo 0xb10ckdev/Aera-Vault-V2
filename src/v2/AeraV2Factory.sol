@@ -2,18 +2,17 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/Create2.sol";
-import "@openzeppelin/Ownable2Step.sol";
-import "@openzeppelin/IERC20.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
 import "./AeraVaultV2.sol";
+import "./Sweepable.sol";
 import "./interfaces/IAeraV2Factory.sol";
 import {VaultParameters} from "./Types.sol";
 
 /// @title AeraV2Factory
 /// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
 /// @dev Only one instance of the factory will be required per chain.
-contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
+contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @notice The address of wrapped native token.
     address public immutable wrappedNativeToken;
 
@@ -89,7 +88,7 @@ contract AeraV2Factory is IAeraV2Factory, Ownable2Step {
 
     /// @notice Initialize the factory contract.
     /// @param wrappedNativeToken_ The address of wrapped native token.
-    constructor(address wrappedNativeToken_) Ownable() {
+    constructor(address wrappedNativeToken_) Sweepable() Ownable() {
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }

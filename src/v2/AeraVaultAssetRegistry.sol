@@ -3,13 +3,13 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/ERC165.sol";
 import "@openzeppelin/IERC4626.sol";
-import "@openzeppelin/Ownable2Step.sol";
+import "./Sweepable.sol";
 import "./interfaces/IAssetRegistry.sol";
 import {ONE} from "./Constants.sol";
 
 /// @title AeraVaultAssetRegistry
 /// @notice Maintains a list of registered assets and their oracles (when applicable).
-contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
+contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @notice Maximum number of assets.
     uint256 public constant MAX_ASSETS = 50;
 
@@ -103,7 +103,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, ERC165, Ownable2Step {
         IERC20 numeraireAsset_,
         IERC20 feeToken_,
         AggregatorV2V3Interface sequencer_
-    ) Ownable() {
+    ) Sweepable() Ownable() {
         // Requirements: confirm that owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__AssetRegistryInitialOwnerIsZeroAddress();
