@@ -79,7 +79,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     error Aera__AssetRegistryOwnerIsGuardian();
     error Aera__AssetRegistryOwnerIsVault();
     error Aera__ERC20OracleIsZeroAddress(address asset);
-    error Aera__OracleHeartbeatIsZero(address asset);
     error Aera__ERC4626OracleIsNotZeroAddress(address asset);
     error Aera__UnderlyingAssetIsNotRegistered(
         address asset, address underlyingAsset
