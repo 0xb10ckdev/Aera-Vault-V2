@@ -48,14 +48,10 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     /// @dev Assigned in `beforeSubmit` and used in `afterSubmit`.
     uint256 internal _beforeValue;
 
-    /// @notice ETH amount in vault before submission.
-    uint256 internal _beforeBalance;
-
     /// ERRORS ///
 
     error Aera__CallerIsNotVault();
     error Aera__VaultIsZeroAddress();
-    error Aera__ETHBalanceIsDecreased();
     error Aera__HooksOwnerIsGuardian();
     error Aera__HooksOwnerIsVault();
     error Aera__MinDailyValueTooLow();
@@ -91,7 +87,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         address vault_,
         uint256 minDailyValue_,
         TargetSighashData[] memory targetSighashAllowlist
-    ) Sweepable() Ownable() {
+    ) Sweepable() Ownable {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
@@ -106,7 +102,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         }
         // Only check vault if it has been deployed already.
         // This will happen if we are deploying a new Hooks contract for an existing vault.
-        if (vault_.code.length > 0) { 
+        if (vault_.code.length > 0) {
             address guardian = IVault(vault_).guardian();
             if (owner_ == guardian) {
                 revert Aera__HooksOwnerIsGuardian();
@@ -165,7 +161,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
             revert Aera__NoCodeAtTarget(target);
         }
 
-        TargetSighash targetSighash = TargetSighashLib.toTargetSighash(target, selector);
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, selector);
 
         // Requirements: check that current target sighash is not set.
         if (_targetSighashAllowed[targetSighash]) {
@@ -258,7 +255,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
         // Effects: remember current vault value and ETH balance for use in afterSubmit.
         _beforeValue = IVault(vault).value();
-        _beforeBalance = vault.balance;
     }
 
     /// @inheritdoc IHooks
@@ -267,11 +263,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         override
         onlyVault
     {
-        // Requirements: check that ETH balance is not decreased.
-        if (vault.balance < _beforeBalance) {
-            revert Aera__ETHBalanceIsDecreased();
-        }
-
         uint256 newMultiplier;
         uint256 currentMultiplier = cumulativeDailyMultiplier;
         uint256 day = block.timestamp / 1 days;
@@ -279,7 +270,8 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
             newMultiplier = currentDay == day ? currentMultiplier : ONE;
-            newMultiplier = (newMultiplier * IVault(vault).value()) / _beforeValue;
+            newMultiplier =
+                (newMultiplier * IVault(vault).value()) / _beforeValue;
 
             // Requirements: check that daily execution loss is within bounds.
             if (newMultiplier < minDailyValue) {
@@ -298,7 +290,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         }
 
         // Effects: reset prior vault value for the next submission.
-        _beforeBalance = 0;
         _beforeValue = 0;
 
         uint256 numOperations = operations.length;
@@ -398,7 +389,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
     /// @notice Check that owner is not the vault or the guardian.
     /// @param owner_ Hooks owner address.
-    /// @param vault_ Vault address. 
+    /// @param vault_ Vault address.
     function _checkHooksOwner(address owner_, address vault_) internal view {
         if (owner_ == vault_) {
             revert Aera__HooksOwnerIsVault();
@@ -412,7 +403,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
     /// @inheritdoc Ownable2Step
     function transferOwnership(address newOwner) public override onlyOwner {
-        // Requirements: check that new owner is disaffiliated from existing roles. 
+        // Requirements: check that new owner is disaffiliated from existing roles.
         _checkHooksOwner(newOwner, vault);
 
         // Effects: initiate ownership transfer.
