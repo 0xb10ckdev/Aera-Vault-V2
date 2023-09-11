@@ -57,7 +57,6 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     error Aera__MinDailyValueTooLow();
     error Aera__MinDailyValueIsNotLessThanOne();
     error Aera__NoCodeAtTarget(address target);
-    error Aera__VaultIsNotValid(address vault);
     error Aera__CallIsNotAllowed(Operation operation);
     error Aera__VaultValueBelowMinDailyValue();
     error Aera__AllowanceIsNotZero(address asset, address spender);
