@@ -11,6 +11,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
         OracleMock(address(assetRegistry.sequencer())).setLatestAnswer(1);
@@ -26,6 +27,7 @@ contract SpotPricesTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(new OracleMock(18)))
         );
 

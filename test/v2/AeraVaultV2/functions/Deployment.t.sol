@@ -23,6 +23,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             assetsInformation,
             numeraireToken,
             feeToken,
+            IERC20(wrappedNativeToken),
             AggregatorV2V3Interface(address(0))
         );
 
@@ -79,6 +80,7 @@ contract DeploymentTest is TestBaseAeraVaultV2 {
             assetsInformation,
             numeraireToken,
             feeToken,
+            IERC20(wrappedNativeToken),
             AggregatorV2V3Interface(address(0))
         );
 

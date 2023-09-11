@@ -197,7 +197,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
                 AeraVaultAssetRegistry
                     .Aera__WrappedNativeTokenIsNotRegistered
                     .selector,
-                feeToken
+                wrappedNativeToken
             )
         );
         new AeraVaultAssetRegistry(
@@ -213,12 +213,12 @@ contract DeploymentTest is TestBaseAssetRegistry {
 
     function test_assetRegistryDeployment_fail_whenWrappedNativeTokenIsERC4626(
     ) public {
-        assets[nonNumeraireId].isERC4626 = true;
+        assets[wrappedNativeTokenId].isERC4626 = true;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                AeraVaultAssetRegistry.Aera__FeeTokenIsERC4626.selector,
-                feeToken
+                AeraVaultAssetRegistry.Aera__WrappedNativeTokenIsERC4626.selector,
+                wrappedNativeToken
             )
         );
         new AeraVaultAssetRegistry(
