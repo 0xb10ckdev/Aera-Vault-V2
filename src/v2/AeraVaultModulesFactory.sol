@@ -28,6 +28,7 @@ contract AeraVaultModulesFactory is
     /// @param assets Initial list of registered assets.
     /// @param numeraireToken Numeraire token address.
     /// @param feeToken Fee token address.
+    /// @param wrappedNativeToken Wrapped native token address.
     /// @param sequencer Sequencer Uptime Feed address for L2.
     event AssetRegistryCreated(
         address indexed assetRegistry,
@@ -36,6 +37,7 @@ contract AeraVaultModulesFactory is
         IAssetRegistry.AssetInformation[] assets,
         IERC20 numeraireToken,
         IERC20 feeToken,
+        IERC20 wrappedNativeToken,
         AggregatorV2V3Interface sequencer
     );
 
@@ -87,6 +89,7 @@ contract AeraVaultModulesFactory is
         IAssetRegistry.AssetInformation[] memory assets,
         IERC20 numeraireToken,
         IERC20 feeToken,
+        IERC20 wrappedNativeToken,
         AggregatorV2V3Interface sequencer
     ) external override onlyOwnerOrV2Factory returns (address deployed) {
         // Effects: deploy asset registry.
@@ -97,6 +100,7 @@ contract AeraVaultModulesFactory is
                 assets,
                 numeraireToken,
                 feeToken,
+                wrappedNativeToken,
                 sequencer
             )
         );
@@ -109,6 +113,7 @@ contract AeraVaultModulesFactory is
             assets,
             numeraireToken,
             feeToken,
+            wrappedNativeToken,
             sequencer
         );
     }
@@ -133,11 +138,7 @@ contract AeraVaultModulesFactory is
 
         // Log hooks creation.
         emit HooksCreated(
-            deployed,
-            vault,
-            owner_,
-            minDailyValue,
-            targetSighashAllowlist
+            deployed, vault, owner_, minDailyValue, targetSighashAllowlist
         );
     }
 }
