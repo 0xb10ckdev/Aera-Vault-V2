@@ -33,7 +33,7 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
                     AeraVaultAssetRegistry
                         .Aera__CannotRemoveNumeraireToken
                         .selector,
-                    feeToken
+                    numeraireToken
                 )
             );
         } else {
@@ -45,6 +45,39 @@ contract RemoveAssetTest is TestBaseAssetRegistry {
             );
         }
         assetRegistry.removeAsset(address(feeToken));
+    }
+
+    function test_removeAsset_fail_whenRemovalAssetIsWrappedNativeToken()
+        public
+    {
+        if (address(wrappedNativeToken) == numeraireToken) {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    AeraVaultAssetRegistry
+                        .Aera__CannotRemoveNumeraireToken
+                        .selector,
+                    wrappedNativeToken
+                )
+            );
+        }
+        if (wrappedNativeToken == feeToken) {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    AeraVaultAssetRegistry.Aera__CannotRemoveFeeToken.selector,
+                    wrappedNativeToken
+                )
+            );
+        } else {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    AeraVaultAssetRegistry
+                        .Aera__CannotRemoveWrappedNativeToken
+                        .selector,
+                    wrappedNativeToken
+                )
+            );
+        }
+        assetRegistry.removeAsset(address(wrappedNativeToken));
     }
 
     function test_removeAsset_fail_whenAssetIsNotRegistered() public {

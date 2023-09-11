@@ -26,6 +26,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @notice Fee token.
     IERC20 public immutable feeToken;
 
+    /// @notice Wrapped native token.
+    IERC20 public immutable wrappedNativeToken;
+
     /// STORAGE ///
 
     /// @notice List of currently registered assets.
@@ -64,9 +67,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// ERRORS ///
 
     error Aera__NumberOfAssetsExceedsMaximum(uint256 max);
+    error Aera__NumeraireTokenIsNotRegistered(address numeraireToken);
+    error Aera__NumeraireTokenIsERC4626();
+    error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__FeeTokenIsNotRegistered(address feeToken);
     error Aera__FeeTokenIsERC4626(address feeToken);
-    error Aera__NumeraireTokenIsNotRegistered(address numeraireToken);
+    error Aera__WrappedNativeTokenIsNotRegistered(address wrappedNativeToken);
+    error Aera__WrappedNativeTokenIsERC4626(address wrappedNativeToken);
     error Aera__AssetOrderIsIncorrect(uint256 index);
     error Aera__AssetRegistryInitialOwnerIsZeroAddress();
     error Aera__AssetRegistryOwnerIsGuardian();
@@ -79,12 +86,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     );
     error Aera__UnderlyingAssetIsItselfERC4626();
     error Aera__AssetIsUnderlyingAssetOfERC4626(address erc4626Asset);
-    error Aera__NumeraireTokenIsMarkedAsERC4626();
-    error Aera__NumeraireOracleIsNotZeroAddress();
     error Aera__AssetIsAlreadyRegistered(uint256 index);
     error Aera__AssetNotRegistered(address asset);
     error Aera__CannotRemoveNumeraireToken(address asset);
     error Aera__CannotRemoveFeeToken(address feeToken);
+    error Aera__CannotRemoveWrappedNativeToken(address wrappedNativeToken);
     error Aera__VaultIsZeroAddress();
     error Aera__SequencerIsDown();
     error Aera__GracePeriodNotOver();
@@ -98,6 +104,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @param assets_ Initial list of registered assets.
     /// @param numeraireToken_ Numeraire token address.
     /// @param feeToken_ Fee token address.
+    /// @param wrappedNativeToken_ Wrapped native token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
     constructor(
         address owner_,
@@ -105,6 +112,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         AssetInformation[] memory assets_,
         IERC20 numeraireToken_,
         IERC20 feeToken_,
+        IERC20 wrappedNativeToken_,
         AggregatorV2V3Interface sequencer_
     ) Sweepable() Ownable() {
         // Requirements: confirm that owner is not zero address.
@@ -151,14 +159,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
             }
         }
 
-        // Requirements: confirm that fee token is present.
-        if (feeTokenIndex >= numAssets) {
-            revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
-        }
-
-        // Requirements: check that fee token is not an ERC4626.
-        if (assets_[feeTokenIndex].isERC4626) {
-            revert Aera__FeeTokenIsERC4626(address(feeToken_));
+        // Calculate the wrapped native token index.
+        uint256 wrappedNativeTokenIndex = 0;
+        for (; wrappedNativeTokenIndex < numAssets;) {
+            if (assets_[wrappedNativeTokenIndex].asset == wrappedNativeToken_)
+            {
+                break;
+            }
+            unchecked {
+                wrappedNativeTokenIndex++; // gas savings
+            }
         }
 
         // Requirements: confirm that Numeraire token is present.
@@ -170,12 +180,36 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Requirements: confirm that numeraire is not an ERC4626 asset.
         if (assets_[numeraireIndex].isERC4626) {
-            revert Aera__NumeraireTokenIsMarkedAsERC4626();
+            revert Aera__NumeraireTokenIsERC4626();
         }
 
         // Requirements: confirm that numeraire does not have a specified oracle.
         if (address(assets_[numeraireIndex].oracle) != address(0)) {
             revert Aera__NumeraireOracleIsNotZeroAddress();
+        }
+
+        // Requirements: confirm that fee token is present.
+        if (feeTokenIndex >= numAssets) {
+            revert Aera__FeeTokenIsNotRegistered(address(feeToken_));
+        }
+
+        // Requirements: check that fee token is not an ERC4626.
+        if (assets_[feeTokenIndex].isERC4626) {
+            revert Aera__FeeTokenIsERC4626(address(feeToken_));
+        }
+
+        // Requirements: confirm that wrapped native token is present.
+        if (wrappedNativeTokenIndex >= numAssets) {
+            revert Aera__WrappedNativeTokenIsNotRegistered(
+                address(wrappedNativeToken_)
+            );
+        }
+
+        // Requirements: check that wrapped native token is not an ERC4626.
+        if (assets_[wrappedNativeTokenIndex].isERC4626) {
+            revert Aera__WrappedNativeTokenIsERC4626(
+                address(wrappedNativeToken_)
+            );
         }
 
         // Requirements: confirm that assets are sorted by address.
@@ -207,10 +241,12 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
             }
         }
 
-        // Effects: set vault, numeraire, fee token and sequencer uptime feed.
+        // Effects: set vault, numeraire, fee token, wrapped native token
+        //          and sequencer uptime feed.
         vault = vault_;
         numeraireToken = numeraireToken_;
         feeToken = feeToken_;
+        wrappedNativeToken = wrappedNativeToken_;
         sequencer = sequencer_;
 
         // Effects: set new owner.
@@ -278,8 +314,13 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         }
 
         // Requirements: check that asset to remove is not fee token.
-        if (address(feeToken) == asset) {
+        if (asset == address(feeToken)) {
             revert Aera__CannotRemoveFeeToken(asset);
+        }
+
+        // Requirements: check that asset to remove is not wrapped native token.
+        if (asset == address(wrappedNativeToken)) {
+            revert Aera__CannotRemoveWrappedNativeToken(asset);
         }
 
         uint256 numAssets = _assets.length;

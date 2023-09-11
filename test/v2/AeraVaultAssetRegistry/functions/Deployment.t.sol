@@ -34,6 +34,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -52,6 +53,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -68,6 +70,67 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
+            AggregatorV2V3Interface(address(0))
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsNotRegistered(
+    ) public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry
+                    .Aera__NumeraireTokenIsNotRegistered
+                    .selector,
+                address(1)
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            vaultAddress,
+            assets,
+            IERC20(address(1)),
+            feeToken,
+            wrappedNativeToken,
+            AggregatorV2V3Interface(address(0))
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsERC4626()
+        public
+    {
+        assets[numeraireId].isERC4626 = true;
+
+        vm.expectRevert(
+            AeraVaultAssetRegistry.Aera__NumeraireTokenIsERC4626.selector
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            vaultAddress,
+            assets,
+            IERC20(numeraireToken),
+            feeToken,
+            wrappedNativeToken,
+            AggregatorV2V3Interface(address(0))
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress(
+    ) public {
+        assets[numeraireId].oracle = AggregatorV2V3Interface(address(1));
+
+        vm.expectRevert(
+            AeraVaultAssetRegistry
+                .Aera__NumeraireOracleIsNotZeroAddress
+                .selector
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            vaultAddress,
+            assets,
+            IERC20(numeraireToken),
+            feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -90,6 +153,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -115,26 +179,55 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
 
-    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsNotRegistered(
+    function test_assetRegistryDeployment_fail_whenWrappedNativeTokenIsNotRegistered(
     ) public {
+        wrappedNativeToken = IERC20(
+            address(
+                new ERC20Mock("Wrapped Native Token", "WRAPPED_NATIVE_TOKEN", 18, 1e30)
+            )
+        );
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 AeraVaultAssetRegistry
-                    .Aera__NumeraireTokenIsNotRegistered
+                    .Aera__WrappedNativeTokenIsNotRegistered
                     .selector,
-                address(1)
+                wrappedNativeToken
             )
         );
         new AeraVaultAssetRegistry(
             address(this),
             vaultAddress,
             assets,
-            IERC20(address(1)),
+            IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
+            AggregatorV2V3Interface(address(0))
+        );
+    }
+
+    function test_assetRegistryDeployment_fail_whenWrappedNativeTokenIsERC4626(
+    ) public {
+        assets[wrappedNativeTokenId].isERC4626 = true;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AeraVaultAssetRegistry.Aera__WrappedNativeTokenIsERC4626.selector,
+                wrappedNativeToken
+            )
+        );
+        new AeraVaultAssetRegistry(
+            address(this),
+            vaultAddress,
+            assets,
+            IERC20(numeraireToken),
+            feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -157,43 +250,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
-            AggregatorV2V3Interface(address(0))
-        );
-    }
-
-    function test_assetRegistryDeployment_fail_whenNumeraireTokenIsMarkedAsERC4626(
-    ) public {
-        assets[numeraireId].isERC4626 = true;
-        vm.expectRevert(
-            AeraVaultAssetRegistry
-                .Aera__NumeraireTokenIsMarkedAsERC4626
-                .selector
-        );
-        new AeraVaultAssetRegistry(
-            address(this),
-            vaultAddress,
-            assets,
-            IERC20(numeraireToken),
-            feeToken,
-            AggregatorV2V3Interface(address(0))
-        );
-    }
-
-    function test_assetRegistryDeployment_fail_whenNumeraireOracleIsNotZeroAddress(
-    ) public {
-        assets[numeraireId].oracle = AggregatorV2V3Interface(address(1));
-
-        vm.expectRevert(
-            AeraVaultAssetRegistry
-                .Aera__NumeraireOracleIsNotZeroAddress
-                .selector
-        );
-        new AeraVaultAssetRegistry(
-            address(this),
-            vaultAddress,
-            assets,
-            IERC20(numeraireToken),
-            feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -214,6 +271,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -237,7 +295,8 @@ contract DeploymentTest is TestBaseAssetRegistry {
                     assets, 
                     IERC20(numeraireToken),
                     feeToken,
-            AggregatorV2V3Interface(address(0))
+                    wrappedNativeToken,
+                    AggregatorV2V3Interface(address(0))
                 );
                 assets[i].oracle = AggregatorV2V3Interface(address(0));
             }
@@ -277,6 +336,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
     }
@@ -288,6 +348,7 @@ contract DeploymentTest is TestBaseAssetRegistry {
             assets,
             IERC20(numeraireToken),
             feeToken,
+            wrappedNativeToken,
             AggregatorV2V3Interface(address(0))
         );
 

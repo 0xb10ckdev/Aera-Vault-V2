@@ -497,6 +497,10 @@ contract AeraVaultV2 is
             }
         }
 
+        if (address(this).balance > 0) {
+            wrappedNativeToken.call{value: address(this).balance}("");
+        }
+
         // Hooks: after executing operations.
         hooks.afterSubmit(operations);
 
@@ -639,9 +643,11 @@ contract AeraVaultV2 is
         uint256 newFee = lastValue * feeIndex * fee;
 
         if (_numeraireTokenDecimals < _feeTokenDecimals) {
-            newFee = newFee * (10 ** (_feeTokenDecimals - _numeraireTokenDecimals));
+            newFee =
+                newFee * (10 ** (_feeTokenDecimals - _numeraireTokenDecimals));
         } else if (_numeraireTokenDecimals > _feeTokenDecimals) {
-            newFee = newFee / (10 ** (_numeraireTokenDecimals - _feeTokenDecimals));
+            newFee =
+                newFee / (10 ** (_numeraireTokenDecimals - _feeTokenDecimals));
         }
 
         newFee /= lastFeeTokenPrice;
@@ -673,9 +679,11 @@ contract AeraVaultV2 is
     /// @param erc20SpotPrices Spot prices of ERC20 assets.
     /// @return vaultValue Current total value.
     /// @return feeTokenPrice Fee token price.
-    function _value(
-        IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices
-    ) internal view returns (uint256 vaultValue, uint256 feeTokenPrice) {
+    function _value(IAssetRegistry.AssetPriceReading[] memory erc20SpotPrices)
+        internal
+        view
+        returns (uint256 vaultValue, uint256 feeTokenPrice)
+    {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
         AssetValue[] memory assetAmounts = _getHoldings(assets);

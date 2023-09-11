@@ -34,12 +34,14 @@ contract TestBaseAssetRegistry is TestBaseFactory {
     AeraVaultV2 public vault;
     IAssetRegistry.AssetInformation[] public assets;
     IERC20 public feeToken;
+    IERC20 public wrappedNativeToken = IERC20(_WETH_ADDRESS);
     address public numeraireToken;
     address public nonNumeraireToken;
     address public nonNumeraireERC4626Asset;
     uint256 public numeraireId;
     uint256 public nonNumeraireId;
     uint256 public nonNumeraireERC4626Id;
+    uint256 public wrappedNativeTokenId;
     uint256 public numAssets;
     // found by trial and error to make sure sorted numeraire address
     // is before non-numeraire address
@@ -165,8 +167,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             assetRegistry.assets();
 
         numAssets = registeredAssets.length;
-        feeToken = assetRegistry.feeToken();
         numeraireToken = address(assetRegistry.numeraireToken());
+        feeToken = assetRegistry.feeToken();
+        wrappedNativeToken = assetRegistry.wrappedNativeToken();
 
         for (uint256 i = 0; i < numAssets; i++) {
             assets.push(registeredAssets[i]);
@@ -192,7 +195,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
 
     function _deploy() internal {
         _deployAeraV2Factory();
-        _createAssets(4, 2, 0);
+        _createAssets(4, 4, 0);
 
         TargetSighashData[] memory targetSighashAllowlist;
 
@@ -249,13 +252,25 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             // salt value was from trial/error to get desired sorting
              _createAsset(false, address(0), initalSaltIndex + i);
 
+            if (i == 0) {
+                assetAddress = address(wrappedNativeToken);
+                asset = IAssetRegistry.AssetInformation({
+                    asset: wrappedNativeToken,
+                    isERC4626: false,
+                    oracle: asset.oracle,
+                    heartbeat: 1 hours
+                });
+            }
+
             if (i == numeraireSetIdx) {
                 numeraireToken = address(asset.asset);
                 asset.oracle = AggregatorV2V3Interface(address(0));
-            } else if (i == (numeraireSetIdx + 1) % numERC20) {
-                nonNumeraireToken = address(asset.asset);
-            } else if (i == (numeraireSetIdx + 2) % numERC20) {
-                feeToken = asset.asset;
+            } else if (i != 0) {
+                if (nonNumeraireToken == address(0)) {
+                    nonNumeraireToken = address(asset.asset);
+                } else if (address(feeToken) == address(0)) {
+                    feeToken = asset.asset;
+                }
             }
 
             assets.push(asset);
@@ -268,7 +283,11 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                     true, assetAddress, initalSaltIndex + numERC20 + i
                 );
                 assets.push(asset4626);
-                if (i == 0) {
+                if (
+                    address(asset.asset) != numeraireToken
+                        && asset.asset != feeToken
+                        && asset.asset != wrappedNativeToken
+                ) {
                     nonNumeraireERC4626Asset = asset4626Address;
                 }
             }
@@ -285,6 +304,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
                 }
             }
 
+            if (assets[i].asset == wrappedNativeToken) {
+                wrappedNativeTokenId = i;
+            }
             if (address(assets[i].asset) == numeraireToken) {
                 numeraireId = i;
             } else if (address(assets[i].asset) == nonNumeraireToken) {

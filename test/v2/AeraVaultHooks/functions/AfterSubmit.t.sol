@@ -32,25 +32,9 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         hooks.afterSubmit(new Operation[](0));
     }
 
-    function test_afterSubmit_fail_whenETHBalanceIsDecreased() public {
-        Operation[] memory operations = new Operation[](1);
-        // Set nonempty bytecode at contract address(20).
-        vm.etch(address(20), hex"00");
-        operations[0] =
-            Operation({target: address(20), value: 1, data: hex"00000000"});
-
-        hooks.addTargetSighash(address(20), hex"00000000");
-
-        deal(address(vault), 1);
-
-        vm.expectRevert(AeraVaultHooks.Aera__ETHBalanceIsDecreased.selector);
-
-        vm.prank(_GUARDIAN);
-        vault.submit(operations);
-    }
-
-    function test_afterSubmit_fail_whenBelowMinDailyValueOnCurrentDay(
-    ) public {
+    function test_afterSubmit_fail_whenBelowMinDailyValueOnCurrentDay()
+        public
+    {
         uint256 numAssets = assets.length;
 
         Operation[] memory operations = new Operation[](numAssets);
@@ -75,9 +59,7 @@ contract AfterSubmitTest is TestBaseAeraVaultHooks {
         vault.submit(operations);
     }
 
-    function test_afterSubmit_fail_whenBelowMinDailyValueOnNextDay()
-        public
-    {
+    function test_afterSubmit_fail_whenBelowMinDailyValueOnNextDay() public {
         uint256 numAssets = assets.length;
 
         Operation[] memory operations = new Operation[](numAssets);
