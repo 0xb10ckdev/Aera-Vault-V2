@@ -1,39 +1,11 @@
 {
-  "assetRegistryFactory": "0x50507925D3407bd44295d480306c58d37532283a",
-  "owner": "0x0000000000000000000000000000000000000000",
+  "vault": "0xc66D154f8b7Ed1445630A57823c10F637A07a754",
   "assets": [
     {
-      "asset": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "asset": "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
       "isERC4626": false,
-      "oracle": "0x327e23a4855b6f663a28c5161541d69af8973302",
+      "oracle": "0x3ea1ec855fbda8ba0396975ec260ad2e9b2bc01c",
       "heartbeat": 0
-    },
-    {
-      "asset": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-      "isERC4626": false,
-      "oracle": "0xefb7e6be8356ccc6827799b6a7348ee674a80eae",
-      "heartbeat": 0
-    },
-    {
-      "asset": "0x2c616F5Dc3d482010D870d8a01b72cbB1711254A",
-      "isERC4626": true,
-      "oracle": "0x0000000000000000000000000000000000000000",
-      "heartbeat": 3600
-    },
-    {
-      "asset": "0x5e5057b8D220eb8573Bc342136FdF1d869316D18",
-      "isERC4626": true,
-      "oracle": "0x0000000000000000000000000000000000000000",
-      "heartbeat": 3600
-    },
-    {
-      "asset": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-      "isERC4626": false,
-      "oracle": "0x0000000000000000000000000000000000000000",
-      "heartbeat": 3600
     }
-  ],
-  "numeraireToken": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-  "feeToken": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
-  "sequencer": "0x0000000000000000000000000000000000000000"
+  ]
 }
