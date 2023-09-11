@@ -12,11 +12,9 @@ contract DeployAeraV2Factory is DeployScriptBase {
     /// @notice Deploy AeraV2Factory contract.
     /// @param deployed The address of deployed factory.
     function run() public returns (AeraV2Factory deployed) {
-        console.log(_deployerAddress);
         if (_deployerAddress == address(0)) {
             _deployerAddress = msg.sender;
         }
-        console.log(_deployerAddress);
         string memory path =
             string.concat(vm.projectRoot(), "/config/AeraV2Factory.json");
         string memory json = vm.readFile(path);
@@ -29,7 +27,7 @@ contract DeployAeraV2Factory is DeployScriptBase {
 
         vm.stopBroadcast();
 
-        console.logBytes(type(AeraV2Factory).creationCode);
+        //console.logBytes(type(AeraV2Factory).creationCode);
 
         _storeDeployedAddress("factory", address(deployed));
     }
