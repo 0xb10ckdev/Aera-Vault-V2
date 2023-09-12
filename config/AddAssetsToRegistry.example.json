@@ -1,0 +1,11 @@
+{
+  "vault": "0xc66D154f8b7Ed1445630A57823c10F637A07a754",
+  "assets": [
+    {
+      "asset": "0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD",
+      "isERC4626": false,
+      "oracle": "0x3ea1ec855fbda8ba0396975ec260ad2e9b2bc01c",
+      "heartbeat": 0
+    }
+  ]
+}
