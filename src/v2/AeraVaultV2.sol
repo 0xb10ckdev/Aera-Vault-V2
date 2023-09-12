@@ -523,6 +523,7 @@ contract AeraVaultV2 is
             revert Aera__NoAvailableFeesForCaller(msg.sender);
         }
 
+        // Effects: update fee total.
         feeTotal -= availableFee;
         reservedFee -= availableFee;
 
