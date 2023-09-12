@@ -45,39 +45,6 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         address wrappedNativeToken
     );
 
-    /// @notice Emitted when the asset registry is created.
-    /// @param assetRegistry Asset registry address.
-    /// @param vault Vault address.
-    /// @param owner Initial owner address.
-    /// @param assets Initial list of registered assets.
-    /// @param numeraireToken Numeraire token address.
-    /// @param feeToken Fee token address.
-    /// @param sequencer Sequencer Uptime Feed address for L2.
-    event AssetRegistryCreated(
-        address indexed assetRegistry,
-        address indexed vault,
-        address indexed owner,
-        IAssetRegistry.AssetInformation[] assets,
-        IERC20 numeraireToken,
-        IERC20 feeToken,
-        AggregatorV2V3Interface sequencer
-    );
-
-    /// @notice Emitted when the hooks is created.
-    /// @param hooks Hooks address.
-    /// @param vault Vault address.
-    /// @param owner Initial owner address.
-    /// @param minDailyValue The fraction of value that the vault has to retain per day
-    ///                      in the course of submissions.
-    /// @param targetSighashAllowlist Array of target contract and sighash combinations to allow.
-    event HooksCreated(
-        address indexed hooks,
-        address indexed vault,
-        address indexed owner,
-        uint256 minDailyValue,
-        TargetSighashData[] targetSighashAllowlist
-    );
-
     /// ERRORS ///
 
     error Aera__DescriptionIsEmpty();
@@ -199,17 +166,6 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             IERC20(wrappedNativeToken),
             assetRegistryParameters.sequencer
         );
-
-        // Log asset registry creation.
-        emit AssetRegistryCreated(
-            deployed,
-            vault,
-            assetRegistryParameters.owner,
-            assetRegistryParameters.assets,
-            assetRegistryParameters.numeraireToken,
-            assetRegistryParameters.feeToken,
-            assetRegistryParameters.sequencer
-        );
     }
 
     /// @notice Deploy hooks.
@@ -227,15 +183,6 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             salt,
             hooksParameters.owner,
             vault,
-            hooksParameters.minDailyValue,
-            hooksParameters.targetSighashAllowlist
-        );
-
-        // Log hooks creation.
-        emit HooksCreated(
-            deployed,
-            vault,
-            hooksParameters.owner,
             hooksParameters.minDailyValue,
             hooksParameters.targetSighashAllowlist
         );
