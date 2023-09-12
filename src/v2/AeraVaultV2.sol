@@ -145,9 +145,9 @@ contract AeraVaultV2 is
         _checkFeeRecipientAddress(feeRecipient_, owner_);
 
         // Requirements: check that initial owner is not zero address.
-        //if (owner_ == address(0)) {
-        //    revert Aera__InitialOwnerIsZeroAddress();
-        //}
+        if (owner_ == address(0)) {
+            revert Aera__InitialOwnerIsZeroAddress();
+        }
         // Requirements: check if fee is within bounds.
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
@@ -900,16 +900,16 @@ contract AeraVaultV2 is
         internal
         view
     {
-        //if (newAssetRegistry == address(0)) {
-        //    revert Aera__AssetRegistryIsZeroAddress();
-        //}
-        //if (
-        //    !ERC165Checker.supportsInterface(
-        //        newAssetRegistry, type(IAssetRegistry).interfaceId
-        //    )
-        //) {
-        //    revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
-        //}
+        if (newAssetRegistry == address(0)) {
+            revert Aera__AssetRegistryIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(
+                newAssetRegistry, type(IAssetRegistry).interfaceId
+            )
+        ) {
+            revert Aera__AssetRegistryIsNotValid(newAssetRegistry);
+        }
         if (IAssetRegistry(newAssetRegistry).vault() != address(this)) {
             revert Aera__AssetRegistryHasInvalidVault();
         }
@@ -918,14 +918,14 @@ contract AeraVaultV2 is
     /// @notice Check if the address can be a hooks contract.
     /// @param newHooks Address to check.
     function _checkHooksAddress(address newHooks) internal view {
-        //if (newHooks == address(0)) {
-        //    revert Aera__HooksIsZeroAddress();
-        //}
-        //if (
-        //    !ERC165Checker.supportsInterface(newHooks, type(IHooks).interfaceId)
-        //) {
-        //    revert Aera__HooksIsNotValid(newHooks);
-        //}
+        if (newHooks == address(0)) {
+            revert Aera__HooksIsZeroAddress();
+        }
+        if (
+            !ERC165Checker.supportsInterface(newHooks, type(IHooks).interfaceId)
+        ) {
+            revert Aera__HooksIsNotValid(newHooks);
+        }
         if (IHooks(newHooks).vault() != address(this)) {
             revert Aera__HooksHasInvalidVault();
         }

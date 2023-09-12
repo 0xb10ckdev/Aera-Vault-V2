@@ -27,7 +27,7 @@ contract DeployAeraV2Factory is DeployScriptBase {
 
         vm.stopBroadcast();
 
-        //console.logBytes(type(AeraV2Factory).creationCode);
+        console.logBytes(type(AeraV2Factory).creationCode);
 
         _storeDeployedAddress("factory", address(deployed));
     }
