@@ -121,7 +121,7 @@ contract AeraVaultV2 is
     /// @dev Check insolvency of fee token was not made worse.
     modifier checkReservedFees() {
         uint256 prevFeeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
+            IERC20(_feeToken).balanceOf(address(this));
         _;
         _checkReservedFees(prevFeeTokenBalance);
     }
@@ -137,8 +137,6 @@ contract AeraVaultV2 is
             address feeRecipient_,
             uint256 fee_
         ) = IAeraV2Factory(msg.sender).parameters();
-        address wrappedNativeToken_ =
-            IAeraV2Factory(msg.sender).wrappedNativeToken();
 
         // Requirements: check provided addresses.
         _checkAssetRegistryAddress(assetRegistry_);
@@ -156,7 +154,7 @@ contract AeraVaultV2 is
         }
 
         // Effects: initialize vault state.
-        wrappedNativeToken = wrappedNativeToken_;
+        wrappedNativeToken = IAeraV2Factory(msg.sender).wrappedNativeToken();
         assetRegistry = IAssetRegistry(assetRegistry_);
         hooks = IHooks(hooks_);
         guardian = guardian_;
@@ -519,13 +517,15 @@ contract AeraVaultV2 is
 
         uint256 availableFee =
             Math.min(_feeToken.balanceOf(address(this)), reservedFee);
-        feeTotal -= availableFee;
-        reservedFee -= availableFee;
 
         // Requirements: check that fees are available to claim.
         if (availableFee == 0) {
             revert Aera__NoAvailableFeesForCaller(msg.sender);
         }
+
+        // Effects: update fee total.
+        feeTotal -= availableFee;
+        reservedFee -= availableFee;
 
         // Effects: update leftover fee.
         fees[msg.sender] = reservedFee;
@@ -571,7 +571,7 @@ contract AeraVaultV2 is
 
     /// @inheritdoc Ownable2Step
     function transferOwnership(address newOwner) public override onlyOwner {
-        // Requirements: check that new owner is disaffiliated from existing roles. 
+        // Requirements: check that new owner is disaffiliated from existing roles.
         if (newOwner == guardian) {
             revert Aera__GuardianIsOwner();
         }
@@ -713,9 +713,7 @@ contract AeraVaultV2 is
             }
         }
 
-        uint256 numeraireDecimals =
-            IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
-        uint256 numeraireUnit = 10 ** numeraireDecimals;
+        uint256 numeraireUnit = 10 ** _numeraireTokenDecimals;
 
         if (numeraireUnit != ONE) {
             vaultValue = vaultValue * numeraireUnit / ONE;
@@ -857,8 +855,7 @@ contract AeraVaultV2 is
     /// @notice Check if balance of fee becomes insolvent or becomes more insolvent.
     /// @param prevFeeTokenBalance Balance of fee token before action.
     function _checkReservedFees(uint256 prevFeeTokenBalance) internal view {
-        uint256 feeTokenBalance =
-            assetRegistry.feeToken().balanceOf(address(this));
+        uint256 feeTokenBalance = IERC20(_feeToken).balanceOf(address(this));
 
         if (
             feeTokenBalance < feeTotal && feeTokenBalance < prevFeeTokenBalance
