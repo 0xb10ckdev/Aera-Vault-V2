@@ -14,7 +14,6 @@ interface IAeraVaultAssetRegistryFactory {
     /// @param assets Initial list of registered assets.
     /// @param numeraireToken Numeraire token address.
     /// @param feeToken Fee token address.
-    /// @param wrappedNativeToken Wrapped native token address.
     /// @param sequencer Sequencer Uptime Feed address for L2.
     /// @return deployed The address of deployed asset registry.
     function deployAssetRegistry(
@@ -24,7 +23,6 @@ interface IAeraVaultAssetRegistryFactory {
         IAssetRegistry.AssetInformation[] memory assets,
         IERC20 numeraireToken,
         IERC20 feeToken,
-        IERC20 wrappedNativeToken,
         AggregatorV2V3Interface sequencer
     ) external returns (address deployed);
 }

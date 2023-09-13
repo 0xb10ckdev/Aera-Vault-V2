@@ -163,7 +163,6 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
             assetRegistryParameters.assets,
             assetRegistryParameters.numeraireToken,
             assetRegistryParameters.feeToken,
-            IERC20(wrappedNativeToken),
             assetRegistryParameters.sequencer
         );
     }
