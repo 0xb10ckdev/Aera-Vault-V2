@@ -118,7 +118,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         vm.serializeAddress("Deployments", "guardian", guardianAddress);
         vm.serializeAddress("Deployments", "feeRecipient", guardianAddress);
         vm.writeJson(
-            vm.serializeAddress("Deployments", "aeraV2Factory", factoryAddress),
+            vm.serializeAddress("Deployments", "v2Factory", factoryAddress),
             aeraVaultV2Path
         );
     }

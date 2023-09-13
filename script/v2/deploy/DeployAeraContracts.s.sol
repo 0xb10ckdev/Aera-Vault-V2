@@ -88,7 +88,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
         // Get parameters for AeraVaultV2
         (
-            address aeraV2Factory,
+            address v2Factory,
             VaultParameters memory vaultParameters,
             string memory description
         ) = _getAeraVaultV2Params(aeraVaultV2Path);
@@ -103,7 +103,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
         (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(
-            aeraV2Factory
+            v2Factory
         ).create(
             saltInput,
             description,
@@ -143,7 +143,7 @@ contract DeployAeraContracts is DeployScriptBase {
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
         returns (
-            address aeraV2Factory,
+            address v2Factory,
             VaultParameters memory vaultParameters,
             string memory description
         )
@@ -151,13 +151,13 @@ contract DeployAeraContracts is DeployScriptBase {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
         string memory json = vm.readFile(path);
 
-        aeraV2Factory = json.readAddress(".aeraV2Factory");
-        if (aeraV2Factory == address(0)) {
+        v2Factory = json.readAddress(".v2Factory");
+        if (v2Factory == address(0)) {
             string memory factoryPath = string.concat(
                 vm.projectRoot(), "/config/FactoryAddresses.json"
             );
             string memory factoryJson = vm.readFile(factoryPath);
-            aeraV2Factory = factoryJson.readAddress(".v2Factory");
+            v2Factory = factoryJson.readAddress(".v2Factory");
         }
         address owner = json.readAddress(".owner");
         address guardian = json.readAddress(".guardian");
@@ -334,10 +334,7 @@ contract DeployAeraContracts is DeployScriptBase {
         console.log("Checking Hooks Integrity");
 
         assertEq(address(hooks.vault()), vault);
-        assertEq(
-            hooks.minDailyValue(),
-            hooksParameters.minDailyValue
-        );
+        assertEq(hooks.minDailyValue(), hooksParameters.minDailyValue);
         assertEq(hooks.currentDay(), block.timestamp / 1 days);
         assertEq(hooks.cumulativeDailyMultiplier(), 1e18);
 

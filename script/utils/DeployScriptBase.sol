@@ -37,6 +37,11 @@ contract DeployScriptBase is Script, Test {
             try vm.parseJsonAddress(json, ".hooks") returns (address addr) {
                 vm.serializeAddress("Deployments", "hooks", addr);
             } catch {}
+            try vm.parseJsonAddress(json, ".modulesFactory") returns (
+                address addr
+            ) {
+                vm.serializeAddress("Deployments", "modulesFactory", addr);
+            } catch {}
         } catch {}
 
         vm.writeJson(vm.serializeAddress("Deployments", key, deployed), path);
