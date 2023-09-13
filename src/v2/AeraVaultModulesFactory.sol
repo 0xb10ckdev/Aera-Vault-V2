@@ -5,6 +5,7 @@ import "@openzeppelin/IERC20.sol";
 import "@openzeppelin/Ownable2Step.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
+import "./interfaces/IAeraV2Factory.sol";
 import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
 import "./interfaces/IAeraVaultHooksFactory.sol";
 
@@ -18,6 +19,9 @@ contract AeraVaultModulesFactory is
 {
     /// @notice The address of the v2 factory.
     address public immutable v2Factory;
+
+    /// @notice Wrapped native token.
+    IERC20 public immutable wrappedNativeToken;
 
     /// EVENTS ///
 
@@ -78,6 +82,9 @@ contract AeraVaultModulesFactory is
             revert Aera__V2FactoryIsZeroAddress();
         }
 
+        wrappedNativeToken =
+            IERC20(IAeraV2Factory(v2Factory_).wrappedNativeToken());
+
         v2Factory = v2Factory_;
     }
 
@@ -89,7 +96,6 @@ contract AeraVaultModulesFactory is
         IAssetRegistry.AssetInformation[] memory assets,
         IERC20 numeraireToken,
         IERC20 feeToken,
-        IERC20 wrappedNativeToken,
         AggregatorV2V3Interface sequencer
     ) external override onlyOwnerOrV2Factory returns (address deployed) {
         // Effects: deploy asset registry.
