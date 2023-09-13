@@ -18,6 +18,7 @@ config/AeraVaultWithdraw.json
 config/AeraVaultAddTargetSighashes.json
 config/AeraVaultOperations.json
 config/AddAssetsToRegistry.json
+config/RemoveAssetsFromRegistry.json
 
 coverage*
 lcov.info
