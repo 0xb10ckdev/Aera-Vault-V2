@@ -34,7 +34,7 @@ contract CurveOracleWrapper is IAeraV2Oracle {
     }
 
     function latestRoundData() external view override returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
-        uint256 uintAnswer = ICurveFiPool(pool).get_dy(tokenToPriceIndex, numeraireIndex, 10**numeraireDecimals);
+        uint256 uintAnswer = ICurveFiPool(pool).get_dy(numeraireIndex, tokenToPriceIndex, 10**numeraireDecimals);
         if (uintAnswer > 2**255) {
             revert("overflow");
         }
