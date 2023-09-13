@@ -19,6 +19,7 @@ config/AeraVaultAddTargetSighashes.json
 config/AeraVaultOperations.json
 config/AddAssetsToRegistry.json
 config/RemoveAssetsFromRegistry.json
+config/periphery/CurveOracleWrapper.json
 
 coverage*
 lcov.info
