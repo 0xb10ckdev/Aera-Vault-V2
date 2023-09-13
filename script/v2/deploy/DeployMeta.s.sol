@@ -85,9 +85,39 @@ contract DeployMeta is DeployScriptBase {
         if (_deployerAddress == address(0)) {
             _deployerAddress = msg.sender;
         }
-        DeployAeraV2Factory deployAeraV2Factory = new DeployAeraV2Factory();
-        deployAeraV2Factory.setDeployerAddress(_deployerAddress);
-        deployedV2Factory = address(deployAeraV2Factory.run());
+
+        deployedV2Factory = _deployV2Factory(factoryAddressesPath);
+        deployedModulesFactory = _deployVaultModulesFactory(deployedV2Factory, factoryAddressesPath);
+
+        (deployedVault, deployedAssetRegistry, deployedHooks) = _deployAeraContracts(saltInput);
+    }
+
+    function _deployAeraContracts(bytes32 saltInput) 
+        internal 
+        returns (
+            address deployedVault, 
+            address deployedAssetRegistry, 
+            address deployedHooks
+        )
+    {
+        DeployAeraContracts deployAeraContracts = new
+            DeployAeraContracts();
+        deployAeraContracts.setDeployerAddress(_deployerAddress);
+        (deployedVault, deployedAssetRegistry, deployedHooks) =
+            deployAeraContracts.run(saltInput);
+    }
+
+    function _deployVaultModulesFactory(address deployedV2Factory, string memory factoryAddressesPath) 
+        internal 
+        returns (address deployedModulesFactory)
+    {
+        DeployAeraVaultModulesFactory deployAeraVaultModulesFactory = new
+            DeployAeraVaultModulesFactory();
+        deployAeraVaultModulesFactory.setDeployerAddress(_deployerAddress);
+        deployedModulesFactory = address(deployAeraVaultModulesFactory.run());
+        vm.serializeAddress(
+            "FactoryAddresses", "vaultModulesFactory", deployedModulesFactory
+        );
         string memory path =
             string.concat(vm.projectRoot(), factoryAddressesPath);
         string memory json = vm.readFile(path);
@@ -97,25 +127,22 @@ contract DeployMeta is DeployScriptBase {
             ),
             path
         );
-
-        DeployAeraVaultModulesFactory deployAeraVaultModulesFactory = new
-            DeployAeraVaultModulesFactory();
-        deployAeraVaultModulesFactory.setDeployerAddress(_deployerAddress);
-        deployedModulesFactory = address(deployAeraVaultModulesFactory.run());
-        vm.serializeAddress(
-            "FactoryAddresses", "vaultModulesFactory", deployedModulesFactory
-        );
-        vm.writeJson(
-            vm.serializeAddress(
-                "FactoryAddresses", "v2Factory", deployedV2Factory
-            ),
-            path
-        );
-
-        DeployAeraContracts deployAeraContracts = new
-            DeployAeraContracts();
-        deployAeraContracts.setDeployerAddress(_deployerAddress);
-        (deployedVault, deployedAssetRegistry, deployedHooks) =
-            deployAeraContracts.run();
     }
+    function _deployV2Factory(string memory factoryAddressesPath) 
+        internal 
+        returns (address deployedV2Factory) 
+    {
+            DeployAeraV2Factory deployAeraV2Factory = new DeployAeraV2Factory();
+            deployAeraV2Factory.setDeployerAddress(_deployerAddress);
+            deployedV2Factory = address(deployAeraV2Factory.run());
+            string memory path =
+                string.concat(vm.projectRoot(), factoryAddressesPath);
+            string memory json = vm.readFile(path);
+            vm.writeJson(
+                vm.serializeAddress(
+                    "FactoryAddresses", "v2Factory", deployedV2Factory
+                ),
+                path
+            );
+        }
 }

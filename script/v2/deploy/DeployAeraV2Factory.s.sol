@@ -12,11 +12,9 @@ contract DeployAeraV2Factory is DeployScriptBase {
     /// @notice Deploy AeraV2Factory contract.
     /// @param deployed The address of deployed factory.
     function run() public returns (AeraV2Factory deployed) {
-        console.log(_deployerAddress);
         if (_deployerAddress == address(0)) {
             _deployerAddress = msg.sender;
         }
-        console.log(_deployerAddress);
         string memory path =
             string.concat(vm.projectRoot(), "/config/AeraV2Factory.json");
         string memory json = vm.readFile(path);
