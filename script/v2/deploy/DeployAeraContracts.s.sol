@@ -27,14 +27,14 @@ contract DeployAeraContracts is DeployScriptBase {
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks if they were not
     ///         deployed yet.
     /// @dev It uses 0x00 for salt input value.
-    /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedVault The address of deployed AeraVaultV2.
+    /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedHooks The address of deployed Hooks.
     function run()
         public
         returns (
-            address deployedAssetRegistry,
             address deployedVault,
+            address deployedAssetRegistry,
             address deployedHooks
         )
     {
