@@ -20,11 +20,13 @@ contract AddTargetSigHashes is Script, Test {
     address[] internal whitelistedERC20TargetsPolygon = [
         0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD, // wstETH
         0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619, // weth
-        0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 //usdc
+        0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, //usdc
+        0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063 //dai
     ];
     address[] internal whitelistedERC4626TargetsPolygon = [
         0x5e5057b8D220eb8573Bc342136FdF1d869316D18, // waPolWeth
-        0x2c616F5Dc3d482010D870d8a01b72cbB1711254A // waPolUsdc
+        0x2c616F5Dc3d482010D870d8a01b72cbB1711254A, // waPolUsdc
+        0xB33166E092AFc5532c74041fd8793d96541C8C4B // waPolDai
     ];
     address[] internal whitelistedSwapRoutersPolygon = [
         0xE592427A0AEce92De3Edee1F18E0157C05861564 // uniswap
