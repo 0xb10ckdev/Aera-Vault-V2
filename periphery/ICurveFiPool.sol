@@ -6,4 +6,5 @@ interface ICurveFiPool {
     function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external;
     function price_oracle() external view returns (uint256);
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external;
 }

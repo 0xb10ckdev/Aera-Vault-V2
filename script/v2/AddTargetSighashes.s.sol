@@ -12,6 +12,7 @@ import "src/v2/AeraVaultHooks.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "periphery/ICurveFiPool.sol";
 
 contract AddTargetSigHashes is Script, Test {
     using stdJson for string;
@@ -31,6 +32,9 @@ contract AddTargetSigHashes is Script, Test {
     address[] internal whitelistedSwapRoutersPolygon = [
         0xE592427A0AEce92De3Edee1F18E0157C05861564 // uniswap
     ];
+    address[] internal whitelistedCurvePoolsMainnet = [
+        0x752ebeb79963cf0732e9c0fec72a49fd1defaeac // t-token/eth
+    ];
     address[] internal whitelistedERC20TargetsMainnet = [
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, // weth
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 //usdc
@@ -43,6 +47,10 @@ contract AddTargetSigHashes is Script, Test {
     address[] internal whitelistedSwapRouters;
 
     function run() public {
+        console.logBytes4(IERC4626.deposit.selector);
+        console.logBytes4(IERC4626.withdraw.selector);
+        console.logBytes4(IERC4626.mint.selector);
+        console.logBytes4(IERC4626.redeem.selector);
         if (this.getChainID() == 137) {
             whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
             whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
@@ -51,6 +59,7 @@ contract AddTargetSigHashes is Script, Test {
             whitelistedERC20Targets = whitelistedERC20TargetsMainnet;
             whitelistedERC4626Targets = whitelistedERC4626TargetsMainnet;
             whitelistedSwapRouters = whitelistedSwapRoutersMainnet;
+            whitelistedCurvePools = whitelistedCurvePoolsMainnet;
         } else {
             revert("unsupported chain");
         }
@@ -97,6 +106,11 @@ contract AddTargetSigHashes is Script, Test {
             hooks.addTargetSighash(
                 whitelistedSwapRouters[i],
                 ISwapRouter.exactOutputSingle.selector
+            );
+        }
+        for (uint256 i = 0; i < whitelistedCurvePools.length; i++) {
+            hooks.addTargetSighash(
+                whitelistedCurvePools[i], ICurveFi.exchange.selector
             );
         }
         vm.stopBroadcast();
