@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "solmate/tokens/ERC20.sol";
+import "./dependencies/solmate/ERC20.sol";
 
 contract WrappedNativeMock is ERC20 {
     constructor() ERC20("Wrapped Native", "WETH", 18) {}
