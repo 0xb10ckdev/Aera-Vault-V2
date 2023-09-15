@@ -132,6 +132,7 @@ contract TestBaseVault is TestBaseFactory, TestBaseVariables {
 
     function _loadDeployedAddresses()
         internal
+        view
         returns (
             address deployedAssetRegistry,
             address deployedFactory,

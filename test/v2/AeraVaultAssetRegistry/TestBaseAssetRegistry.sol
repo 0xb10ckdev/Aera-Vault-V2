@@ -148,7 +148,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         }
     }
 
-    function _loadDeployedAssetRegistry() internal returns (address) {
+    function _loadDeployedAssetRegistry() internal view returns (address) {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);
@@ -156,7 +156,7 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         return vm.parseJsonAddress(json, ".assetRegistry");
     }
 
-    function _loadDeployedVault() internal returns (address) {
+    function _loadDeployedVault() internal view returns (address) {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
         string memory json = vm.readFile(path);

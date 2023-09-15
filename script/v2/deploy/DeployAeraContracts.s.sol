@@ -142,6 +142,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
+        view
         returns (
             address v2Factory,
             VaultParameters memory vaultParameters,
@@ -175,6 +176,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAssetRegistryParams(string memory relFilePath)
         internal
+        view
         returns (AssetRegistryParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
@@ -209,6 +211,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultHooksParams(string memory relFilePath)
         internal
+        view
         returns (HooksParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
