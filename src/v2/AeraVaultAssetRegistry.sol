@@ -56,12 +56,16 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @param assets Initial list of registered assets.
     /// @param numeraireToken Numeraire token address.
     /// @param feeToken Fee token address.
+    /// @param wrappedNativeToken Wrapped native token.
+    /// @param sequencer Sequencer Uptime Feed address for L2.
     event Created(
         address indexed owner,
         address indexed vault,
         AssetInformation[] assets,
         address indexed numeraireToken,
-        address feeToken
+        address feeToken,
+        address wrappedNativeToken,
+        address sequencer
     );
 
     /// ERRORS ///
@@ -257,7 +261,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
             vault_,
             assets_,
             address(numeraireToken_),
-            address(feeToken_)
+            address(feeToken_),
+            address(wrappedNativeToken_),
+            address(sequencer)
         );
     }
 

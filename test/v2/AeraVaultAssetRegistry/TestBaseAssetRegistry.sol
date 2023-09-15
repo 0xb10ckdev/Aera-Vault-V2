@@ -23,7 +23,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
         address indexed vault,
         IAssetRegistry.AssetInformation[] assets,
         address indexed numeraireToken,
-        address feeToken
+        address feeToken,
+        address wrappedNativeToken,
+        address sequencer
     );
 
     address internal constant _GUARDIAN = address(0x123456);
@@ -211,7 +213,9 @@ contract TestBaseAssetRegistry is TestBaseFactory {
             vaultAddress,
             assets,
             numeraireToken,
-            address(feeToken)
+            address(feeToken),
+            _WETH_ADDRESS,
+            address(0)
         );
 
         (address deployedVault, address deployedAssetRegistry,) = factory
