@@ -58,7 +58,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
 
     /// @notice Initialize the factory contract.
     /// @param wrappedNativeToken_ The address of wrapped native token.
-    constructor(address wrappedNativeToken_) Sweepable() Ownable() {
+    constructor(address wrappedNativeToken_) Ownable() {
         if (wrappedNativeToken_ == address(0)) {
             revert Aera__WrappedNativeTokenIsZeroAddress();
         }

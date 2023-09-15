@@ -77,7 +77,7 @@ contract AeraVaultModulesFactory is
 
     /// FUNCTIONS ///
 
-    constructor(address v2Factory_) Sweepable() Ownable() {
+    constructor(address v2Factory_) Ownable() {
         if (v2Factory_ == address(0)) {
             revert Aera__V2FactoryIsZeroAddress();
         }
