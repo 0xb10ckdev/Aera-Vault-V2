@@ -29,6 +29,9 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @notice Wrapped native token.
     IERC20 public immutable wrappedNativeToken;
 
+    /// @notice Sequencer Uptime Feed address for L2.
+    AggregatorV2V3Interface public immutable sequencer;
+
     /// STORAGE ///
 
     /// @notice List of currently registered assets.
@@ -36,9 +39,6 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
     /// @notice Number of ERC4626 assets. Maintained for more efficient calculation of spotPrices.
     uint256 public numYieldAssets;
-
-    /// @notice Sequencer Uptime Feed address for L2.
-    AggregatorV2V3Interface public sequencer;
 
     /// EVENTS ///
 
@@ -596,8 +596,11 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
     /// @notice Check that owner is not the vault or the guardian.
     /// @param owner_ Asset registry owner address.
-    /// @param vault_ Vault address. 
-    function _checkAssetRegistryOwner(address owner_, address vault_) internal view {
+    /// @param vault_ Vault address.
+    function _checkAssetRegistryOwner(
+        address owner_,
+        address vault_
+    ) internal view {
         if (owner_ == vault_) {
             revert Aera__AssetRegistryOwnerIsVault();
         }
@@ -610,7 +613,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
     /// @inheritdoc Ownable2Step
     function transferOwnership(address newOwner) public override onlyOwner {
-        // Requirements: check that new owner is disaffiliated from existing roles. 
+        // Requirements: check that new owner is disaffiliated from existing roles.
         _checkAssetRegistryOwner(newOwner, vault);
 
         // Effects: initiate ownership transfer.
