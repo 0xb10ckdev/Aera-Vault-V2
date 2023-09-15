@@ -44,13 +44,6 @@ contract AeraVaultHooksInvariantTest is TestBaseAeraVaultHooks {
         );
     }
 
-    function invariant_beforeBalance() public {
-        assertEq(
-            uint256(vm.load(address(hooks), _BEFORE_BALANCE_SLOT)),
-            handler.beforeBalance()
-        );
-    }
-
     function invariant_currentDay() public {
         assertEq(hooks.currentDay(), handler.currentDay());
     }

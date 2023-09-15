@@ -13,7 +13,6 @@ contract AeraVaultHooksHandler is TestBase {
     uint256 public currentDay;
     uint256 public cumulativeDailyMultiplier;
     uint256 public beforeValue;
-    uint256 public beforeBalance;
 
     constructor(AeraVaultV2 _vault, AeraVaultHooks _hooks) {
         vault = _vault;
@@ -30,7 +29,6 @@ contract AeraVaultHooksHandler is TestBase {
         hooks.beforeSubmit(_operations(ops));
 
         beforeValue = vault.value();
-        beforeBalance = address(vault).balance;
     }
 
     function runAfterSubmit(Operation[5] memory ops) public {
@@ -74,7 +72,6 @@ contract AeraVaultHooksHandler is TestBase {
         vault.claim();
 
         beforeValue = vault.value();
-        beforeBalance = address(vault).balance;
 
         vm.prank(vault.guardian());
         vault.submit(operations);
@@ -84,10 +81,6 @@ contract AeraVaultHooksHandler is TestBase {
 
     function _updateInvariantVariables() internal {
         uint256 day = block.timestamp / 1 days;
-
-        if (address(vault).balance < beforeBalance) {
-            return;
-        }
 
         if (beforeValue > 0) {
             uint256 newMultiplier = (
@@ -104,7 +97,6 @@ contract AeraVaultHooksHandler is TestBase {
 
         currentDay = day;
         beforeValue = 0;
-        beforeBalance = 0;
     }
 
     function _operations(Operation[5] memory ops)
