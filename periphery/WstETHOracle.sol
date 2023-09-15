@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 import "@openzeppelin/IERC20Metadata.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "./WstETH.sol";
+import "./IWstETH.sol";
 
 /// @title CurveOracleWrapper 
 /// @notice Used to calculate price of tokens in a Curve V2 pool
@@ -17,17 +17,13 @@ contract WstETHOracle is AggregatorV2V3Interface {
 
     /// ERRORS ///
 
-    error TokenToPriceNotFoundInPoool(address pool, address tokenToPrice);
-    error NumeraireTokenNotFoundInPool(address pool, address numeraireToken);
     error PriceOverflowsInt256();
     error NotImplemented();
 
     /// FUNCTIONS ///
 
     /// @notice Initialize the oracle contract.
-    /// @param pool_ The address of the underlying curve pool
-    /// @param tokenToPrice The address of the underlying token to get a price for
-    /// @param numeraireToken The address of the other token in the pool to price against
+    /// @param wstETH_ wstETH address
     constructor(address wstETH_) {
         
         // Effects: initialize contract variables.
@@ -37,7 +33,7 @@ contract WstETHOracle is AggregatorV2V3Interface {
     
     /// @inheritdoc AggregatorV3Interface
     function latestRoundData() external view override returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
-        uint256 uintAnswer = WstETH(wstEth).getStETHByWstETH(ONE);
+        uint256 uintAnswer = IWstETH(wstETH).getStETHByWstETH(ONE);
 
         if (uintAnswer > uint256(type(int256).max)) {
             revert PriceOverflowsInt256();
