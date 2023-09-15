@@ -22,25 +22,7 @@ import {
 } from "src/v2/Types.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
-
-interface CurvePool {
-    function coins(uint256 i) external view returns (address);
-
-    function price_oracle() external view returns (uint256);
-
-    function get_dy(
-        uint256 i,
-        uint256 j,
-        uint256 dx
-    ) external view returns (uint256);
-
-    function exchange(
-        uint256 i,
-        uint256 j,
-        uint256 dx,
-        uint256 min_dy
-    ) external returns (uint256);
-}
+import "periphery/ICurveFiPool.sol";
 
 contract DeployAeraContracts is DeployScriptBase {
     using stdJson for string;
@@ -284,20 +266,8 @@ contract DeployAeraContracts is DeployScriptBase {
         address owner = json.readAddress(".owner");
         uint256 minDailyValue = json.readUint(".minDailyValue");
 
-        //bytes32[] memory allowlistRaw =
-        //    json.readBytes32Array(".targetSighashAllowlist");
-        //TargetSighash[] memory allowlist;
-        //assembly {
-        //    allowlist := allowlistRaw
-        //}
-
-        //for (uint256 i = 0; i < allowlist.length; i++) {
-        //    targetSighashAllowlist[i] = TargetSighashData({
-        //        target: _getTarget(allowlist[i]),
-        //        selector: _getSelector(allowlist[i])
-        //    });
-        //}
         if (this.getChainID() == 137) {
+            // TODO - add polygon addresses
             //whitelistedCurveTargets = whitelistedCurveTargetsPolygon;
             //whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
             //whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
@@ -313,7 +283,7 @@ contract DeployAeraContracts is DeployScriptBase {
         for (uint256 i = 0; i < whitelistedCurveTargets.length; i++) {
             targetSighashAllowlist.push(TargetSighashData({
                 target: whitelistedCurveTargetsMainnet[i],
-                selector: CurvePool.exchange.selector
+                selector: ICurveFiPool.exchange.selector
             }));
         }
         for (uint256 i = 0; i < whitelistedERC20Targets.length; i++) {
