@@ -935,7 +935,7 @@ contract AeraVaultV2 is
     /// @param asset Asset to check.
     /// @param registeredAssets Array of registered assets.
     /// @return isRegistered True if asset is registered.
-    /// @return index Index of asset in Balancer pool.
+    /// @return index Index of asset in asset registry.
     function _isAssetRegistered(
         IERC20 asset,
         IAssetRegistry.AssetInformation[] memory registeredAssets
