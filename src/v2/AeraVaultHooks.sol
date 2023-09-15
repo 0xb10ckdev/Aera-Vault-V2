@@ -86,7 +86,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         address vault_,
         uint256 minDailyValue_,
         TargetSighashData[] memory targetSighashAllowlist
-    ) Sweepable() Ownable() {
+    ) Ownable() {
         // Requirements: validate vault.
         if (vault_ == address(0)) {
             revert Aera__VaultIsZeroAddress();
@@ -122,17 +122,11 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
         // Effects: initialize target sighash allowlist.
         for (uint256 i = 0; i < numTargetSighashAllowlist;) {
-            TargetSighashData memory targetSighash = targetSighashAllowlist[i];
-            address target = targetSighash.target;
+            _addTargetSighash(
+                targetSighashAllowlist[i].target,
+                targetSighashAllowlist[i].selector
+            );
 
-            // Requirements: check there is code at target.
-            if (target.code.length == 0) {
-                revert Aera__NoCodeAtTarget(target);
-            }
-
-            _targetSighashAllowed[TargetSighashLib.toTargetSighash(
-                target, targetSighash.selector
-            )] = true;
             unchecked {
                 i++; // gas savings
             }
@@ -155,24 +149,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
         address target,
         bytes4 selector
     ) external onlyOwner {
-        // Requirements: check there is code at target.
-        if (target.code.length == 0) {
-            revert Aera__NoCodeAtTarget(target);
-        }
-
-        TargetSighash targetSighash =
-            TargetSighashLib.toTargetSighash(target, selector);
-
-        // Requirements: check that current target sighash is not set.
-        if (_targetSighashAllowed[targetSighash]) {
-            revert Aera__AddingDuplicateTargetSighash(targetSighash);
-        }
-
-        // Effects: add target sighash combination to the allowlist.
-        _targetSighashAllowed[targetSighash] = true;
-
-        // Log the addition.
-        emit TargetSighashAdded(target, selector);
+        _addTargetSighash(target, selector);
     }
 
     /// @notice Remove targetSighash pair from allowlist.
@@ -373,6 +350,30 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
     }
 
     /// INTERNAL FUNCTIONS ///
+
+    /// @notice Add targetSighash pair to allowlist.
+    /// @param target Address of target.
+    /// @param selector Selector of function.
+    function _addTargetSighash(address target, bytes4 selector) internal {
+        // Requirements: check there is code at target.
+        if (target.code.length == 0) {
+            revert Aera__NoCodeAtTarget(target);
+        }
+
+        TargetSighash targetSighash =
+            TargetSighashLib.toTargetSighash(target, selector);
+
+        // Requirements: check that current target sighash is not set.
+        if (_targetSighashAllowed[targetSighash]) {
+            revert Aera__AddingDuplicateTargetSighash(targetSighash);
+        }
+
+        // Effects: add target sighash combination to the allowlist.
+        _targetSighashAllowed[targetSighash] = true;
+
+        // Log the addition.
+        emit TargetSighashAdded(target, selector);
+    }
 
     /// @notice Check whether selector is allowance related selector or not.
     /// @param selector Selector of calldata to check.

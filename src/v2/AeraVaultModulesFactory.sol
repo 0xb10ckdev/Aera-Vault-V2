@@ -2,9 +2,9 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20.sol";
-import "@openzeppelin/Ownable2Step.sol";
 import "./AeraVaultAssetRegistry.sol";
 import "./AeraVaultHooks.sol";
+import "./Sweepable.sol";
 import "./interfaces/IAeraV2Factory.sol";
 import "./interfaces/IAeraVaultAssetRegistryFactory.sol";
 import "./interfaces/IAeraVaultHooksFactory.sol";
@@ -15,7 +15,7 @@ import "./interfaces/IAeraVaultHooksFactory.sol";
 contract AeraVaultModulesFactory is
     IAeraVaultAssetRegistryFactory,
     IAeraVaultHooksFactory,
-    Ownable2Step
+    Sweepable
 {
     /// @notice The address of the v2 factory.
     address public immutable v2Factory;

@@ -290,8 +290,8 @@ contract AeraVaultV2 is
         address newFeeRecipient
     ) external override onlyOwner whenNotFinalized reserveFees {
         // Requirements: check guardian and fee recipient addresses.
-        _checkGuardianAddress(newGuardian, owner());
-        _checkFeeRecipientAddress(newFeeRecipient, owner());
+        _checkGuardianAddress(newGuardian, msg.sender);
+        _checkFeeRecipientAddress(newFeeRecipient, msg.sender);
 
         // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
@@ -935,7 +935,7 @@ contract AeraVaultV2 is
     /// @param asset Asset to check.
     /// @param registeredAssets Array of registered assets.
     /// @return isRegistered True if asset is registered.
-    /// @return index Index of asset in Balancer pool.
+    /// @return index Index of asset in asset registry.
     function _isAssetRegistered(
         IERC20 asset,
         IAssetRegistry.AssetInformation[] memory registeredAssets

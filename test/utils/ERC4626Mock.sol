@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "forge-std/interfaces/IERC20.sol";
-import "solmate/tokens/ERC20.sol";
-import "solmate/mixins/ERC4626.sol";
+import "./dependencies/solmate/ERC20.sol";
+import "./dependencies/solmate/ERC4626.sol";
 
 /**
  * @dev Mock ERC4626 token with initial total supply.
