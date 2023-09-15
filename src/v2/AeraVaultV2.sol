@@ -290,8 +290,8 @@ contract AeraVaultV2 is
         address newFeeRecipient
     ) external override onlyOwner whenNotFinalized reserveFees {
         // Requirements: check guardian and fee recipient addresses.
-        _checkGuardianAddress(newGuardian, owner());
-        _checkFeeRecipientAddress(newFeeRecipient, owner());
+        _checkGuardianAddress(newGuardian, msg.sender);
+        _checkFeeRecipientAddress(newFeeRecipient, msg.sender);
 
         // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
