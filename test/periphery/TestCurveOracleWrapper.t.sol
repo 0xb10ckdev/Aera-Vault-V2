@@ -40,7 +40,7 @@ contract TestCurveOracleWrapper is Test {
             uint80 answeredInRound
         ) = oracleWrapper.latestRoundData();
         assertEq(roundId, 0);
-        assertEq(answer, 95891321380667741120450); // ~95k tToken for 1 ETH
+        assertEq(answer, 89968000000000000000000); // ~89k tToken for 1 ETH
         assertEq(startedAt, 0);
         assertEq(updatedAt, block.timestamp);
         assertEq(answeredInRound, 0);
