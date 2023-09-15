@@ -33,7 +33,7 @@ contract AddTargetSigHashes is Script, Test {
         0xE592427A0AEce92De3Edee1F18E0157C05861564 // uniswap
     ];
     address[] internal whitelistedCurvePoolsMainnet = [
-        0x752ebeb79963cf0732e9c0fec72a49fd1defaeac // t-token/eth
+        0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC // t-token/eth
     ];
     address[] internal whitelistedERC20TargetsMainnet = [
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, // weth
@@ -45,6 +45,7 @@ contract AddTargetSigHashes is Script, Test {
     address[] internal whitelistedERC20Targets;
     address[] internal whitelistedERC4626Targets;
     address[] internal whitelistedSwapRouters;
+    address[] internal whitelistedCurvePools;
 
     function run() public {
         console.logBytes4(IERC4626.deposit.selector);
@@ -110,7 +111,7 @@ contract AddTargetSigHashes is Script, Test {
         }
         for (uint256 i = 0; i < whitelistedCurvePools.length; i++) {
             hooks.addTargetSighash(
-                whitelistedCurvePools[i], ICurveFi.exchange.selector
+                whitelistedCurvePools[i], ICurveFiPool.exchange.selector
             );
         }
         vm.stopBroadcast();
