@@ -29,6 +29,7 @@ contract TestBaseFactory is TestBase {
 
     function _loadDeployedFactory()
         internal
+        view
         returns (address deployedFactory)
     {
         string memory path =
