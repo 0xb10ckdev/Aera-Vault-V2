@@ -635,6 +635,7 @@ contract AeraVaultV2 is
 
         // Requirements: check that fee token has a positive price.
         if (lastFeeTokenPrice == 0) {
+            emit NoFeesReserved(lastFeeCheckpoint, lastValue, feeTotal);
             return;
         }
 

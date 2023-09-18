@@ -57,6 +57,10 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
     {
         _setInvalidOracle(nonNumeraireId);
 
+        uint256 lastFeeCheckpoint = vault.lastFeeCheckpoint();
+        uint256 lastValue = vault.lastValue();
+        uint256 feeTotal = vault.feeTotal();
+
         skip(1000);
 
         vm.expectEmit(true, true, true, true, address(vault));
@@ -67,6 +71,9 @@ contract SetGuardianAndFeeRecipientTest is TestBaseAeraVaultV2 {
                 -1
             )
         );
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit NoFeesReserved(lastFeeCheckpoint, lastValue, feeTotal);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit SetGuardianAndFeeRecipient(_USER, address(1));

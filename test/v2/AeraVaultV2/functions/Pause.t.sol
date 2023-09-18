@@ -32,6 +32,10 @@ contract PauseTest is TestBaseAeraVaultV2 {
     function test_pause_success_whenOraclePriceIsInvalid() public {
         _setInvalidOracle(nonNumeraireId);
 
+        uint256 lastFeeCheckpoint = vault.lastFeeCheckpoint();
+        uint256 lastValue = vault.lastValue();
+        uint256 feeTotal = vault.feeTotal();
+
         skip(1000);
 
         vm.expectEmit(true, true, true, true, address(vault));
@@ -42,6 +46,9 @@ contract PauseTest is TestBaseAeraVaultV2 {
                 -1
             )
         );
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit NoFeesReserved(lastFeeCheckpoint, lastValue, feeTotal);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Paused(_GUARDIAN);

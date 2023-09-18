@@ -10,7 +10,7 @@ import "./interfaces/IAeraVaultHooksFactory.sol";
 import {Parameters} from "./Types.sol";
 
 /// @title AeraV2Factory
-/// @notice Used to create new vaults and deploy arbitrary non-payable contracts with create2.
+/// @notice Used to create new vaults and deploy modules.
 /// @dev Only one instance of the factory will be required per chain.
 contract AeraV2Factory is IAeraV2Factory, Sweepable {
     /// @notice The address of wrapped native token.
