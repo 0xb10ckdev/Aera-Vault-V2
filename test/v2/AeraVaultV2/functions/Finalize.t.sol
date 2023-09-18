@@ -47,6 +47,10 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
         AssetValue[] memory withdrawnAmounts = vault.holdings();
         _setInvalidOracle(nonNumeraireId);
 
+        uint256 lastFeeCheckpoint = vault.lastFeeCheckpoint();
+        uint256 lastValue = vault.lastValue();
+        uint256 feeTotal = vault.feeTotal();
+
         skip(1000);
 
         vm.expectEmit(true, true, true, true, address(vault));
@@ -57,6 +61,9 @@ contract FinalizeTest is TestBaseAeraVaultV2 {
                 -1
             )
         );
+
+        vm.expectEmit(true, true, true, true, address(vault));
+        emit NoFeesReserved(lastFeeCheckpoint, lastValue, feeTotal);
 
         vm.expectEmit(true, true, true, true, address(vault));
         emit Finalized(address(this), withdrawnAmounts);

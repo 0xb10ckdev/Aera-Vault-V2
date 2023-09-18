@@ -79,6 +79,16 @@ interface IVaultEvents {
         uint256 feeTotal
     );
 
+    /// @notice Emitted when no fees are reserved.
+    /// @param lastFeeCheckpoint Updated fee checkpoint.
+    /// @param lastValue Last registered vault value.
+    /// @param feeTotal New total reserved fee value.
+    event NoFeesReserved(
+        uint256 lastFeeCheckpoint,
+        uint256 lastValue,
+        uint256 feeTotal
+    );
+
     /// @notice Emitted when the call to get spot prices from the asset registry reverts.
     /// @param reason Revert reason.
     event SpotPricesReverted(bytes reason);
