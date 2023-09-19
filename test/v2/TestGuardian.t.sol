@@ -261,11 +261,14 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
 
         vm.serializeAddress("Hooks", "owner", address(this));
         vm.serializeUint(
-            "Deployments", "minDailyValue", minDailyValue
+            "Hooks", "minDailyValue", minDailyValue
+        );
+        vm.serializeAddress(
+            "Hooks", "hooksFactory", address(0)
         );
         string memory json;
         json = vm.serializeBytes32(
-            "Deployments", "targetSighashAllowlist", dynamicSighashArray
+            "Hooks", "targetSighashAllowlist", dynamicSighashArray
         );
 
         vm.writeJson(json, aeraVaultHooksPath);
