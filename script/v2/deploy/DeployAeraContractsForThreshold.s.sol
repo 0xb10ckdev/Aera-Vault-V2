@@ -166,6 +166,7 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
 
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
+        view
         returns (
             address v2Factory,
             VaultParameters memory vaultParameters,
@@ -199,6 +200,7 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
 
     function _getAssetRegistryParams(string memory relFilePath)
         internal
+        view
         returns (AssetRegistryParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);

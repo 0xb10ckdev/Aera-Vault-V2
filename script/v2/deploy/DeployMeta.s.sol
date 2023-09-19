@@ -53,25 +53,13 @@ contract DeployMeta is DeployScriptBase {
     {
         return runFromSpecifiedConfigPaths(
             saltInput,
-            "/config/FactoryAddresses.json",
-            "/config/AeraV2Factory.json",
-            "/config/AeraVaultModulesFactory.json",
-            "/config/AeraVaultAssetRegistry.json",
-            "/config/AeraVaultV2.json",
-            "/config/AeraVaultHooks.json",
-            true
+            "/config/FactoryAddresses.json"
         );
     }
 
     function runFromSpecifiedConfigPaths(
         bytes32 saltInput,
-        string memory factoryAddressesPath,
-        string memory v2FactoryPath,
-        string memory vaultModulesFactoryPath,
-        string memory assetRegistryPath,
-        string memory aeraVaultV2Path,
-        string memory aeraVaultHooksPath,
-        bool broadcast
+        string memory factoryAddressesPath
     )
         public
         returns (
@@ -120,7 +108,6 @@ contract DeployMeta is DeployScriptBase {
         );
         string memory path =
             string.concat(vm.projectRoot(), factoryAddressesPath);
-        string memory json = vm.readFile(path);
         vm.writeJson(
             vm.serializeAddress(
                 "FactoryAddresses", "v2Factory", deployedV2Factory
@@ -137,7 +124,6 @@ contract DeployMeta is DeployScriptBase {
             deployedV2Factory = address(deployAeraV2Factory.run());
             string memory path =
                 string.concat(vm.projectRoot(), factoryAddressesPath);
-            string memory json = vm.readFile(path);
             vm.writeJson(
                 vm.serializeAddress(
                     "FactoryAddresses", "v2Factory", deployedV2Factory
