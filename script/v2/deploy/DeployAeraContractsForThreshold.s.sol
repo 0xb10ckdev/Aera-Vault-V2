@@ -116,7 +116,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         for (uint256 i = 0; i < allowedCurveTargets.length; i++) {
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: allowedCurveTargetsMainnet[i],
+                    target: allowedCurveTargets[i],
                     selector: ICurveFiPool.exchange.selector
                 })
             );
