@@ -39,9 +39,10 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
     constructor(address pool_, address tokenToPrice, address numeraireToken) {
         // Effects: find numeraire and token to price.
         for (uint256 i = 0; i < 2; i++) {
-            if (ICurveFiPool(pool_).coins(i) == numeraireToken) {
+            address coin = ICurveFiPool(pool_).coins(i);
+            if (coin == numeraireToken) {
                 numeraireIndex = i;
-            } else if (ICurveFiPool(pool_).coins(i) == tokenToPrice) {
+            } else if (coin == tokenToPrice) {
                 tokenToPriceIndex = i;
             }
         }
