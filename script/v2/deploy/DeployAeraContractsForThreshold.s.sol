@@ -64,6 +64,18 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         uniswapSwapRouter
     ];
 
+    /// @inheritdoc DeployAeraContracts
+    function run()
+        public
+        returns (
+            address deployedVault,
+            address deployedAssetRegistry,
+            address deployedHooks
+        )
+    {
+        return run(bytes32("346"));
+    }
+
     function _getAeraVaultHooksParams(string memory relFilePath) 
         internal
         override
