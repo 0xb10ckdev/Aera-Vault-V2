@@ -169,28 +169,4 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
             targetSighashAllowlistMem
         );
     }
-
-    function _getTarget(TargetSighash targetSighash)
-        internal
-        pure
-        returns (address)
-    {
-        bytes32 ts;
-        assembly {
-            ts := targetSighash
-        }
-        return address(bytes20(ts));
-    }
-
-    function _getSelector(TargetSighash targetSighash)
-        internal
-        pure
-        returns (bytes4)
-    {
-        bytes32 ts;
-        assembly {
-            ts := targetSighash
-        }
-        return bytes4(ts << (20 * 8));
-    }
 }

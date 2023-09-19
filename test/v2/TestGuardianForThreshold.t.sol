@@ -127,20 +127,20 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
     }
 
     function _deployContracts() internal {
-        VaultParameters vaultParameters = VaultParameters(
+        VaultParameters memory vaultParameters = VaultParameters(
             address(this),
             guardianAddress,
             guardianAddress,
             fee
         );
 
-        HooksParameters hooksParameters = _getAeraVaultHooksParamsFromSolidity(
+        HooksParameters memory hooksParameters = _getAeraVaultHooksParamsFromSolidity(
             modulesFactoryAddress, 
             address(this), 
             minDailyValue
         );
 
-        AssetRegistryParameters assetRegistryParameters = _getAssetRegistryParameters();
+        AssetRegistryParameters memory assetRegistryParameters = _getAssetRegistryParameters();
         (vaultAddress, assetRegistryAddress, hooksAddress) =
         runFromPassedParams(
             bytes32("0"),
@@ -281,7 +281,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
             || selector == _INCREASE_ALLOWANCE_SELECTOR;
     }
 
-    function _getAssetRegistryParameters() internal {
+    function _getAssetRegistryParameters() internal returns (AssetRegistryParameters memory) {
         address numeraireToken;
         address feeToken;
         if (block.chainid == 137 ) {
@@ -292,7 +292,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(wethPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: address(0)
+                    oracle: AggregatorV2V3Interface(address(0))
                 })
             );
             assets.push(
@@ -300,7 +300,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(usdcPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: usdcOraclePolygon
+                    oracle: AggregatorV2V3Interface(usdcOraclePolygon)
                 })
             );
             assets.push(
@@ -308,7 +308,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(usdcPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: usdcOraclePolygon
+                    oracle: AggregatorV2V3Interface(usdcOraclePolygon)
                 })
             );
             assets.push(
@@ -316,7 +316,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(wstethPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: wstethOraclePolygon
+                    oracle: AggregatorV2V3Interface(wstethOraclePolygon)
                 })
             );
             assets.push(
@@ -324,7 +324,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(wmaticPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: wmaticOraclePolygon
+                    oracle: AggregatorV2V3Interface(wmaticOraclePolygon)
                 })
             );
             assets.push(
@@ -332,7 +332,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(waPolUSDC),
                     heartbeat: 86400,
                     isERC4626: true,
-                    oracle: address(0)
+                    oracle: AggregatorV2V3Interface(address(0))
                 })
             );
             assets.push(
@@ -340,7 +340,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(waPolWETH),
                     heartbeat: 86400,
                     isERC4626: true,
-                    oracle: address(0)
+                    oracle: AggregatorV2V3Interface(address(0))
                 })
             );
         } else {
@@ -351,7 +351,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(weth),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: address(0)
+                    oracle: AggregatorV2V3Interface(address(0))
                 })
             );
             assets.push(
@@ -359,7 +359,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(usdc),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: usdcOracle
+                    oracle: AggregatorV2V3Interface(usdcOracle)
                 })
             );
             assets.push(
@@ -367,7 +367,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(wsteth),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: wstethOracle
+                    oracle: AggregatorV2V3Interface(wstethOracle)
                 })
             );
             assets.push(
@@ -375,7 +375,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(T),
                     heartbeat: 86400,
                     isERC4626: false,
-                    oracle: TOracle
+                    oracle: AggregatorV2V3Interface(TOracle)
                 })
             );
 
@@ -384,7 +384,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
                     asset: IERC20(waUSDC),
                     heartbeat: 86400,
                     isERC4626: true,
-                    oracle: address(0)
+                    oracle: AggregatorV2V3Interface(address(0))
                 })
             );
         }
@@ -396,7 +396,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
             assets,
             IERC20(numeraireToken),
             IERC20(feeToken),
-            address(0)
+            AggregatorV2V3Interface(address(0))
         );
     }
 
@@ -406,7 +406,9 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         for (uint256 i = 0; i < n - 1; i++) {
             for (uint256 j = 0; j < n - i - 1; j++) {
                 if (assets[j].asset > assets[j + 1].asset) {
-                    (assets[j], assets[j + 1]) = (assets[j + 1], assets[j]);
+                    IAssetRegistry.AssetInformation storage tmp = assets[j];
+                    assets[j] = assets[j+1];
+                    assets[j+1] = tmp;
                 }
             }
         }

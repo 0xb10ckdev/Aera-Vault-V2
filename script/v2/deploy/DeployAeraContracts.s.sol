@@ -239,7 +239,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultHooksParams(string memory relFilePath)
         internal
-        view
+        virtual
         returns (HooksParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
