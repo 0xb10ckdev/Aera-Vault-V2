@@ -47,6 +47,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
     IAssetRegistry.AssetInformation[] assets;
+    IAssetRegistry.AssetInformation tmpAsset;
 
     modifier whenPolygon() {
         if (block.chainid != 137) {
@@ -117,6 +118,37 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         vm.stopPrank();
     }
 
+    function test_submitSwapAndDepositMainnet() public whenMainnet {
+        assertEq(address(this), vault.owner());
+        _loadSwapAndDepositOperationsMainnet();
+
+        AssetValue[] memory amounts = new AssetValue[](2);
+        amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
+        amounts[1] = AssetValue({asset: IERC20(weth), value: 1e18});
+
+        deal(usdc, address(this), amounts[0].value);
+        deal(weth, address(this), amounts[1].value);
+        IERC20(usdc).approve(vaultAddress, amounts[0].value);
+        IERC20(weth).approve(vaultAddress, amounts[1].value);
+        vault.deposit(amounts);
+        vault.resume();
+
+        // TODO: test warping, fees, etc
+        vm.startPrank(vault.guardian());
+        // fails with over/underflow if this is uncommented, in wapolweth::convertToAssets
+        // vm.warp(1000);
+        vault.submit(operations);
+        // fails with no fees available when no vm.warp
+        vm.expectRevert(
+            abi.encodePacked(
+                IVault.Aera__NoClaimableFeesForCaller.selector,
+                abi.encode(vault.guardian())
+            )
+        );
+        vault.claim();
+        vm.stopPrank();
+    }
+
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         factoryAddress = address(factory);
@@ -141,6 +173,8 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         );
 
         AssetRegistryParameters memory assetRegistryParameters = _getAssetRegistryParameters();
+
+        vm.startBroadcast(address(this));
         (vaultAddress, assetRegistryAddress, hooksAddress) =
         runFromPassedParams(
             bytes32("0"),
@@ -305,14 +339,6 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
             );
             assets.push(
                 IAssetRegistry.AssetInformation({
-                    asset: IERC20(usdcPolygon),
-                    heartbeat: 86400,
-                    isERC4626: false,
-                    oracle: AggregatorV2V3Interface(usdcOraclePolygon)
-                })
-            );
-            assets.push(
-                IAssetRegistry.AssetInformation({
                     asset: IERC20(wstethPolygon),
                     heartbeat: 86400,
                     isERC4626: false,
@@ -406,9 +432,14 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         for (uint256 i = 0; i < n - 1; i++) {
             for (uint256 j = 0; j < n - i - 1; j++) {
                 if (assets[j].asset > assets[j + 1].asset) {
-                    IAssetRegistry.AssetInformation storage tmp = assets[j];
+                    tmpAsset = IAssetRegistry.AssetInformation({
+                        asset: assets[j].asset,
+                        heartbeat: assets[j].heartbeat,
+                        isERC4626: assets[j].isERC4626,
+                        oracle: assets[j].oracle
+                    });
                     assets[j] = assets[j+1];
-                    assets[j+1] = tmp;
+                    assets[j+1] = tmpAsset;
                 }
             }
         }

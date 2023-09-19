@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
 import {AggregatorV2V3Interface} from

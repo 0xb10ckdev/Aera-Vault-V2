@@ -128,7 +128,6 @@ contract DeployAeraContracts is DeployScriptBase {
         address deployedHooks
     )
     {
-
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
         (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(
             v2Factory
