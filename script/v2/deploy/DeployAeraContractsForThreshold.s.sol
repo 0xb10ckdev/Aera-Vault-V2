@@ -33,18 +33,35 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
     address[] internal whitelistedCurveTargetsMainnet = [
         teth
     ];
+    address[] internal whitelistedCurveTargetsPolygon;
     address[] whitelistedERC20Targets;
     address[] internal whitelistedERC20TargetsMainnet = [
         wsteth,
         weth,
-        usdc
+        usdc,
+        T
+    ];
+    address[] internal whitelistedERC20TargetsPolygon = [
+        wstethPolygon,
+        wethPolygon,
+        usdcPolygon,
+        daiPolygon,
+        wmaticPolygon
     ];
     address[] whitelistedERC4626Targets;
     address[] internal whitelistedERC4626TargetsMainnet = [
         waUSDC
     ];
+    address[] internal whitelistedERC4626TargetsPolygon = [
+        waPolWETH,
+        waPolUSDC,
+        waPolDAI 
+    ];
     address[] whitelistedSwapRouters;
     address[] internal whitelistedSwapRoutersMainnet = [
+        uniswapSwapRouter
+    ];
+    address[] internal whitelistedSwapRoutersPolygon = [
         uniswapSwapRouter
     ];
 
@@ -252,11 +269,10 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
         uint256 minDailyValue = json.readUint(".minDailyValue");
 
         if (this.getChainID() == 137) {
-            // TODO - add polygon addresses
-            //whitelistedCurveTargets = whitelistedCurveTargetsPolygon;
-            //whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
-            //whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
-            //whitelistedSwapRouters = whitelistedSwapRoutersPolygon;
+            whitelistedCurveTargets = whitelistedCurveTargetsPolygon;
+            whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
+            whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
+            whitelistedSwapRouters = whitelistedSwapRoutersPolygon;
         } else if (this.getChainID() == 1) {
             whitelistedCurveTargets = whitelistedCurveTargetsMainnet;
             whitelistedERC20Targets = whitelistedERC20TargetsMainnet;

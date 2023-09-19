@@ -4,9 +4,12 @@ pragma solidity ^0.8.21;
 contract DeployConstants {
     address wethPolygon = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
     address usdcPolygon  = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
+    address daiPolygon = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+    address wmaticPolygon = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
     address waPolWETH = 0x5e5057b8D220eb8573Bc342136FdF1d869316D18;
+    address waPolUSDC = 0x2c616F5Dc3d482010D870d8a01b72cbB1711254A;
+    address waPolDAI = 0xB33166E092AFc5532c74041fd8793d96541C8C4B;
     address wstethPolygon  = 0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD;
-    address swapRouterAddressPolygon  = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     address teth = 0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
     address T = 0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;

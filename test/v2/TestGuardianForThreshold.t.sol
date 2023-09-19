@@ -4,9 +4,10 @@ pragma solidity ^0.8.21;
 import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
-import {DeployAeraContracts} from "script/v2/deploy/DeployAeraContracts.s.sol";
+import {DeployAeraContractsForThreshold} from "script/v2/deploy/DeployAeraContractsForThreshold.s.sol";
 import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraV2Factory.sol";
+import "src/v2/AeraVaultModulesFactory.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/IVault.sol";
 import "src/v2/AeraVaultHooks.sol";
@@ -23,7 +24,7 @@ struct OperationAlpha {
     uint256 value;
 }
 
-contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
+contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContractsForThreshold {
     bytes4 internal constant _APPROVE_SELECTOR = IERC20.approve.selector;
 
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
@@ -37,41 +38,62 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     address internal hooksAddress;
     address internal assetRegistryAddress;
     address internal factoryAddress;
+    address internal modulesFactoryAddress;
     address internal guardianAddress = address(1);
+    address internal wrappedNativeToken;
     AeraVaultV2 internal vault;
-    uint256 fee = 1000000000;
+    uint256 fee = 0;
     uint256 minDailyValue = 900000000000000000;
-    uint256 minBlockNumber = 46145721;
+    uint256 minBlockNumberPolygon = 46145721;
+    uint256 minBlockNumberMainnet = 18171594;
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
 
-    modifier whenValidNetwork() {
+    modifier whenPolygon() {
         if (block.chainid != 137) {
             return;
         }
-        if (block.number < minBlockNumber) {
+        if (block.number < minBlockNumberPolygon) {
             return;
         }
         _;
     }
 
-    function setUp() public virtual whenValidNetwork {
+    modifier whenMainnet() {
+        if (block.chainid != 1) {
+            return;
+        }
+        if (block.number < minBlockNumberPolygon) {
+            return;
+        }
+        _;
+    }
+
+    function setUp() public virtual {
         _deployerAddress = address(this);
         vm.label(wethPolygon, "wethPolygon");
-        vm.label(waPolWETH, "WAPOLWETH");
+        vm.label(waPolWETH, "waPolWETH");
         vm.label(usdcPolygon, "usdcPolygon");
+        vm.label(weth, "wethMainnet");
+        vm.label(waPolUSDC, "waPolUSDC");
+        vm.label(usdc, "usdcMainnet");
+        if (block.chainid == 137) {
+            wrappedNativeToken = wmaticPolygon;
+        } else {
+            wrappedNativeToken = weth;
+        }
 
         _deployFactory();
         _saveAeraVaultV2Params();
         _deployContracts();
     }
 
-    function test_submitSwapAndDeposit() public whenValidNetwork {
+    function test_submitSwapAndDepositPolygon() public whenPolygon {
         assertEq(address(this), vault.owner());
-        _loadSwapAndDepositOperations();
+        _loadSwapAndDepositOperationsPolygon();
 
         AssetValue[] memory amounts = new AssetValue[](2);
-        amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 25e6});
+        amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 50e6});
         amounts[1] = AssetValue({asset: IERC20(wethPolygon), value: 1e18});
 
         deal(usdcPolygon, address(this), amounts[0].value);
@@ -98,9 +120,12 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     }
 
     function _deployFactory() internal {
-        AeraV2Factory factory = new AeraV2Factory(wethPolygon);
+        AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         factoryAddress = address(factory);
+        AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(factoryAddress);
+        modulesFactoryAddress = address(modulesFactory);
         vm.label(factoryAddress, "Factory");
+        vm.label(modulesFactoryAddress, "ModulesFactory");
     }
 
     function _saveAeraVaultV2Params() internal {
@@ -120,7 +145,8 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
 
     function _deployContracts() internal {
         _writeHooksParams();
-        (assetRegistryAddress, vaultAddress, hooksAddress) =
+        _writeAssetRegistryParams();
+        (vaultAddress, assetRegistryAddress, hooksAddress) =
         runFromSpecifiedConfigPaths(
             0,
             "/config/test_guardian/AeraVaultAssetRegistry.json",
@@ -134,12 +160,12 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         vault = AeraVaultV2(payable(vaultAddress));
     }
 
-    function _loadSwapAndDepositOperations() internal {
+    function _loadSwapAndDepositOperationsPolygon() internal {
         operations.push(
             Operation({
                 data: abi.encodePacked(
                     IERC20.approve.selector,
-                    abi.encode(address(swapRouterAddressPolygon), 2480252)
+                    abi.encode(address(uniswapSwapRouter), 2480252)
                     ),
                 target: usdcPolygon,
                 value: 0
@@ -160,7 +186,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                         )
                     )
                     ),
-                target: swapRouterAddressPolygon,
+                target: uniswapSwapRouter,
                 value: 0
             })
         );
@@ -188,6 +214,63 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         );
     }
 
+    // TODO: also test t-token and curve swap
+    function _loadSwapAndDepositOperationsMainnet() internal {
+        operations.push(
+            Operation({
+                data: abi.encodePacked(
+                    IERC20.approve.selector,
+                    abi.encode(address(uniswapSwapRouter), 2480252)
+                    ),
+                target: usdc,
+                value: 0
+            })
+        );
+
+        operations.push(
+            Operation({
+                data: abi.encodePacked(
+                    ISwapRouter.exactInput.selector,
+                    abi.encode(
+                        ISwapRouter.ExactInputParams(
+                            abi.encodePacked(usdc, uint24(500), weth),
+                            address(this),
+                            block.timestamp + 3600,
+                            2480252,
+                            1293364631244994
+                        )
+                    )
+                    ),
+                target: uniswapSwapRouter,
+                value: 0
+            })
+        );
+
+        operations.push(
+            Operation({
+                data: abi.encodePacked(
+                    IERC20.approve.selector,
+                    abi.encode(waUSDC, 20e6)
+                    ),
+                target: usdc,
+                value: 0
+            })
+        );
+
+        operations.push(
+            Operation({
+                data: abi.encodePacked(
+                    IERC4626.deposit.selector,
+                    abi.encode(20e6, vaultAddress)
+                    ),
+                target: waUSDC,
+                value: 0
+            })
+        );
+    }
+
+
+
     function getSelector(bytes calldata data) public pure returns (bytes4) {
         return bytes4(data[0:4]);
     }
@@ -199,6 +282,31 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     {
         return selector == _APPROVE_SELECTOR
             || selector == _INCREASE_ALLOWANCE_SELECTOR;
+    }
+
+    function _writeAssetRegistryParams() internal {
+        string memory aeraVaultAssetRegistryReadPath;
+        // TODO: remove json and just deploy using solidity variables
+        address numeraireToken;
+        address feeToken;
+        if (block.chainid == 137 ) {
+            aeraVaultAssetRegistryReadPath = string.concat(rootPath, "/AeraVaultAssetRegistryPolygon.json");
+            numeraireToken = wethPolygon;
+            feeToken = wethPolygon;
+        } else {
+            aeraVaultAssetRegistryReadPath = string.concat(rootPath, "/AeraVaultAssetRegistryMainnet.json");
+            numeraireToken = weth;
+            feeToken = weth;
+        }
+        string memory aeraVaultAssetRegistryPath =
+            string.concat(rootPath, "/AeraVaultAssetRegistry.json");
+
+        setAddress(aeraVaultAssetRegistryPath, "owner", address(this));
+        setAddress(aeraVaultAssetRegistryPath, "numeraireToken", numeraireToken);
+        setAddress(aeraVaultAssetRegistryPath, "feeToken", feeToken);
+        setAddress(aeraVaultAssetRegistryPath, "sequencer", address(0));
+        setAddress(aeraVaultAssetRegistryPath, "assetRegistryFactory", modulesFactoryAddress);
+        // TODO: serialize the struct of assets?
     }
 
     function _writeHooksParams() internal {
@@ -214,22 +322,22 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddressPolygon, ISwapRouter.exactInput.selector
+                    uniswapSwapRouter, ISwapRouter.exactInput.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddressPolygon, ISwapRouter.exactInputSingle.selector
+                    uniswapSwapRouter, ISwapRouter.exactInputSingle.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddressPolygon, ISwapRouter.exactOutput.selector
+                    uniswapSwapRouter, ISwapRouter.exactOutput.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddressPolygon, ISwapRouter.exactOutputSingle.selector
+                    uniswapSwapRouter, ISwapRouter.exactOutputSingle.selector
                 )
             ),
             TargetSighash.unwrap(
@@ -259,18 +367,16 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         string memory aeraVaultHooksPath =
             string.concat(rootPath, "/AeraVaultHooks.json");
 
-        vm.serializeAddress("Hooks", "owner", address(this));
-        vm.serializeUint(
-            "Hooks", "minDailyValue", minDailyValue
-        );
-        vm.serializeAddress(
-            "Hooks", "hooksFactory", address(0)
-        );
-        string memory json;
-        json = vm.serializeBytes32(
-            "Hooks", "targetSighashAllowlist", dynamicSighashArray
-        );
+        setUint(aeraVaultHooksPath, "minDailyValue", minDailyValue);
+        setAddress(aeraVaultHooksPath, "hooksFactory", modulesFactoryAddress);
+        setAddress(aeraVaultHooksPath, "owner", address(this));
+    }
 
-        vm.writeJson(json, aeraVaultHooksPath);
+    function setAddress(string memory filepath, string memory jsonPath, address value) public {
+        vm.writeJson(vm.toString(value), filepath, string(abi.encodePacked(".", jsonPath)));
+    }
+
+    function setUint(string memory filepath, string memory jsonPath, uint256 value) public {
+        vm.writeJson(vm.toString(value), filepath, string(abi.encodePacked(".", jsonPath)));
     }
 }

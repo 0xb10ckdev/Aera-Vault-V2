@@ -1,0 +1,33 @@
+{
+  "assetRegistryFactory": "0xC6149001299f3894FA2554e518b40961Da554eE0",
+  "owner": "0x0000000000000000000000000000000000000000",
+  "assets": [
+    {
+      "asset": "0x2f79d4ceb79ebd26161e51ca0c9300f970ded54d",
+      "isERC4626": true,
+      "oracle": "0x0000000000000000000000000000000000000000",
+      "heartbeat": 86400
+    },
+    {
+      "asset": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "isERC4626": false,
+      "oracle": "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4",
+      "heartbeat": 86400
+    },
+    {
+      "asset": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "isERC4626": false,
+      "oracle": "0x0000000000000000000000000000000000000000",
+      "heartbeat": 86400
+    },
+    {
+      "asset": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
+      "isERC4626": false,
+      "oracle": "0x277e028e24655792320038E2f8d397654866933c",
+      "heartbeat": 86400
+    }
+  ],
+  "numeraireToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  "feeToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  "sequencer": "0x0000000000000000000000000000000000000000"
+}
