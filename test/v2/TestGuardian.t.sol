@@ -46,7 +46,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     Operation[] operations;
 
     modifier whenValidNetwork() {
-        if (this.getChainID() != 137) {
+        if (block.chainid != 137) {
             return;
         }
         if (block.number < minBlockNumber) {
