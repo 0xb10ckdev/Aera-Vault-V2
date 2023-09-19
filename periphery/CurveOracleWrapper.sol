@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 import "@openzeppelin/IERC20Metadata.sol";
+import "./SafeCast.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import {ONE} from "src/v2/Constants.sol";
 import "./ICurveFiPool.sol";
@@ -15,8 +16,6 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
     uint256 public immutable numeraireIndex;
 
     /// @notice 10 ** decimals of numeraire asset
-    uint256 public immutable numeraireScale;
-
     /// @notice The index in the curve pool of the asset we want a price for
     uint256 public immutable tokenToPriceIndex;
 
@@ -27,7 +26,6 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
 
     error TokenToPriceNotFoundInPoool(address pool, address tokenToPrice);
     error NumeraireTokenNotFoundInPool(address pool, address numeraireToken);
-    error CurvePriceOverflowsInt256();
     error NotImplemented();
 
     /// FUNCTIONS ///
@@ -59,7 +57,6 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
         
         // Effects: initialize contract variables.
         pool = pool_;
-        numeraireScale = 10 ** IERC20Metadata(numeraireToken).decimals();
         decimals = 18;
     }
     
@@ -70,11 +67,7 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
         if (numeraireIndex == 0) {
             uintAnswer = ONE * (ONE / uintAnswer);
         }
-
-        if (uintAnswer > uint256(type(int256).max)) {
-            revert CurvePriceOverflowsInt256();
-        }
-        answer = int256(uintAnswer);
+        answer = SafeCast.toInt256(uintAnswer);
 
         updatedAt = block.timestamp;
     }
