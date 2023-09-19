@@ -4,8 +4,9 @@ pragma solidity ^0.8.21;
 import {stdJson} from "forge-std/Script.sol";
 import {Script} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
+import {DeployConstants} from "./DeployConstants.sol";
 
-contract DeployScriptBase is Script, Test {
+contract DeployScriptBase is DeployConstants, Script, Test {
     using stdJson for string;
 
     // subclasses need to set this to msg.sender

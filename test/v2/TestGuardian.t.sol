@@ -39,11 +39,6 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     address internal factoryAddress;
     address internal guardianAddress = address(1);
     AeraVaultV2 internal vault;
-    address weth = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
-    address usdc = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
-    address waPolWETH = 0x5e5057b8D220eb8573Bc342136FdF1d869316D18;
-    address wsteth = 0x03b54A6e9a984069379fae1a4fC4dBAE93B3bCCD;
-    address swapRouterAddress = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 fee = 1000000000;
     uint256 minDailyValue = 900000000000000000;
     uint256 minBlockNumber = 46145721;
@@ -51,7 +46,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     Operation[] operations;
 
     modifier whenValidNetwork() {
-        if (this.getChainID() != 137) {
+        if (block.chainid != 137) {
             return;
         }
         if (block.number < minBlockNumber) {
@@ -62,9 +57,9 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
 
     function setUp() public virtual whenValidNetwork {
         _deployerAddress = address(this);
-        vm.label(weth, "WETH");
+        vm.label(wethPolygon, "wethPolygon");
         vm.label(waPolWETH, "WAPOLWETH");
-        vm.label(usdc, "USDC");
+        vm.label(usdcPolygon, "usdcPolygon");
 
         _deployFactory();
         _saveAeraVaultV2Params();
@@ -76,13 +71,13 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         _loadSwapAndDepositOperations();
 
         AssetValue[] memory amounts = new AssetValue[](2);
-        amounts[0] = AssetValue({asset: IERC20(usdc), value: 25e6});
-        amounts[1] = AssetValue({asset: IERC20(weth), value: 1e18});
+        amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 25e6});
+        amounts[1] = AssetValue({asset: IERC20(wethPolygon), value: 1e18});
 
-        deal(usdc, address(this), amounts[0].value);
-        deal(weth, address(this), amounts[1].value);
-        IERC20(usdc).approve(vaultAddress, amounts[0].value);
-        IERC20(weth).approve(vaultAddress, amounts[1].value);
+        deal(usdcPolygon, address(this), amounts[0].value);
+        deal(wethPolygon, address(this), amounts[1].value);
+        IERC20(usdcPolygon).approve(vaultAddress, amounts[0].value);
+        IERC20(wethPolygon).approve(vaultAddress, amounts[1].value);
         vault.deposit(amounts);
         vault.resume();
 
@@ -103,7 +98,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     }
 
     function _deployFactory() internal {
-        AeraV2Factory factory = new AeraV2Factory(weth);
+        AeraV2Factory factory = new AeraV2Factory(wethPolygon);
         factoryAddress = address(factory);
         vm.label(factoryAddress, "Factory");
     }
@@ -144,9 +139,9 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
             Operation({
                 data: abi.encodePacked(
                     IERC20.approve.selector,
-                    abi.encode(address(swapRouterAddress), 2480252)
+                    abi.encode(address(swapRouterAddressPolygon), 2480252)
                     ),
-                target: usdc,
+                target: usdcPolygon,
                 value: 0
             })
         );
@@ -157,7 +152,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                     ISwapRouter.exactInput.selector,
                     abi.encode(
                         ISwapRouter.ExactInputParams(
-                            abi.encodePacked(usdc, uint24(500), weth),
+                            abi.encodePacked(usdcPolygon, uint24(500), wethPolygon),
                             address(this),
                             block.timestamp + 3600,
                             2480252,
@@ -165,7 +160,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                         )
                     )
                     ),
-                target: swapRouterAddress,
+                target: swapRouterAddressPolygon,
                 value: 0
             })
         );
@@ -176,7 +171,7 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
                     IERC20.approve.selector,
                     abi.encode(waPolWETH, 1293364631244994)
                     ),
-                target: weth,
+                target: wethPolygon,
                 value: 0
             })
         );
@@ -209,32 +204,32 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
     function _writeHooksParams() internal {
         bytes32[11] memory sighashes = [
             TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(usdc, IERC20.approve.selector)
+                TargetSighashLib.toTargetSighash(usdcPolygon, IERC20.approve.selector)
             ),
             TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(weth, IERC20.approve.selector)
+                TargetSighashLib.toTargetSighash(wethPolygon, IERC20.approve.selector)
             ),
             TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(wsteth, IERC20.approve.selector)
+                TargetSighashLib.toTargetSighash(wstethPolygon, IERC20.approve.selector)
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddress, ISwapRouter.exactInput.selector
+                    swapRouterAddressPolygon, ISwapRouter.exactInput.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddress, ISwapRouter.exactInputSingle.selector
+                    swapRouterAddressPolygon, ISwapRouter.exactInputSingle.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddress, ISwapRouter.exactOutput.selector
+                    swapRouterAddressPolygon, ISwapRouter.exactOutput.selector
                 )
             ),
             TargetSighash.unwrap(
                 TargetSighashLib.toTargetSighash(
-                    swapRouterAddress, ISwapRouter.exactOutputSingle.selector
+                    swapRouterAddressPolygon, ISwapRouter.exactOutputSingle.selector
                 )
             ),
             TargetSighash.unwrap(
@@ -274,13 +269,5 @@ contract TestGuardian is Test, DeployScriptBase, DeployAeraContracts {
         );
 
         vm.writeJson(json, aeraVaultHooksPath);
-    }
-
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
     }
 }
