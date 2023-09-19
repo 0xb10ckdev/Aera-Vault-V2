@@ -24,20 +24,20 @@ import "periphery/ICurveFiPool.sol";
 
 contract DeployAeraContractsForThreshold is DeployAeraContracts {
     TargetSighashData[] targetSighashAllowlistStorage;
-    address[] whitelistedCurveTargets;
-    address[] internal whitelistedCurveTargetsMainnet = [teth];
-    address[] internal whitelistedCurveTargetsPolygon;
-    address[] whitelistedERC20Targets;
-    address[] internal whitelistedERC20TargetsMainnet = [wsteth, weth, usdc, T];
-    address[] internal whitelistedERC20TargetsPolygon =
+    address[] allowlistedCurveTargets;
+    address[] internal allowlistedCurveTargetsMainnet = [teth];
+    address[] internal allowlistedCurveTargetsPolygon;
+    address[] allowlistedERC20Targets;
+    address[] internal allowlistedERC20TargetsMainnet = [wsteth, weth, usdc, T];
+    address[] internal allowlistedERC20TargetsPolygon =
         [wstethPolygon, wethPolygon, usdcPolygon, daiPolygon, wmaticPolygon];
-    address[] whitelistedERC4626Targets;
-    address[] internal whitelistedERC4626TargetsMainnet = [waUSDC];
-    address[] internal whitelistedERC4626TargetsPolygon =
+    address[] allowlistedERC4626Targets;
+    address[] internal allowlistedERC4626TargetsMainnet = [waUSDC];
+    address[] internal allowlistedERC4626TargetsPolygon =
         [waPolWETH, waPolUSDC, waPolDAI];
-    address[] whitelistedSwapRouters;
-    address[] internal whitelistedSwapRoutersMainnet = [uniswapSwapRouter];
-    address[] internal whitelistedSwapRoutersPolygon = [uniswapSwapRouter];
+    address[] allowlistedSwapRouters;
+    address[] internal allowlistedSwapRoutersMainnet = [uniswapSwapRouter];
+    address[] internal allowlistedSwapRoutersPolygon = [uniswapSwapRouter];
 
     address v2Factory = 0x6b8d4485e11aae228a32FAe5802c6d4BA25EA404;
     address vaultModulesFactory = 0xC6149001299f3894FA2554e518b40961Da554eE0;
@@ -101,94 +101,96 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         returns (TargetSighashData[] memory)
     {
         if (block.chainid == 137) {
-            whitelistedCurveTargets = whitelistedCurveTargetsPolygon;
-            whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
-            whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
-            whitelistedSwapRouters = whitelistedSwapRoutersPolygon;
+            allowlistedCurveTargets = allowlistedCurveTargetsPolygon;
+            allowlistedERC20Targets = allowlistedERC20TargetsPolygon;
+            allowlistedERC4626Targets = allowlistedERC4626TargetsPolygon;
+            allowlistedSwapRouters = allowlistedSwapRoutersPolygon;
         } else if (block.chainid == 1) {
-            whitelistedCurveTargets = whitelistedCurveTargetsMainnet;
-            whitelistedERC20Targets = whitelistedERC20TargetsMainnet;
-            whitelistedERC4626Targets = whitelistedERC4626TargetsMainnet;
-            whitelistedSwapRouters = whitelistedSwapRoutersMainnet;
+            allowlistedCurveTargets = allowlistedCurveTargetsMainnet;
+            allowlistedERC20Targets = allowlistedERC20TargetsMainnet;
+            allowlistedERC4626Targets = allowlistedERC4626TargetsMainnet;
+            allowlistedSwapRouters = allowlistedSwapRoutersMainnet;
         } else {
             revert("unsupported chain");
         }
-        for (uint256 i = 0; i < whitelistedCurveTargets.length; i++) {
+        for (uint256 i = 0; i < allowlistedCurveTargets.length; i++) {
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedCurveTargetsMainnet[i],
+                    target: allowlistedCurveTargetsMainnet[i],
                     selector: ICurveFiPool.exchange.selector
                 })
             );
         }
-        for (uint256 i = 0; i < whitelistedERC20Targets.length; i++) {
+        for (uint256 i = 0; i < allowlistedERC20Targets.length; i++) {
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC20Targets[i],
+                    target: allowlistedERC20Targets[i],
                     selector: IERC20.approve.selector
                 })
             );
         }
-        for (uint256 i = 0; i < whitelistedERC4626Targets.length; i++) {
+        for (uint256 i = 0; i < allowlistedERC4626Targets.length; i++) {
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC4626Targets[i],
+                    target: allowlistedERC4626Targets[i],
                     selector: IERC20.approve.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC4626Targets[i],
+                    target: allowlistedERC4626Targets[i],
                     selector: IERC4626.deposit.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC4626Targets[i],
+                    target: allowlistedERC4626Targets[i],
                     selector: IERC4626.withdraw.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC4626Targets[i],
+                    target: allowlistedERC4626Targets[i],
                     selector: IERC4626.mint.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedERC4626Targets[i],
+                    target: allowlistedERC4626Targets[i],
                     selector: IERC4626.redeem.selector
                 })
             );
         }
-        for (uint256 i = 0; i < whitelistedSwapRouters.length; i++) {
+        for (uint256 i = 0; i < allowlistedSwapRouters.length; i++) {
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedSwapRouters[i],
+                    target: allowlistedSwapRouters[i],
                     selector: ISwapRouter.exactInput.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedSwapRouters[i],
+                    target: allowlistedSwapRouters[i],
                     selector: ISwapRouter.exactInputSingle.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedSwapRouters[i],
+                    target: allowlistedSwapRouters[i],
                     selector: ISwapRouter.exactOutput.selector
                 })
             );
             targetSighashAllowlistStorage.push(
                 TargetSighashData({
-                    target: whitelistedSwapRouters[i],
+                    target: allowlistedSwapRouters[i],
                     selector: ISwapRouter.exactOutputSingle.selector
                 })
             );
         }
         TargetSighashData[] memory targetSighashAllowlistMem =
-            new TargetSighashData[](targetSighashAllowlistStorage.length);
+        new TargetSighashData[](
+                targetSighashAllowlistStorage.length
+            );
         for (uint256 i = 0; i < targetSighashAllowlistStorage.length; i++) {
             targetSighashAllowlistMem[i] = targetSighashAllowlistStorage[i];
         }
