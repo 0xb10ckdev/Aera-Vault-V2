@@ -32,6 +32,7 @@ contract WstETHOracle is AggregatorV2V3Interface {
     /// @inheritdoc AggregatorV3Interface
     function latestRoundData() external view override returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
         // Assumes ETH : stETH exchange rate of 1 : 1.
+        // In future, can use stETH/ETH chainlink oracle to be slightly more accurate
         uint256 uintAnswer = IWstETH(wstETH).getStETHByWstETH(ONE);
 
         if (uintAnswer > uint256(type(int256).max)) {
