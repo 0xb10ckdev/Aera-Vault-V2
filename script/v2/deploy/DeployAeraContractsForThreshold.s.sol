@@ -67,6 +67,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
     /// @inheritdoc DeployAeraContracts
     function run()
         public
+        override
         returns (
             address deployedVault,
             address deployedAssetRegistry,

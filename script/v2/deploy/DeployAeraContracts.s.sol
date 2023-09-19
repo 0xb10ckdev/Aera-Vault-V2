@@ -32,6 +32,7 @@ contract DeployAeraContracts is DeployScriptBase {
     /// @return deployedHooks The address of deployed Hooks.
     function run()
         public
+        virtual
         returns (
             address deployedVault,
             address deployedAssetRegistry,
