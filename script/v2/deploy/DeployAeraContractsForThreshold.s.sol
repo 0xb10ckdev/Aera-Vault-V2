@@ -50,7 +50,7 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
 
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks if they were not
     ///         deployed yet.
-    /// @dev It uses 0x00 for salt input value.
+    /// @dev It uses 0x346 for salt input value.
     /// @return deployedVault The address of deployed AeraVaultV2.
     /// @return deployedAssetRegistry The address of deployed AssetRegistry.
     /// @return deployedHooks The address of deployed Hooks.
@@ -62,7 +62,7 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
             address deployedHooks
         )
     {
-        return run(0);
+        return run(346); // random salt
     }
 
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt input
