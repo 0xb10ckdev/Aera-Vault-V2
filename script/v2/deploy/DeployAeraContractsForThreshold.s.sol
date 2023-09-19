@@ -25,44 +25,24 @@ import "periphery/ICurveFiPool.sol";
 contract DeployAeraContractsForThreshold is DeployAeraContracts {
     TargetSighashData[] targetSighashAllowlistStorage;
     address[] whitelistedCurveTargets;
-    address[] internal whitelistedCurveTargetsMainnet = [
-        teth
-    ];
+    address[] internal whitelistedCurveTargetsMainnet = [teth];
     address[] internal whitelistedCurveTargetsPolygon;
     address[] whitelistedERC20Targets;
-    address[] internal whitelistedERC20TargetsMainnet = [
-        wsteth,
-        weth,
-        usdc,
-        T
-    ];
-    address[] internal whitelistedERC20TargetsPolygon = [
-        wstethPolygon,
-        wethPolygon,
-        usdcPolygon,
-        daiPolygon,
-        wmaticPolygon
-    ];
+    address[] internal whitelistedERC20TargetsMainnet = [wsteth, weth, usdc, T];
+    address[] internal whitelistedERC20TargetsPolygon =
+        [wstethPolygon, wethPolygon, usdcPolygon, daiPolygon, wmaticPolygon];
     address[] whitelistedERC4626Targets;
-    address[] internal whitelistedERC4626TargetsMainnet = [
-        waUSDC
-    ];
-    address[] internal whitelistedERC4626TargetsPolygon = [
-        waPolWETH,
-        waPolUSDC,
-        waPolDAI 
-    ];
+    address[] internal whitelistedERC4626TargetsMainnet = [waUSDC];
+    address[] internal whitelistedERC4626TargetsPolygon =
+        [waPolWETH, waPolUSDC, waPolDAI];
     address[] whitelistedSwapRouters;
-    address[] internal whitelistedSwapRoutersMainnet = [
-        uniswapSwapRouter
-    ];
-    address[] internal whitelistedSwapRoutersPolygon = [
-        uniswapSwapRouter
-    ];
-    
+    address[] internal whitelistedSwapRoutersMainnet = [uniswapSwapRouter];
+    address[] internal whitelistedSwapRoutersPolygon = [uniswapSwapRouter];
+
     address v2Factory = 0x6b8d4485e11aae228a32FAe5802c6d4BA25EA404;
     address vaultModulesFactory = 0xC6149001299f3894FA2554e518b40961Da554eE0;
-    address internal guardianAddress = 0xacEb23F3d96a2e3BE44306D9e57aaF9a0d1FFD74;
+    address internal guardianAddress =
+        0xacEb23F3d96a2e3BE44306D9e57aaF9a0d1FFD74;
     address internal feeRecipient = guardianAddress;
     uint256 minDailyValue = 0.9e18;
     uint256 fee = 0;
@@ -92,23 +72,21 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         )
     {
         return (
-            v2Factory, 
+            v2Factory,
             VaultParameters(
-                address(this),
-                guardianAddress,
-                guardianAddress,
-                fee
-            ), 
+                address(this), guardianAddress, guardianAddress, fee
+                ),
             description
         );
     }
 
-    function _getAeraVaultHooksParams(string memory) 
+    function _getAeraVaultHooksParams(string memory)
         internal
         override
         returns (HooksParameters memory)
     {
-        TargetSighashData[] memory targetSighashAllowlist = _getTargetSighashAllowList();
+        TargetSighashData[] memory targetSighashAllowlist =
+            _getTargetSighashAllowList();
 
         return HooksParameters(
             vaultModulesFactory,
@@ -136,56 +114,78 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
             revert("unsupported chain");
         }
         for (uint256 i = 0; i < whitelistedCurveTargets.length; i++) {
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedCurveTargetsMainnet[i],
-                selector: ICurveFiPool.exchange.selector
-            }));
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedCurveTargetsMainnet[i],
+                    selector: ICurveFiPool.exchange.selector
+                })
+            );
         }
         for (uint256 i = 0; i < whitelistedERC20Targets.length; i++) {
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC20Targets[i],
-                selector: IERC20.approve.selector
-            }));
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC20Targets[i],
+                    selector: IERC20.approve.selector
+                })
+            );
         }
         for (uint256 i = 0; i < whitelistedERC4626Targets.length; i++) {
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC4626Targets[i],
-                selector: IERC20.approve.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC4626Targets[i],
-                selector: IERC4626.deposit.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC4626Targets[i],
-                selector: IERC4626.withdraw.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC4626Targets[i],
-                selector: IERC4626.mint.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedERC4626Targets[i],
-                selector: IERC4626.redeem.selector
-            }));
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC4626Targets[i],
+                    selector: IERC20.approve.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC4626Targets[i],
+                    selector: IERC4626.deposit.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC4626Targets[i],
+                    selector: IERC4626.withdraw.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC4626Targets[i],
+                    selector: IERC4626.mint.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedERC4626Targets[i],
+                    selector: IERC4626.redeem.selector
+                })
+            );
         }
         for (uint256 i = 0; i < whitelistedSwapRouters.length; i++) {
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedSwapRouters[i],
-                selector: ISwapRouter.exactInput.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedSwapRouters[i],
-                selector: ISwapRouter.exactInputSingle.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedSwapRouters[i],
-                selector: ISwapRouter.exactOutput.selector
-            }));
-            targetSighashAllowlistStorage.push(TargetSighashData({
-                target: whitelistedSwapRouters[i],
-                selector: ISwapRouter.exactOutputSingle.selector
-            }));
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedSwapRouters[i],
+                    selector: ISwapRouter.exactInput.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedSwapRouters[i],
+                    selector: ISwapRouter.exactInputSingle.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedSwapRouters[i],
+                    selector: ISwapRouter.exactOutput.selector
+                })
+            );
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: whitelistedSwapRouters[i],
+                    selector: ISwapRouter.exactOutputSingle.selector
+                })
+            );
         }
         TargetSighashData[] memory targetSighashAllowlistMem =
             new TargetSighashData[](targetSighashAllowlistStorage.length);
@@ -195,7 +195,12 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         return targetSighashAllowlistMem;
     }
 
-    function _getAssetRegistryParams(string memory) internal virtual override returns (AssetRegistryParameters memory) {
+    function _getAssetRegistryParams(string memory)
+        internal
+        virtual
+        override
+        returns (AssetRegistryParameters memory)
+    {
         IAssetRegistry.AssetInformation[] memory assets = _getAssets();
         address numeraireToken = weth;
         address feeToken = weth;
@@ -209,8 +214,12 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         );
     }
 
-    function _getAssets() internal returns (IAssetRegistry.AssetInformation[] memory) {
-        IAssetRegistry.AssetInformation[] memory assets = new IAssetRegistry.AssetInformation[](5);
+    function _getAssets()
+        internal
+        returns (IAssetRegistry.AssetInformation[] memory)
+    {
+        IAssetRegistry.AssetInformation[] memory assets =
+            new IAssetRegistry.AssetInformation[](5);
         uint256 i = 0;
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(weth),
@@ -247,7 +256,10 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         return assets;
     }
 
-    function _sortAssets(IAssetRegistry.AssetInformation[] memory assets) internal pure {
+    function _sortAssets(IAssetRegistry.AssetInformation[] memory assets)
+        internal
+        pure
+    {
         IAssetRegistry.AssetInformation memory tmpAsset;
         uint256 n = assets.length;
 
@@ -260,8 +272,8 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
                         isERC4626: assets[j].isERC4626,
                         oracle: assets[j].oracle
                     });
-                    assets[j] = assets[j+1];
-                    assets[j+1] = tmpAsset;
+                    assets[j] = assets[j + 1];
+                    assets[j + 1] = tmpAsset;
                 }
             }
         }
