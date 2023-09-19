@@ -170,14 +170,13 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         v2Factory = address(factory);
         AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(v2Factory);
         vaultModulesFactory = address(modulesFactory);
-        vm.label(factoryAddress, "Factory");
+        vm.label(v2Factory, "Factory");
         vm.label(vaultModulesFactory, "ModulesFactory");
     }
 
     function _deployContracts() internal {
         _deployerAddress = address(this);
 
-        vm.startBroadcast(address(this));
         (vaultAddress, assetRegistryAddress, hooksAddress) = run();
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
