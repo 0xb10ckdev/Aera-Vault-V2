@@ -3,17 +3,16 @@ pragma solidity 0.8.21;
 import "@openzeppelin/IERC20Metadata.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "./IWstETH.sol";
+import {ONE} from "src/v2/Constants.sol";
 
-/// @title CurveOracleWrapper 
-/// @notice Used to calculate price of tokens in a Curve V2 pool
+/// @title WstETHOracle
+/// @notice Used to calculate price of wstETH.
 contract WstETHOracle is AggregatorV2V3Interface {
-    /// @notice The address of wstETH
+    /// @notice The address of wstETH.
     address public immutable wstETH;
 
-    /// @notice Decimals of price returned by this oracle
+    /// @notice Decimals of price returned by this oracle.
     uint8 public immutable decimals;
-
-    uint256 internal constant ONE = 10**18;
 
     /// ERRORS ///
 
@@ -23,9 +22,8 @@ contract WstETHOracle is AggregatorV2V3Interface {
     /// FUNCTIONS ///
 
     /// @notice Initialize the oracle contract.
-    /// @param wstETH_ wstETH address
+    /// @param wstETH_ wstETH address.
     constructor(address wstETH_) {
-        
         // Effects: initialize contract variables.
         wstETH = wstETH_;
         decimals = 18;
@@ -33,6 +31,7 @@ contract WstETHOracle is AggregatorV2V3Interface {
     
     /// @inheritdoc AggregatorV3Interface
     function latestRoundData() external view override returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
+        // Assumes ETH : stETH exchange rate of 1 : 1.
         uint256 uintAnswer = IWstETH(wstETH).getStETHByWstETH(ONE);
 
         if (uintAnswer > uint256(type(int256).max)) {
@@ -41,48 +40,52 @@ contract WstETHOracle is AggregatorV2V3Interface {
         answer = int256(uintAnswer);
 
         updatedAt = block.timestamp;
+        
+        roundId = 0;
+        startedAt = 0;
+        answeredInRound = 0;
     }
     
     /// @inheritdoc AggregatorV3Interface
-    function description() external view returns (string memory) {
+    function description() external pure returns (string memory) {
         return "";
     }
 
-    function getAnswer(uint256 roundId) external view returns (int256) {
+    function getAnswer(uint256) external pure returns (int256) {
         revert NotImplemented();
     }
 
     /// @inheritdoc AggregatorV3Interface
-    function getRoundData(uint80 _roundId) 
-        external view 
+    function getRoundData(uint80) 
+        external pure 
         returns (
-          uint80 roundId,
-          int256 answer,
-          uint256 startedAt,
-          uint256 updatedAt,
-          uint80 answeredInRound
+          uint80,
+          int256,
+          uint256,
+          uint256,
+          uint80
         ) {
         revert NotImplemented();
     }
 
-    function getTimestamp(uint256 roundId) external view returns (uint256) {
+    function getTimestamp(uint256) external pure returns (uint256) {
         revert NotImplemented();
     }
 
-    function latestAnswer() external view returns (int256) {
+    function latestAnswer() external pure returns (int256) {
         revert NotImplemented();
     }
 
-    function latestRound() external view returns (uint256) {
+    function latestRound() external pure returns (uint256) {
         revert NotImplemented();
     }
 
-    function latestTimestamp() external view returns (uint256) {
+    function latestTimestamp() external pure returns (uint256) {
         revert NotImplemented();
     }
 
     /// @inheritdoc AggregatorV3Interface
-    function version() external view returns (uint256){
+    function version() external pure returns (uint256){
         revert NotImplemented();
     }
 }
