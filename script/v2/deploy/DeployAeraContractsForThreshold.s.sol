@@ -62,7 +62,7 @@ contract DeployAeraContractsForThreshold is DeployScriptBase {
             address deployedHooks
         )
     {
-        return run(346); // random salt
+        return run(bytes32("346")); // random salt
     }
 
     /// @notice Deploy AssetRegistry, AeraVaultV2 and Hooks with the given salt input
