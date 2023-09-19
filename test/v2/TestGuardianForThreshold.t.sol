@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import {stdJson} from "forge-std/Script.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
 import {DeployAeraContractsForThreshold} from "script/v2/deploy/DeployAeraContractsForThreshold.s.sol";
@@ -9,6 +8,7 @@ import {DeployScriptBase} from "script/utils/DeployScriptBase.sol";
 import "src/v2/AeraV2Factory.sol";
 import "src/v2/AeraVaultModulesFactory.sol";
 import "src/v2/AeraVaultV2.sol";
+import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/interfaces/IVault.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/TargetSighashLib.sol";
@@ -30,8 +30,6 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
     bytes4 internal constant _INCREASE_ALLOWANCE_SELECTOR =
         IERC20IncreaseAllowance.increaseAllowance.selector;
 
-    using stdJson for string;
-
     uint256 internal senderPrivateKey;
     address internal senderAddress;
     address internal vaultAddress;
@@ -48,6 +46,7 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
     uint256 minBlockNumberMainnet = 18171594;
     string rootPath = string.concat(vm.projectRoot(), "/config/test_guardian");
     Operation[] operations;
+    IAssetRegistry.AssetInformation[] assets;
 
     modifier whenPolygon() {
         if (block.chainid != 137) {
@@ -84,7 +83,6 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         }
 
         _deployFactory();
-        _saveAeraVaultV2Params();
         _deployContracts();
     }
 
@@ -128,31 +126,30 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
         vm.label(modulesFactoryAddress, "ModulesFactory");
     }
 
-    function _saveAeraVaultV2Params() internal {
-        string memory aeraVaultV2Path =
-            string.concat(rootPath, "/AeraVaultV2.json");
-
-        vm.serializeAddress("Deployments", "owner", address(this));
-        vm.serializeString("Deployments", "description", "Test Vault");
-        vm.serializeUint("Deployments", "fee", fee);
-        vm.serializeAddress("Deployments", "guardian", guardianAddress);
-        vm.serializeAddress("Deployments", "feeRecipient", guardianAddress);
-        vm.writeJson(
-            vm.serializeAddress("Deployments", "v2Factory", factoryAddress),
-            aeraVaultV2Path
-        );
-    }
-
     function _deployContracts() internal {
-        _writeHooksParams();
-        _writeAssetRegistryParams();
+        VaultParameters vaultParameters = VaultParameters(
+            address(this),
+            guardianAddress,
+            guardianAddress,
+            fee
+        );
+
+        HooksParameters hooksParameters = _getAeraVaultHooksParamsFromSolidity(
+            modulesFactoryAddress, 
+            address(this), 
+            minDailyValue
+        );
+
+        AssetRegistryParameters assetRegistryParameters = _getAssetRegistryParameters();
         (vaultAddress, assetRegistryAddress, hooksAddress) =
-        runFromSpecifiedConfigPaths(
-            0,
-            "/config/test_guardian/AeraVaultAssetRegistry.json",
-            "/config/test_guardian/AeraVaultV2.json",
-            "/config/test_guardian/AeraVaultHooks.json",
-            false
+        runFromPassedParams(
+            bytes32("0"),
+            factoryAddress,
+            "test threshold vault",
+            vaultParameters,
+            assetRegistryParameters,
+            hooksParameters,
+            true
         );
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
@@ -284,99 +281,134 @@ contract TestGuardianForThreshold is Test, DeployScriptBase, DeployAeraContracts
             || selector == _INCREASE_ALLOWANCE_SELECTOR;
     }
 
-    function _writeAssetRegistryParams() internal {
-        string memory aeraVaultAssetRegistryReadPath;
-        // TODO: remove json and just deploy using solidity variables
+    function _getAssetRegistryParameters() internal {
         address numeraireToken;
         address feeToken;
         if (block.chainid == 137 ) {
-            aeraVaultAssetRegistryReadPath = string.concat(rootPath, "/AeraVaultAssetRegistryPolygon.json");
             numeraireToken = wethPolygon;
             feeToken = wethPolygon;
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(wethPolygon),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: address(0)
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(usdcPolygon),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: usdcOraclePolygon
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(usdcPolygon),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: usdcOraclePolygon
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(wstethPolygon),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: wstethOraclePolygon
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(wmaticPolygon),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: wmaticOraclePolygon
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(waPolUSDC),
+                    heartbeat: 86400,
+                    isERC4626: true,
+                    oracle: address(0)
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(waPolWETH),
+                    heartbeat: 86400,
+                    isERC4626: true,
+                    oracle: address(0)
+                })
+            );
         } else {
-            aeraVaultAssetRegistryReadPath = string.concat(rootPath, "/AeraVaultAssetRegistryMainnet.json");
             numeraireToken = weth;
             feeToken = weth;
-        }
-        string memory aeraVaultAssetRegistryPath =
-            string.concat(rootPath, "/AeraVaultAssetRegistry.json");
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(weth),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: address(0)
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(usdc),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: usdcOracle
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(wsteth),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: wstethOracle
+                })
+            );
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(T),
+                    heartbeat: 86400,
+                    isERC4626: false,
+                    oracle: TOracle
+                })
+            );
 
-        setAddress(aeraVaultAssetRegistryPath, "owner", address(this));
-        setAddress(aeraVaultAssetRegistryPath, "numeraireToken", numeraireToken);
-        setAddress(aeraVaultAssetRegistryPath, "feeToken", feeToken);
-        setAddress(aeraVaultAssetRegistryPath, "sequencer", address(0));
-        setAddress(aeraVaultAssetRegistryPath, "assetRegistryFactory", modulesFactoryAddress);
-        // TODO: serialize the struct of assets?
-    }
-
-    function _writeHooksParams() internal {
-        bytes32[11] memory sighashes = [
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(usdcPolygon, IERC20.approve.selector)
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(wethPolygon, IERC20.approve.selector)
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(wstethPolygon, IERC20.approve.selector)
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    uniswapSwapRouter, ISwapRouter.exactInput.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    uniswapSwapRouter, ISwapRouter.exactInputSingle.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    uniswapSwapRouter, ISwapRouter.exactOutput.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    uniswapSwapRouter, ISwapRouter.exactOutputSingle.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    waPolWETH, IERC4626.deposit.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    waPolWETH, IERC4626.withdraw.selector
-                )
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(waPolWETH, IERC4626.mint.selector)
-            ),
-            TargetSighash.unwrap(
-                TargetSighashLib.toTargetSighash(
-                    waPolWETH, IERC4626.redeem.selector
-                )
-            )
-        ];
-        bytes32[] memory dynamicSighashArray = new bytes32[](11);
-        for (uint256 i = 0; i < sighashes.length; i++) {
-            dynamicSighashArray[i] = sighashes[i];
+            assets.push(
+                IAssetRegistry.AssetInformation({
+                    asset: IERC20(waUSDC),
+                    heartbeat: 86400,
+                    isERC4626: true,
+                    oracle: address(0)
+                })
+            );
         }
 
-        string memory aeraVaultHooksPath =
-            string.concat(rootPath, "/AeraVaultHooks.json");
-
-        setUint(aeraVaultHooksPath, "minDailyValue", minDailyValue);
-        setAddress(aeraVaultHooksPath, "hooksFactory", modulesFactoryAddress);
-        setAddress(aeraVaultHooksPath, "owner", address(this));
+        _sortAssets();
+        return AssetRegistryParameters(
+            modulesFactoryAddress,
+            address(this),
+            assets,
+            IERC20(numeraireToken),
+            IERC20(feeToken),
+            address(0)
+        );
     }
 
-    function setAddress(string memory filepath, string memory jsonPath, address value) public {
-        vm.writeJson(vm.toString(value), filepath, string(abi.encodePacked(".", jsonPath)));
-    }
+    function _sortAssets() internal {
+        uint256 n = assets.length;
 
-    function setUint(string memory filepath, string memory jsonPath, uint256 value) public {
-        vm.writeJson(vm.toString(value), filepath, string(abi.encodePacked(".", jsonPath)));
+        for (uint256 i = 0; i < n - 1; i++) {
+            for (uint256 j = 0; j < n - i - 1; j++) {
+                if (assets[j].asset > assets[j + 1].asset) {
+                    (assets[j], assets[j + 1]) = (assets[j + 1], assets[j]);
+                }
+            }
+        }
     }
 }
