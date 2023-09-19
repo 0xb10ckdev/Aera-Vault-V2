@@ -195,7 +195,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         return targetSighashAllowlistMem;
     }
 
-    function _getAssetRegistryParams(string memory) internal override returns (AssetRegistryParameters memory) {
+    function _getAssetRegistryParams(string memory) internal virtual override returns (AssetRegistryParameters memory) {
         IAssetRegistry.AssetInformation[] memory assets = _getAssets();
         address numeraireToken = weth;
         address feeToken = weth;

@@ -102,33 +102,6 @@ contract DeployAeraContracts is DeployScriptBase {
         HooksParameters memory hooksParameters =
             _getAeraVaultHooksParams(aeraVaultHooksPath);
 
-        return runFromPassedParams(
-            saltInput,
-            v2Factory, 
-            description, 
-            vaultParameters, 
-            assetRegistryParameters, 
-            hooksParameters,
-            broadcast
-        );
-    }
-
-    function runFromPassedParams(
-        bytes32 saltInput,
-        address v2Factory,
-        string memory description,
-        VaultParameters memory vaultParameters, 
-        AssetRegistryParameters memory assetRegistryParameters, 
-        HooksParameters memory hooksParameters,
-        bool broadcast
-    )
-    public
-    returns (
-        address deployedVault,
-        address deployedAssetRegistry,
-        address deployedHooks
-    )
-    {
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
         (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(
             v2Factory

@@ -19,8 +19,6 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     address internal vaultAddress;
     address internal hooksAddress;
     address internal assetRegistryAddress;
-    address internal factoryAddress;
-    address internal modulesFactoryAddress;
     address internal wrappedNativeToken;
     AeraVaultV2 internal vault;
     uint256 minBlockNumberPolygon = 46145721;
@@ -169,41 +167,18 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
-        factoryAddress = address(factory);
-        AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(factoryAddress);
-        modulesFactoryAddress = address(modulesFactory);
+        v2Factory = address(factory);
+        AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(v2Factory);
+        vaultModulesFactory = address(modulesFactory);
         vm.label(factoryAddress, "Factory");
-        vm.label(modulesFactoryAddress, "ModulesFactory");
+        vm.label(vaultModulesFactory, "ModulesFactory");
     }
 
     function _deployContracts() internal {
-        VaultParameters memory vaultParameters = VaultParameters(
-            address(this),
-            guardianAddress,
-            guardianAddress,
-            fee
-        );
-
-        HooksParameters memory hooksParameters = HooksParameters(
-            modulesFactoryAddress,
-            address(this),
-            minDailyValue,
-            _getTargetSighashAllowList()
-        );
-
-        AssetRegistryParameters memory assetRegistryParameters = _getAssetRegistryParams();
+        _deployerAddress = address(this);
 
         vm.startBroadcast(address(this));
-        (vaultAddress, assetRegistryAddress, hooksAddress) =
-        runFromPassedParams(
-            bytes32("0"),
-            factoryAddress,
-            "test threshold vault",
-            vaultParameters,
-            assetRegistryParameters,
-            hooksParameters,
-            true
-        );
+        (vaultAddress, assetRegistryAddress, hooksAddress) = run();
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
         vm.label(assetRegistryAddress, "ASSET_REGISTRY");
@@ -257,7 +232,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         return operations;
     }
 
-    function _getAssetRegistryParams() internal returns (AssetRegistryParameters memory) {
+    function _getAssetRegistryParams(string memory) internal override returns (AssetRegistryParameters memory) {
         IAssetRegistry.AssetInformation[] memory assets;
         address numeraireToken;
         address feeToken;
@@ -272,7 +247,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         }
 
         return AssetRegistryParameters(
-            modulesFactoryAddress,
+            vaultModulesFactory,
             address(this),
             assets,
             IERC20(numeraireToken),
