@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 import "@openzeppelin/IERC20Metadata.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
+import {ONE} from "src/v2/Constants.sol";
 import "./ICurveFiPool.sol";
 
 /// @title CurveOracleWrapper 
@@ -21,8 +22,6 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
 
     /// @notice Decimals of price returned by this oracle
     uint8 public immutable decimals;
-
-    uint256 internal constant ONE = 10**18;
 
     /// ERRORS ///
 
