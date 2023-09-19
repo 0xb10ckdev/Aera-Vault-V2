@@ -15,6 +15,7 @@ contract DeployConstants {
     address wmaticOraclePolygon = 0x327e23A4855b6F663a28c5161541d69Af8973302;
     address wstethOraclePolygon = 0x3Ea1eC855fBda8bA0396975eC260AD2e9B2Bc01c;
 
+    address balancerVault = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
     address teth = 0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC;
     address T = 0xCdF7028ceAB81fA0C6971208e83fa7872994beE5;
     address TOracle = 0x4c3C5088382A700c47bC0D0A20649d192D39D124;

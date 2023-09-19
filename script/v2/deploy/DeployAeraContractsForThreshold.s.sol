@@ -21,12 +21,16 @@ import {
 import {DeployAeraContracts} from "./DeployAeraContracts.s.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
 import "periphery/ICurveFiPool.sol";
+import "periphery/IBalancer.sol";
 
 contract DeployAeraContractsForThreshold is DeployAeraContracts {
     TargetSighashData[] targetSighashAllowlistStorage;
     address[] allowedCurveTargets;
     address[] internal allowedCurveTargetsMainnet = [teth];
     address[] internal allowedCurveTargetsPolygon;
+    address[] allowedBalancerTargets;
+    address[] internal allowedBalancerTargetsMainnet = [balancerVault];
+    address[] internal allowedBalancerTargetsPolygon;
     address[] allowedERC20Targets;
     address[] internal allowedERC20TargetsMainnet = [wsteth, weth, usdc, T];
     address[] internal allowedERC20TargetsPolygon =
@@ -102,11 +106,13 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
     {
         if (block.chainid == 137) {
             allowedCurveTargets = allowedCurveTargetsPolygon;
+            allowedBalancerTargets = allowedBalancerTargetsPolygon;
             allowedERC20Targets = allowedERC20TargetsPolygon;
             allowedERC4626Targets = allowedERC4626TargetsPolygon;
             allowedSwapRouters = allowedSwapRoutersPolygon;
         } else if (block.chainid == 1) {
             allowedCurveTargets = allowedCurveTargetsMainnet;
+            allowedBalancerTargets = allowedBalancerTargetsMainnet;
             allowedERC20Targets = allowedERC20TargetsMainnet;
             allowedERC4626Targets = allowedERC4626TargetsMainnet;
             allowedSwapRouters = allowedSwapRoutersMainnet;
@@ -118,6 +124,14 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
                 TargetSighashData({
                     target: allowedCurveTargets[i],
                     selector: ICurveFiPool.exchange.selector
+                })
+            );
+        }
+        for (uint256 i = 0; i < allowedBalancerTargets.length; i++) {
+            targetSighashAllowlistStorage.push(
+                TargetSighashData({
+                    target: allowedBalancerTargets[i],
+                    selector: Balancer.swap.selector
                 })
             );
         }
