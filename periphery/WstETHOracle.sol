@@ -55,7 +55,6 @@ contract WstETHOracle is AggregatorV2V3Interface {
         revert NotImplemented();
     }
 
-    /// @inheritdoc AggregatorV3Interface
     function getRoundData(uint80) 
         external pure 
         returns (
@@ -84,7 +83,6 @@ contract WstETHOracle is AggregatorV2V3Interface {
         revert NotImplemented();
     }
 
-    /// @inheritdoc AggregatorV3Interface
     function version() external pure returns (uint256){
         revert NotImplemented();
     }
