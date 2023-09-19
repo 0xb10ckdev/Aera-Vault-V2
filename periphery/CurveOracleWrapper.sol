@@ -63,13 +63,16 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
     /// @inheritdoc AggregatorV3Interface
     function latestRoundData() external view override returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
         uint256 uintAnswer = ICurveFiPool(pool).price_oracle();
-        // reverse price
         if (numeraireIndex == 0) {
-            uintAnswer = ONE * (ONE / uintAnswer);
+            uintAnswer = _getReciprocalPrice(uintAnswer);
         }
         answer = SafeCast.toInt256(uintAnswer);
 
         updatedAt = block.timestamp;
+    }
+    
+    function _getReciprocalPrice(uint256 price) internal pure returns (uint256) {
+        return ONE * ONE / price;
     }
     
     /// @inheritdoc AggregatorV3Interface
