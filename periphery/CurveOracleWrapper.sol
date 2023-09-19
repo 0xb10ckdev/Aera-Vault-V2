@@ -69,6 +69,10 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
         answer = SafeCast.toInt256(uintAnswer);
 
         updatedAt = block.timestamp;
+
+        roundId = 0;
+        startedAt = 0;
+        answeredInRound = 0;
     }
     
     function _getReciprocalPrice(uint256 price) internal pure returns (uint256) {
@@ -76,45 +80,45 @@ contract CurveOracleWrapper is AggregatorV2V3Interface {
     }
     
     /// @inheritdoc AggregatorV3Interface
-    function description() external view returns (string memory) {
+    function description() external pure returns (string memory) {
         return "";
     }
 
-    function getAnswer(uint256 roundId) external view returns (int256) {
+    function getAnswer(uint256) external pure returns (int256) {
         revert NotImplemented();
     }
 
     /// @inheritdoc AggregatorV3Interface
-    function getRoundData(uint80 _roundId) 
-        external view 
+    function getRoundData(uint80) 
+        external pure 
         returns (
-          uint80 roundId,
-          int256 answer,
-          uint256 startedAt,
-          uint256 updatedAt,
-          uint80 answeredInRound
+          uint80,
+          int256,
+          uint256,
+          uint256,
+          uint80 
         ) {
         revert NotImplemented();
     }
 
-    function getTimestamp(uint256 roundId) external view returns (uint256) {
+    function getTimestamp(uint256) external pure returns (uint256) {
         revert NotImplemented();
     }
 
-    function latestAnswer() external view returns (int256) {
+    function latestAnswer() external pure returns (int256) {
         revert NotImplemented();
     }
 
-    function latestRound() external view returns (uint256) {
+    function latestRound() external pure returns (uint256) {
         revert NotImplemented();
     }
 
-    function latestTimestamp() external view returns (uint256) {
+    function latestTimestamp() external pure returns (uint256) {
         revert NotImplemented();
     }
 
     /// @inheritdoc AggregatorV3Interface
-    function version() external view returns (uint256){
+    function version() external pure returns (uint256){
         revert NotImplemented();
     }
 }
