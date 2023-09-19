@@ -9,7 +9,7 @@ contract FixedPriceOracle is Ownable {
 
     constructor(int256 _price, address _owner, uint8 decimals_) Ownable() {
         price = _price;
-        transferOwnership(_owner);
+        _transferOwnership(_owner);
         decimals = decimals_;
     }
 
