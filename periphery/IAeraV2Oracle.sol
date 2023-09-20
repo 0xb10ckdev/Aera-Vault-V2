@@ -13,12 +13,12 @@ interface IAeraV2Oracle {
     ///         answer is the price
     function latestRoundData()
         external
-        view 
+        view
         returns (
-            uint80 roundId, 
-            int256 answer, 
-            uint256 startedAt, 
-            uint256 updatedAt, 
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
             uint80 answeredInRound
         );
 }

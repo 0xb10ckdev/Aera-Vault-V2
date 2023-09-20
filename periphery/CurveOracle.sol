@@ -16,7 +16,7 @@ contract CurveOracle is IAeraV2Oracle {
     /// @notice Decimals of price returned by this oracle (matches the quote token's decimals)
     uint8 public immutable decimals;
 
-    /// @notice "BASE/QUOTE" 
+    /// @notice "BASE/QUOTE"
     string public description;
 
     /// @notice Whether the price returned by this oracle inverts the pool's pricing oracle
@@ -65,7 +65,7 @@ contract CurveOracle is IAeraV2Oracle {
             IERC20Metadata(quoteToken).symbol()
         );
 
-        decimals = quoteDecimals; 
+        decimals = quoteDecimals;
         invertedNumerator = 10 ** (baseDecimals + quoteDecimals);
     }
 

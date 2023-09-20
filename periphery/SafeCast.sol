@@ -589,7 +589,11 @@ library SafeCast {
      *
      * - input must fit into 248 bits
      */
-    function toInt248(int256 value) internal pure returns (int248 downcasted) {
+    function toInt248(int256 value)
+        internal
+        pure
+        returns (int248 downcasted)
+    {
         downcasted = int248(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(248, value);
@@ -607,7 +611,11 @@ library SafeCast {
      *
      * - input must fit into 240 bits
      */
-    function toInt240(int256 value) internal pure returns (int240 downcasted) {
+    function toInt240(int256 value)
+        internal
+        pure
+        returns (int240 downcasted)
+    {
         downcasted = int240(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(240, value);
@@ -625,7 +633,11 @@ library SafeCast {
      *
      * - input must fit into 232 bits
      */
-    function toInt232(int256 value) internal pure returns (int232 downcasted) {
+    function toInt232(int256 value)
+        internal
+        pure
+        returns (int232 downcasted)
+    {
         downcasted = int232(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(232, value);
@@ -643,7 +655,11 @@ library SafeCast {
      *
      * - input must fit into 224 bits
      */
-    function toInt224(int256 value) internal pure returns (int224 downcasted) {
+    function toInt224(int256 value)
+        internal
+        pure
+        returns (int224 downcasted)
+    {
         downcasted = int224(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(224, value);
@@ -661,7 +677,11 @@ library SafeCast {
      *
      * - input must fit into 216 bits
      */
-    function toInt216(int256 value) internal pure returns (int216 downcasted) {
+    function toInt216(int256 value)
+        internal
+        pure
+        returns (int216 downcasted)
+    {
         downcasted = int216(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(216, value);
@@ -679,7 +699,11 @@ library SafeCast {
      *
      * - input must fit into 208 bits
      */
-    function toInt208(int256 value) internal pure returns (int208 downcasted) {
+    function toInt208(int256 value)
+        internal
+        pure
+        returns (int208 downcasted)
+    {
         downcasted = int208(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(208, value);
@@ -697,7 +721,11 @@ library SafeCast {
      *
      * - input must fit into 200 bits
      */
-    function toInt200(int256 value) internal pure returns (int200 downcasted) {
+    function toInt200(int256 value)
+        internal
+        pure
+        returns (int200 downcasted)
+    {
         downcasted = int200(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(200, value);
@@ -715,7 +743,11 @@ library SafeCast {
      *
      * - input must fit into 192 bits
      */
-    function toInt192(int256 value) internal pure returns (int192 downcasted) {
+    function toInt192(int256 value)
+        internal
+        pure
+        returns (int192 downcasted)
+    {
         downcasted = int192(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(192, value);
@@ -733,7 +765,11 @@ library SafeCast {
      *
      * - input must fit into 184 bits
      */
-    function toInt184(int256 value) internal pure returns (int184 downcasted) {
+    function toInt184(int256 value)
+        internal
+        pure
+        returns (int184 downcasted)
+    {
         downcasted = int184(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(184, value);
@@ -751,7 +787,11 @@ library SafeCast {
      *
      * - input must fit into 176 bits
      */
-    function toInt176(int256 value) internal pure returns (int176 downcasted) {
+    function toInt176(int256 value)
+        internal
+        pure
+        returns (int176 downcasted)
+    {
         downcasted = int176(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(176, value);
@@ -769,7 +809,11 @@ library SafeCast {
      *
      * - input must fit into 168 bits
      */
-    function toInt168(int256 value) internal pure returns (int168 downcasted) {
+    function toInt168(int256 value)
+        internal
+        pure
+        returns (int168 downcasted)
+    {
         downcasted = int168(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(168, value);
@@ -787,7 +831,11 @@ library SafeCast {
      *
      * - input must fit into 160 bits
      */
-    function toInt160(int256 value) internal pure returns (int160 downcasted) {
+    function toInt160(int256 value)
+        internal
+        pure
+        returns (int160 downcasted)
+    {
         downcasted = int160(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(160, value);
@@ -805,7 +853,11 @@ library SafeCast {
      *
      * - input must fit into 152 bits
      */
-    function toInt152(int256 value) internal pure returns (int152 downcasted) {
+    function toInt152(int256 value)
+        internal
+        pure
+        returns (int152 downcasted)
+    {
         downcasted = int152(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(152, value);
@@ -823,7 +875,11 @@ library SafeCast {
      *
      * - input must fit into 144 bits
      */
-    function toInt144(int256 value) internal pure returns (int144 downcasted) {
+    function toInt144(int256 value)
+        internal
+        pure
+        returns (int144 downcasted)
+    {
         downcasted = int144(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(144, value);
@@ -841,7 +897,11 @@ library SafeCast {
      *
      * - input must fit into 136 bits
      */
-    function toInt136(int256 value) internal pure returns (int136 downcasted) {
+    function toInt136(int256 value)
+        internal
+        pure
+        returns (int136 downcasted)
+    {
         downcasted = int136(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(136, value);
@@ -859,7 +919,11 @@ library SafeCast {
      *
      * - input must fit into 128 bits
      */
-    function toInt128(int256 value) internal pure returns (int128 downcasted) {
+    function toInt128(int256 value)
+        internal
+        pure
+        returns (int128 downcasted)
+    {
         downcasted = int128(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(128, value);
@@ -877,7 +941,11 @@ library SafeCast {
      *
      * - input must fit into 120 bits
      */
-    function toInt120(int256 value) internal pure returns (int120 downcasted) {
+    function toInt120(int256 value)
+        internal
+        pure
+        returns (int120 downcasted)
+    {
         downcasted = int120(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(120, value);
@@ -895,7 +963,11 @@ library SafeCast {
      *
      * - input must fit into 112 bits
      */
-    function toInt112(int256 value) internal pure returns (int112 downcasted) {
+    function toInt112(int256 value)
+        internal
+        pure
+        returns (int112 downcasted)
+    {
         downcasted = int112(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(112, value);
@@ -913,7 +985,11 @@ library SafeCast {
      *
      * - input must fit into 104 bits
      */
-    function toInt104(int256 value) internal pure returns (int104 downcasted) {
+    function toInt104(int256 value)
+        internal
+        pure
+        returns (int104 downcasted)
+    {
         downcasted = int104(value);
         if (downcasted != value) {
             revert SafeCastOverflowedIntDowncast(104, value);
