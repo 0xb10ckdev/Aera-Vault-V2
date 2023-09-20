@@ -51,7 +51,6 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         [waPolWETH, waPolUSDC, waPolDAI];
     bytes4[] internal allowedERC4626Selectors = [
         IERC20.approve.selector,
-        IERC20.approve.selector,
         IERC4626.deposit.selector,
         IERC4626.withdraw.selector,
         IERC4626.mint.selector,
@@ -136,8 +135,8 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         address[] memory targets,
         bytes4[] memory selectors
     ) public {
-        for (uint256 i = 0; i < allowedCurveTargets.length; i++) {
-            for (uint256 j = 0; j < allowedCurveTargets.length; j++) {
+        for (uint256 i = 0; i < targets.length; i++) {
+            for (uint256 j = 0; j < selectors.length; j++) {
                 addSelector(targets[i], selectors[j]);
             }
         }
