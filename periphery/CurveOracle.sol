@@ -5,7 +5,6 @@ import "@openzeppelin/IERC20Metadata.sol";
 import "./SafeCast.sol";
 import {ONE} from "src/v2/Constants.sol";
 import "./ICurveFiPool.sol";
-import {console} from "forge-std/console.sol";
 
 /// @title CurveOracle
 /// @notice Used to calculate price of tokens in a Curve V2 pool
@@ -21,6 +20,7 @@ contract CurveOracle {
 
     /// @notice Whether the price returned by this oracle inverts the pool's pricing oracle
     bool private immutable invertedPrice;
+
     /// @notice If invertedPrice, then invertedNumerator / price is what's returned
     uint256 private immutable invertedNumerator;
 
@@ -87,7 +87,7 @@ contract CurveOracle {
         roundId = 0;
         answer = SafeCast.toInt256(price);
         startedAt = 0;
-        updatedAt = block.timestamp;
+        updatedAt = ICurveFiPool(pool).last_prices_timestamp();
         answeredInRound = 0;
     }
 }
