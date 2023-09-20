@@ -57,9 +57,6 @@ contract CurveOracle {
         uint8 baseDecimals = IERC20Metadata(baseToken).decimals();
         uint8 quoteDecimals = IERC20Metadata(quoteToken).decimals();
 
-        uint256 baseTokenUnitAmount = 10 ** baseDecimals;
-        uint256 quoteTokenUnitAmount = 10 ** quoteDecimals;
-
         pool = pool_;
         description = string.concat(
             IERC20Metadata(baseToken).symbol(),
@@ -68,7 +65,7 @@ contract CurveOracle {
         );
 
         decimals = quoteDecimals; 
-        invertedNumerator = quoteTokenUnitAmount * baseTokenUnitAmount;
+        invertedNumerator = 10 ** (baseDecimals + quoteDecimals);
     }
 
     function latestRoundData()
