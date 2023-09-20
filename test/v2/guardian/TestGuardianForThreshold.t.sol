@@ -263,6 +263,54 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(usdc).balanceOf(address(vault)) >= minOutput);
     }
 
+    function test_swapWstETHETH() public whenMainnet {
+        uint256 exactInput = 1e18;
+        uint256 minOutput = 1139900000000000000;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(wsteth), value: exactInput});
+        assert(amounts.length == i);
+
+        for (i = 0; i < amounts.length; i++) {
+            console.log(
+                "Approving %s",
+                IERC20Metadata(address(amounts[i].asset)).symbol()
+            );
+            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            amounts[i].asset.approve(address(vault), amounts[i].value);
+        }
+        vault.deposit(amounts);
+        vault.resume();
+
+        Operation[] memory operations = new Operation[](2);
+
+        i = 0;
+        operations[i++] =
+            Ops.approve(wsteth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.swap(
+            uniswapSwapRouter,
+            ISwapRouter.ExactInputParams(
+                abi.encodePacked(wsteth, uint24(100), weth),
+                address(vault),
+                block.timestamp + 3600,
+                exactInput,
+                minOutput
+            )
+        );
+        assert(operations.length == i);
+
+        assert(IERC20(wsteth).balanceOf(address(vault)) == exactInput);
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(wsteth).balanceOf(address(vault)) == 0);
+        assert(IERC20(weth).balanceOf(address(vault)) >= minOutput);
+        console.log("weth holdings", IERC20(weth).balanceOf(address(vault)));
+    }
+
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         v2Factory = address(factory);
