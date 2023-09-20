@@ -13,7 +13,7 @@ contract FixedPriceOracle is Ownable {
         decimals = decimals_;
     }
 
-    function setPrice(int256 _price) onlyOwner public {
+    function setPrice(int256 _price) public onlyOwner {
         price = _price;
     }
 

@@ -5,17 +5,18 @@ import "@openzeppelin/IERC20Metadata.sol";
 import "./SafeCast.sol";
 import {ONE} from "src/v2/Constants.sol";
 import "./ICurveFiPool.sol";
+import "./IAeraV2Oracle.sol";
 
 /// @title CurveOracle
 /// @notice Used to calculate price of tokens in a Curve V2 pool
-contract CurveOracle {
+contract CurveOracle is IAeraV2Oracle {
     /// @notice The address of underlying curve pool
     address public immutable pool;
 
     /// @notice Decimals of price returned by this oracle (matches the quote token's decimals)
     uint8 public immutable decimals;
 
-    /// @notice "BASE/QUOTE" 
+    /// @notice "BASE/QUOTE"
     string public description;
 
     /// @notice Whether the price returned by this oracle inverts the pool's pricing oracle
@@ -64,10 +65,11 @@ contract CurveOracle {
             IERC20Metadata(quoteToken).symbol()
         );
 
-        decimals = quoteDecimals; 
+        decimals = quoteDecimals;
         invertedNumerator = 10 ** (baseDecimals + quoteDecimals);
     }
 
+    /// @inheritdoc IAeraV2Oracle
     function latestRoundData()
         external
         view
