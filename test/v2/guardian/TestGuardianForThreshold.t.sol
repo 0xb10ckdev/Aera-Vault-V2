@@ -69,10 +69,6 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function _depositAmounts(AssetValue[] memory amounts) internal {
         for (uint256 i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
             deal(address(amounts[i].asset), address(this), amounts[i].value);
             amounts[i].asset.approve(address(vault), amounts[i].value);
         }
