@@ -69,6 +69,7 @@ contract CurveOracle is IAeraV2Oracle {
         invertedNumerator = 10 ** (baseDecimals + quoteDecimals);
     }
 
+    /// @inheritdoc IAeraV2Oracle
     function latestRoundData()
         external
         view
