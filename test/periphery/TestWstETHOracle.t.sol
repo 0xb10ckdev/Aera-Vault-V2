@@ -10,7 +10,7 @@ contract TestWstETHOracle is Test {
     WstETHOracle oracle;
 
     modifier whenValidNetwork() {
-        if (this.getChainID() != 1) {
+        if (block.chainid != 1) {
             return;
         }
         _;
@@ -37,13 +37,5 @@ contract TestWstETHOracle is Test {
         assertEq(startedAt, 0);
         assertEq(updatedAt, block.timestamp);
         assertEq(answeredInRound, 0);
-    }
-
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
     }
 }

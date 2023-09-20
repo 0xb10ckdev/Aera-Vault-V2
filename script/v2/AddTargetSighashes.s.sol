@@ -52,11 +52,11 @@ contract AddTargetSigHashes is Script, Test {
         console.logBytes4(IERC4626.withdraw.selector);
         console.logBytes4(IERC4626.mint.selector);
         console.logBytes4(IERC4626.redeem.selector);
-        if (this.getChainID() == 137) {
+        if (block.chainid == 137) {
             whitelistedERC20Targets = whitelistedERC20TargetsPolygon;
             whitelistedERC4626Targets = whitelistedERC4626TargetsPolygon;
             whitelistedSwapRouters = whitelistedSwapRoutersPolygon;
-        } else if (this.getChainID() == 1) {
+        } else if (block.chainid == 1) {
             whitelistedERC20Targets = whitelistedERC20TargetsMainnet;
             whitelistedERC4626Targets = whitelistedERC4626TargetsMainnet;
             whitelistedSwapRouters = whitelistedSwapRoutersMainnet;
@@ -115,13 +115,5 @@ contract AddTargetSigHashes is Script, Test {
             );
         }
         vm.stopBroadcast();
-    }
-
-    function getChainID() external view returns (uint256) {
-        uint256 id;
-        assembly {
-            id := chainid()
-        }
-        return id;
     }
 }
