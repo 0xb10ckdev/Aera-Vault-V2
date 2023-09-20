@@ -32,6 +32,7 @@ contract DeployAeraContracts is DeployScriptBase {
     /// @return deployedHooks The address of deployed Hooks.
     function run()
         public
+        virtual
         returns (
             address deployedVault,
             address deployedAssetRegistry,
@@ -142,6 +143,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultV2Params(string memory relFilePath)
         internal
+        virtual
         view
         returns (
             address v2Factory,
@@ -176,7 +178,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAssetRegistryParams(string memory relFilePath)
         internal
-        view
+        virtual
         returns (AssetRegistryParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
@@ -211,7 +213,7 @@ contract DeployAeraContracts is DeployScriptBase {
 
     function _getAeraVaultHooksParams(string memory relFilePath)
         internal
-        view
+        virtual
         returns (HooksParameters memory)
     {
         string memory path = string.concat(vm.projectRoot(), relFilePath);
