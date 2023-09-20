@@ -87,7 +87,7 @@ contract CurveOracle {
         roundId = 0;
         answer = SafeCast.toInt256(price);
         startedAt = 0;
-        updatedAt = ICurveFiPool(pool).last_prices_timestamp();
+        updatedAt = block.timestamp;
         answeredInRound = 0;
     }
 }
