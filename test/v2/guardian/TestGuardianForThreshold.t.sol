@@ -32,7 +32,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             return;
         }
         if (block.number != requiredBlockNumberPolygon) {
-            return;
+            revert("wrong block number");
         }
         _;
     }
@@ -42,7 +42,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             return;
         }
         if (block.number != requiredBlockNumberMainnet) {
-            return;
+            revert("wrong block number");
         }
         _;
     }
