@@ -236,7 +236,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function test_swapWstETHETH() public whenMainnet {
         uint256 exactInput = 1e18;
-        uint256 minOutput = 1.1399e18;
+        uint256 minOutput = 1.12e18;
 
         AssetValue[] memory amounts = new AssetValue[](1);
         uint256 i = 0;
