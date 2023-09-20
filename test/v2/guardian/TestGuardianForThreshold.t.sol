@@ -67,19 +67,26 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         }
     }
 
+    function _depositAmounts(AssetValue[] memory amounts) internal {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            console.log(
+                "Approving %s",
+                IERC20Metadata(address(amounts[i].asset)).symbol()
+            );
+            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            amounts[i].asset.approve(address(vault), amounts[i].value);
+        }
+        vault.deposit(amounts);
+        vault.resume();
+    }
+
     function test_submitSwapAndDepositPolygon() public whenPolygon {
         assertEq(address(this), vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 50e6});
         amounts[1] = AssetValue({asset: IERC20(wethPolygon), value: 1e18});
-
-        deal(usdcPolygon, address(this), amounts[0].value);
-        deal(wethPolygon, address(this), amounts[1].value);
-        IERC20(usdcPolygon).approve(vaultAddress, amounts[0].value);
-        IERC20(wethPolygon).approve(vaultAddress, amounts[1].value);
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         // TODO: test warping, fees, etc
         vm.startPrank(vault.guardian());
@@ -104,13 +111,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
         amounts[1] = AssetValue({asset: IERC20(weth), value: 1e18});
-
-        deal(usdc, address(this), amounts[0].value);
-        deal(weth, address(this), amounts[1].value);
-        IERC20(usdc).approve(vaultAddress, amounts[0].value);
-        IERC20(weth).approve(vaultAddress, amounts[1].value);
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         // TODO: test warping, fees, etc
         vm.startPrank(vault.guardian());
@@ -140,17 +141,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(T), value: startSize});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](2);
 
@@ -178,17 +169,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(usdc), value: startSize});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](3);
 
@@ -223,17 +204,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(weth), value: exactInput});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](2);
 
@@ -270,17 +241,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(wsteth), value: exactInput});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](2);
 
@@ -317,17 +278,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(weth), value: exactInput});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](2);
 
