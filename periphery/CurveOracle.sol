@@ -5,10 +5,11 @@ import "@openzeppelin/IERC20Metadata.sol";
 import "./SafeCast.sol";
 import {ONE} from "src/v2/Constants.sol";
 import "./ICurveFiPool.sol";
+import "./IAeraV2Oracle.sol";
 
 /// @title CurveOracle
 /// @notice Used to calculate price of tokens in a Curve V2 pool
-contract CurveOracle {
+contract CurveOracle is IAeraV2Oracle {
     /// @notice The address of underlying curve pool
     address public immutable pool;
 

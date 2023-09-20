@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 interface IAeraV2Oracle {
-    function decimals() external view returns (uint256);
+    function decimals() external view returns (uint8);
     function latestRoundData()
         external
         view 
