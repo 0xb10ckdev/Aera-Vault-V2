@@ -22,14 +22,16 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     address public assetRegistryAddress;
     address public wrappedNativeToken;
     AeraVaultV2 public vault;
-    uint256 public minBlockNumberPolygon = 46145721;
-    uint256 public minBlockNumberMainnet = 18171594;
+    // forge test --fork-url $POLYGON_RPC_URL --fork-block-number 47786597
+    uint256 public requiredBlockNumberPolygon = 47786597;
+    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18176564
+    uint256 public requiredBlockNumberMainnet = 18176564;
 
     modifier whenPolygon() {
         if (block.chainid != 137) {
             return;
         }
-        if (block.number < minBlockNumberPolygon) {
+        if (block.number != requiredBlockNumberPolygon) {
             return;
         }
         _;
@@ -39,7 +41,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         if (block.chainid != 1) {
             return;
         }
-        if (block.number < minBlockNumberMainnet) {
+        if (block.number != requiredBlockNumberMainnet) {
             return;
         }
         _;
