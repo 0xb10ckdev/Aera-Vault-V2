@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
+import {console2} from "forge-std/console2.sol";
 import {Test} from "forge-std/Test.sol";
 import {Operation, AssetValue} from "src/v2/Types.sol";
 import {DeployAeraContractsForThreshold} from
@@ -167,6 +168,51 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         assert(IERC20(T).balanceOf(address(vault)) == startSize - tradeSize);
         assert(IERC20(weth).balanceOf(address(vault)) >= minReceived);
+    }
+
+    function test_withdrawWAUSDC() public whenMainnet {
+        uint256 startSize = 50e6;
+        uint256 withdrawAmt = IERC4626(waUSDC).convertToShares(startSize) / 2;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(usdc), value: startSize});
+        assert(amounts.length == i);
+
+        for (i = 0; i < amounts.length; i++) {
+            console.log(
+                "Approving %s",
+                IERC20Metadata(address(amounts[i].asset)).symbol()
+            );
+            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            amounts[i].asset.approve(address(vault), amounts[i].value);
+        }
+        vault.deposit(amounts);
+        vault.resume();
+
+        Operation[] memory operations = new Operation[](3);
+
+        i = 0;
+
+        operations[i++] = Ops.approve(usdc, waUSDC, startSize);
+        operations[i++] = Ops.deposit(waUSDC, startSize, address(vault));
+        operations[i++] = Ops.withdraw(waUSDC, withdrawAmt, address(vault));
+
+        assert(operations.length == i);
+
+        assert(IERC20(waUSDC).balanceOf(address(vault)) == 0);
+        assert(IERC20(usdc).balanceOf(address(vault)) == startSize);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+
+        uint256 startSizeWaUSDC = IERC4626(waUSDC).convertToShares(startSize);
+        uint256 usdcEndAmt = IERC4626(waUSDC).convertToAssets(withdrawAmt);
+        assert(IERC20(waUSDC).balanceOf(address(vault)) >= startSizeWaUSDC - withdrawAmt);
+        assert(IERC20(waUSDC).balanceOf(address(vault)) < startSizeWaUSDC - withdrawAmt + 15e3); // small wiggle room
+        uint256 actualUSDCEndAmt = IERC20(usdc).balanceOf(address(vault));
+        assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
     }
 
     function _deployFactory() internal {
