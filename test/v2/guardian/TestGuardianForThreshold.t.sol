@@ -8,6 +8,7 @@ import {DeployAeraContractsForThreshold} from
 import "src/v2/AeraV2Factory.sol";
 import "src/v2/AeraVaultModulesFactory.sol";
 import "src/v2/AeraVaultV2.sol";
+import "src/v2/AeraVaultHooks.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/interfaces/IVault.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -21,14 +22,16 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     address public assetRegistryAddress;
     address public wrappedNativeToken;
     AeraVaultV2 public vault;
-    uint256 public minBlockNumberPolygon = 46145721;
-    uint256 public minBlockNumberMainnet = 18171594;
+    // forge test --fork-url $POLYGON_RPC_URL --fork-block-number 47786597
+    uint256 public requiredBlockNumberPolygon = 47786597;
+    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18176564
+    uint256 public requiredBlockNumberMainnet = 18176564;
 
     modifier whenPolygon() {
         if (block.chainid != 137) {
             return;
         }
-        if (block.number < minBlockNumberPolygon) {
+        if (block.number != requiredBlockNumberPolygon) {
             return;
         }
         _;
@@ -38,7 +41,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         if (block.chainid != 1) {
             return;
         }
-        if (block.number < minBlockNumberMainnet) {
+        if (block.number != requiredBlockNumberMainnet) {
             return;
         }
         _;
@@ -66,19 +69,22 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         }
     }
 
+    function _depositAmounts(AssetValue[] memory amounts) internal {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            amounts[i].asset.approve(address(vault), amounts[i].value);
+        }
+        vault.deposit(amounts);
+        vault.resume();
+    }
+
     function test_submitSwapAndDepositPolygon() public whenPolygon {
         assertEq(address(this), vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 50e6});
         amounts[1] = AssetValue({asset: IERC20(wethPolygon), value: 1e18});
-
-        deal(usdcPolygon, address(this), amounts[0].value);
-        deal(wethPolygon, address(this), amounts[1].value);
-        IERC20(usdcPolygon).approve(vaultAddress, amounts[0].value);
-        IERC20(wethPolygon).approve(vaultAddress, amounts[1].value);
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         // TODO: test warping, fees, etc
         vm.startPrank(vault.guardian());
@@ -103,13 +109,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
         amounts[1] = AssetValue({asset: IERC20(weth), value: 1e18});
-
-        deal(usdc, address(this), amounts[0].value);
-        deal(weth, address(this), amounts[1].value);
-        IERC20(usdc).approve(vaultAddress, amounts[0].value);
-        IERC20(weth).approve(vaultAddress, amounts[1].value);
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         // TODO: test warping, fees, etc
         vm.startPrank(vault.guardian());
@@ -139,17 +139,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         amounts[i++] = AssetValue({asset: IERC20(T), value: startSize});
         assert(amounts.length == i);
-
-        for (i = 0; i < amounts.length; i++) {
-            console.log(
-                "Approving %s",
-                IERC20Metadata(address(amounts[i].asset)).symbol()
-            );
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
-            amounts[i].asset.approve(address(vault), amounts[i].value);
-        }
-        vault.deposit(amounts);
-        vault.resume();
+        _depositAmounts(amounts);
 
         Operation[] memory operations = new Operation[](2);
 
@@ -169,11 +159,161 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(weth).balanceOf(address(vault)) >= minReceived);
     }
 
+    function test_withdrawWAUSDC() public whenMainnet {
+        uint256 startSize = 50e6;
+        uint256 withdrawAmt = IERC4626(waUSDC).convertToShares(startSize) / 2;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(usdc), value: startSize});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](3);
+
+        i = 0;
+
+        operations[i++] = Ops.approve(usdc, waUSDC, startSize);
+        operations[i++] = Ops.deposit(waUSDC, startSize, address(vault));
+        operations[i++] = Ops.withdraw(waUSDC, withdrawAmt, address(vault));
+
+        assert(operations.length == i);
+
+        assert(IERC20(waUSDC).balanceOf(address(vault)) == 0);
+        assert(IERC20(usdc).balanceOf(address(vault)) == startSize);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+
+        uint256 startSizeWaUSDC = IERC4626(waUSDC).convertToShares(startSize);
+        uint256 usdcEndAmt = IERC4626(waUSDC).convertToAssets(withdrawAmt);
+        assert(
+            IERC20(waUSDC).balanceOf(address(vault))
+                >= startSizeWaUSDC - withdrawAmt
+        );
+        assert(
+            IERC20(waUSDC).balanceOf(address(vault))
+                < startSizeWaUSDC - withdrawAmt + 15e3
+        ); // small wiggle room
+        uint256 actualUSDCEndAmt = IERC20(usdc).balanceOf(address(vault));
+        assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
+    }
+
+    function test_swapWETHUSDC() public whenMainnet {
+        uint256 exactInput = 1e18;
+        uint256 minOutput = 1616e6;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(weth), value: exactInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](2);
+
+        i = 0;
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.swap(
+            uniswapSwapRouter,
+            ISwapRouter.ExactInputParams(
+                abi.encodePacked(weth, uint24(500), usdc),
+                address(vault),
+                block.timestamp + 3600,
+                exactInput,
+                minOutput
+            )
+        );
+        assert(operations.length == i);
+
+        assert(IERC20(weth).balanceOf(address(vault)) == exactInput);
+        assert(IERC20(usdc).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+        assert(IERC20(usdc).balanceOf(address(vault)) >= minOutput);
+    }
+
+    function test_swapWstETHETH() public whenMainnet {
+        uint256 exactInput = 1e18;
+        uint256 minOutput = 1.12e18;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(wsteth), value: exactInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](2);
+
+        i = 0;
+        operations[i++] = Ops.approve(wsteth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.swap(
+            uniswapSwapRouter,
+            ISwapRouter.ExactInputParams(
+                abi.encodePacked(wsteth, uint24(100), weth),
+                address(vault),
+                block.timestamp + 1 hours,
+                exactInput,
+                minOutput
+            )
+        );
+        assert(operations.length == i);
+
+        assert(IERC20(wsteth).balanceOf(address(vault)) == exactInput);
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(wsteth).balanceOf(address(vault)) == 0);
+        assert(IERC20(weth).balanceOf(address(vault)) >= minOutput);
+    }
+
+    function test_swapWethWstETH() public whenMainnet {
+        uint256 exactInput = 1.15e18;
+        uint256 minOutput = 1e18;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(weth), value: exactInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](2);
+
+        i = 0;
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.swap(
+            uniswapSwapRouter,
+            ISwapRouter.ExactInputParams(
+                abi.encodePacked(weth, uint24(100), wsteth),
+                address(vault),
+                block.timestamp + 1 hours,
+                exactInput,
+                minOutput
+            )
+        );
+        assert(operations.length == i);
+
+        assert(IERC20(weth).balanceOf(address(vault)) == exactInput);
+        assert(IERC20(wsteth).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+        assert(IERC20(wsteth).balanceOf(address(vault)) >= minOutput);
+    }
+
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         v2Factory = address(factory);
-        AeraVaultModulesFactory modulesFactory =
-            new AeraVaultModulesFactory(v2Factory);
+        AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(
+            v2Factory
+        );
         vaultModulesFactory = address(modulesFactory);
         vm.label(v2Factory, "Factory");
         vm.label(vaultModulesFactory, "ModulesFactory");
@@ -204,7 +344,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdcPolygon, uint24(500), wethPolygon),
                 address(this),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -231,7 +371,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdc, uint24(500), weth),
                 address(this),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -280,37 +420,37 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wethPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(address(0))
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(usdcPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(usdcOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wstethPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(wstethOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wmaticPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(wmaticOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(waPolUSDC),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: true,
             oracle: AggregatorV2V3Interface(address(0))
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(waPolWETH),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: true,
             oracle: AggregatorV2V3Interface(address(0))
         });

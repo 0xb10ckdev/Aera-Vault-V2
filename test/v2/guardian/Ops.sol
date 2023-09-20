@@ -56,6 +56,20 @@ library Ops {
         });
     }
 
+    function withdraw(
+        address token,
+        uint256 amount,
+        address recipient
+    ) public pure returns (Operation memory) {
+        return Operation({
+            data: abi.encodePacked(
+                IERC4626.withdraw.selector, abi.encode(amount, recipient, recipient)
+                ),
+            target: token,
+            value: 0
+        });
+    }
+
     function curveSwap(
         address pool,
         address tokenIn,
