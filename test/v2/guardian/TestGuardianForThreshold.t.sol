@@ -257,7 +257,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(wsteth, uint24(100), weth),
                 address(vault),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -293,7 +293,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(weth, uint24(100), wsteth),
                 address(vault),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -346,7 +346,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdcPolygon, uint24(500), wethPolygon),
                 address(this),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -373,7 +373,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdc, uint24(500), weth),
                 address(this),
-                block.timestamp + 3600,
+                block.timestamp + 1 hours,
                 exactInput,
                 minOutput
             )
@@ -422,37 +422,37 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 i = 0;
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wethPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(address(0))
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(usdcPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(usdcOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wstethPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(wstethOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(wmaticPolygon),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: false,
             oracle: AggregatorV2V3Interface(wmaticOraclePolygon)
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(waPolUSDC),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: true,
             oracle: AggregatorV2V3Interface(address(0))
         });
         assets[i++] = IAssetRegistry.AssetInformation({
             asset: IERC20(waPolWETH),
-            heartbeat: 86400,
+            heartbeat: 24 hours,
             isERC4626: true,
             oracle: AggregatorV2V3Interface(address(0))
         });
