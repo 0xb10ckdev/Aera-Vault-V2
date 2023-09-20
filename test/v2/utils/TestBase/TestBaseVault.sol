@@ -6,12 +6,10 @@ import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultHooks.sol";
 import "src/v2/AeraVaultV2.sol";
-import "src/v2/AeraV2Factory.sol";
 import {AssetRegistryParameters, HooksParameters} from "src/v2/Types.sol";
 import {TestBaseFactory} from "test/v2/utils/TestBase/TestBaseFactory.sol";
 import {TestBaseVariables} from "test/v2/utils/TestBase/TestBaseVariables.sol";
 import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
-import {OracleMock} from "test/utils/OracleMock.sol";
 
 contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     using stdJson for string;

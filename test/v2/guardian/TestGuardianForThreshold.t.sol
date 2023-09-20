@@ -9,7 +9,6 @@ import "src/v2/AeraVaultModulesFactory.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/interfaces/IVault.sol";
-import "src/v2/AeraVaultHooks.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC20.sol";
 import "forge-std/console.sol";
