@@ -88,7 +88,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
             address deployedHooks
         )
     {
-        return run(bytes32("346"));
+        return run(bytes32("346")); // random salt
     }
 
     function _getAeraVaultV2Params(string memory)
