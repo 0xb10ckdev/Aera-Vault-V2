@@ -15,13 +15,13 @@ import "forge-std/console.sol";
 import {Ops} from "./Ops.sol";
 
 contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
-    address internal vaultAddress;
-    address internal hooksAddress;
-    address internal assetRegistryAddress;
-    address internal wrappedNativeToken;
-    AeraVaultV2 internal vault;
-    uint256 minBlockNumberPolygon = 46145721;
-    uint256 minBlockNumberMainnet = 18171594;
+    address public vaultAddress;
+    address public hooksAddress;
+    address public assetRegistryAddress;
+    address public wrappedNativeToken;
+    AeraVaultV2 public vault;
+    uint256 public minBlockNumberPolygon = 46145721;
+    uint256 public minBlockNumberMainnet = 18171594;
 
     modifier whenPolygon() {
         if (block.chainid != 137) {
@@ -37,7 +37,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         if (block.chainid != 1) {
             return;
         }
-        if (block.number < minBlockNumberPolygon) {
+        if (block.number < minBlockNumberMainnet) {
             return;
         }
         _;
@@ -45,20 +45,24 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function setUp() public virtual {
         _deployerAddress = address(this);
+
         vm.label(wethPolygon, "wethPolygon");
         vm.label(waPolWETH, "waPolWETH");
         vm.label(usdcPolygon, "usdcPolygon");
         vm.label(weth, "wethMainnet");
         vm.label(waPolUSDC, "waPolUSDC");
         vm.label(usdc, "usdcMainnet");
-        if (block.chainid == 137) {
-            wrappedNativeToken = wmaticPolygon;
-        } else {
-            wrappedNativeToken = weth;
-        }
 
-        _deployFactory();
-        _deployContracts();
+        if (block.chainid == 137 || block.chainid == 1) {
+            if (block.chainid == 137) {
+                wrappedNativeToken = wmaticPolygon;
+            } else {
+                wrappedNativeToken = weth;
+            }
+
+            _deployFactory();
+            _deployContracts();
+        }
     }
 
     function test_submitSwapAndDepositPolygon() public whenPolygon {
@@ -174,8 +178,6 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function _deployContracts() internal {
-        _deployerAddress = address(this);
-
         (vaultAddress, assetRegistryAddress, hooksAddress) = run();
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
