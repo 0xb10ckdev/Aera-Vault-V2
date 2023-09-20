@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "@openzeppelin/Ownable2Step.sol";
 import "../TestBaseAeraVaultV2.sol";
 
 contract ExecuteTest is TestBaseAeraVaultV2 {

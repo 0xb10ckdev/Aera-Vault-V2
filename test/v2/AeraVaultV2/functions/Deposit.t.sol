@@ -3,8 +3,6 @@ pragma solidity 0.8.21;
 
 import "../TestBaseAeraVaultV2.sol";
 import "lib/forge-std/src/StdStorage.sol";
-import {ERC20Mock} from "test/utils/ERC20Mock.sol";
-import "src/v2/interfaces/IVaultEvents.sol";
 
 contract DepositTest is TestBaseAeraVaultV2 {
     using stdStorage for StdStorage;
