@@ -9,6 +9,7 @@ import {DeployAeraContractsForThreshold} from
 import "src/v2/AeraV2Factory.sol";
 import "src/v2/AeraVaultModulesFactory.sol";
 import "src/v2/AeraVaultV2.sol";
+import "src/v2/AeraVaultHooks.sol";
 import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/interfaces/IVault.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -213,6 +214,53 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(waUSDC).balanceOf(address(vault)) < startSizeWaUSDC - withdrawAmt + 15e3); // small wiggle room
         uint256 actualUSDCEndAmt = IERC20(usdc).balanceOf(address(vault));
         assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
+    }
+    
+    function test_swapWETHUSDC() public whenMainnet {
+        uint256 exactInput = 1e18;
+        uint256 minOutput = 1616e6;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(weth), value: exactInput});
+        assert(amounts.length == i);
+
+        for (i = 0; i < amounts.length; i++) {
+            console.log(
+                "Approving %s",
+                IERC20Metadata(address(amounts[i].asset)).symbol()
+            );
+            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            amounts[i].asset.approve(address(vault), amounts[i].value);
+        }
+        vault.deposit(amounts);
+        vault.resume();
+
+        Operation[] memory operations = new Operation[](2);
+
+        i = 0;
+        operations[i++] =
+            Ops.approve(weth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.swap(
+            uniswapSwapRouter,
+            ISwapRouter.ExactInputParams(
+                abi.encodePacked(weth, uint24(500), usdc),
+                address(vault),
+                block.timestamp + 3600,
+                exactInput,
+                minOutput
+            )
+        );
+        assert(operations.length == i);
+
+        assert(IERC20(weth).balanceOf(address(vault)) == exactInput);
+        assert(IERC20(usdc).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+        assert(IERC20(usdc).balanceOf(address(vault)) >= minOutput);
     }
 
     function _deployFactory() internal {
