@@ -538,7 +538,7 @@ contract AeraVaultV2 is
     }
 
     /// @inheritdoc IVault
-    function holdings() public view override returns (AssetValue[] memory) {
+    function holdings() external view override returns (AssetValue[] memory) {
         IAssetRegistry.AssetInformation[] memory assets =
             assetRegistry.assets();
 
