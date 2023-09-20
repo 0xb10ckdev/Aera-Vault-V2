@@ -190,12 +190,18 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         uint256 startSizeWaUSDC = IERC4626(waUSDC).convertToShares(startSize);
         uint256 usdcEndAmt = IERC4626(waUSDC).convertToAssets(withdrawAmt);
-        assert(IERC20(waUSDC).balanceOf(address(vault)) >= startSizeWaUSDC - withdrawAmt);
-        assert(IERC20(waUSDC).balanceOf(address(vault)) < startSizeWaUSDC - withdrawAmt + 15e3); // small wiggle room
+        assert(
+            IERC20(waUSDC).balanceOf(address(vault))
+                >= startSizeWaUSDC - withdrawAmt
+        );
+        assert(
+            IERC20(waUSDC).balanceOf(address(vault))
+                < startSizeWaUSDC - withdrawAmt + 15e3
+        ); // small wiggle room
         uint256 actualUSDCEndAmt = IERC20(usdc).balanceOf(address(vault));
         assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
     }
-    
+
     function test_swapWETHUSDC() public whenMainnet {
         uint256 exactInput = 1e18;
         uint256 minOutput = 1616e6;
@@ -209,8 +215,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         Operation[] memory operations = new Operation[](2);
 
         i = 0;
-        operations[i++] =
-            Ops.approve(weth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
         operations[i++] = Ops.swap(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
@@ -246,8 +251,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         Operation[] memory operations = new Operation[](2);
 
         i = 0;
-        operations[i++] =
-            Ops.approve(wsteth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.approve(wsteth, uniswapSwapRouter, exactInput);
         operations[i++] = Ops.swap(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
@@ -283,8 +287,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         Operation[] memory operations = new Operation[](2);
 
         i = 0;
-        operations[i++] =
-            Ops.approve(weth, uniswapSwapRouter, exactInput);
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
         operations[i++] = Ops.swap(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
@@ -310,8 +313,9 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         v2Factory = address(factory);
-        AeraVaultModulesFactory modulesFactory =
-            new AeraVaultModulesFactory(v2Factory);
+        AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(
+            v2Factory
+        );
         vaultModulesFactory = address(modulesFactory);
         vm.label(v2Factory, "Factory");
         vm.label(vaultModulesFactory, "ModulesFactory");
