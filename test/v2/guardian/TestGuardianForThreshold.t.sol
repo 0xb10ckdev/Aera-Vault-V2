@@ -65,7 +65,6 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vm.label(weth, "wethMainnet");
         vm.label(waPolUSDC, "waPolUSDC");
         vm.label(usdc, "usdcMainnet");
-        
         if (block.chainid == 137 || block.chainid == 1) {
             if (block.chainid == 137) {
                 wrappedNativeToken = wmaticPolygon;
