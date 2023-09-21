@@ -86,7 +86,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vault.resume();
     }
 
-    function test_submitSwapAndDepositPolygon() public whenPolygon {
+    function test_submitSwapAndDepositPolygonExactInput() public whenPolygon {
         assertEq(address(this), vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
@@ -98,7 +98,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vm.startPrank(vault.guardian());
         // fails with over/underflow if this is uncommented, in wapolweth::convertToAssets
         // vm.warp(1000);
-        Operation[] memory operations = _loadSwapAndDepositOperationsPolygon();
+        Operation[] memory operations = _loadSwapAndDepositOperationsPolygonExactInput();
         vault.submit(operations);
         // fails with no fees available when no vm.warp
         vm.expectRevert(
@@ -111,7 +111,32 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vm.stopPrank();
     }
 
-    function test_submitSwapAndDepositMainnet() public whenMainnet {
+    function test_submitSwapAndDepositPolygonExactOutput() public whenPolygon {
+        assertEq(address(this), vault.owner());
+
+        AssetValue[] memory amounts = new AssetValue[](2);
+        amounts[0] = AssetValue({asset: IERC20(usdcPolygon), value: 50e6});
+        amounts[1] = AssetValue({asset: IERC20(wethPolygon), value: 1e18});
+        _depositAmounts(amounts);
+
+        // TODO: test warping, fees, etc
+        vm.startPrank(vault.guardian());
+        // fails with over/underflow if this is uncommented, in wapolweth::convertToAssets
+        // vm.warp(1000);
+        Operation[] memory operations = _loadSwapAndDepositOperationsPolygonExactOutput();
+        vault.submit(operations);
+        // fails with no fees available when no vm.warp
+        vm.expectRevert(
+            abi.encodePacked(
+                IVault.Aera__NoClaimableFeesForCaller.selector,
+                abi.encode(vault.guardian())
+            )
+        );
+        vault.claim();
+        vm.stopPrank();
+    }
+
+    function test_submitSwapAndDepositMainnetExactInput() public whenMainnet {
         assertEq(address(this), vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
@@ -124,7 +149,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         // fails with over/underflow if this is uncommented, in wapolweth::convertToAssets
         // vm.warp(1000);
 
-        Operation[] memory operations = _loadSwapAndDepositOperationsMainnet();
+        Operation[] memory operations = _loadSwapAndDepositOperationsMainnetExactInput();
 
         vault.submit(operations);
         // fails with no fees available when no vm.warp
@@ -137,6 +162,34 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vault.claim();
         vm.stopPrank();
     }
+
+    function test_submitSwapAndDepositMainnetExactOutput() public whenMainnet {
+        assertEq(address(this), vault.owner());
+
+        AssetValue[] memory amounts = new AssetValue[](2);
+        amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
+        amounts[1] = AssetValue({asset: IERC20(weth), value: 1e18});
+        _depositAmounts(amounts);
+
+        // TODO: test warping, fees, etc
+        vm.startPrank(vault.guardian());
+        // fails with over/underflow if this is uncommented, in wapolweth::convertToAssets
+        // vm.warp(1000);
+
+        Operation[] memory operations = _loadSwapAndDepositOperationsMainnetExactOutput();
+
+        vault.submit(operations);
+        // fails with no fees available when no vm.warp
+        vm.expectRevert(
+            abi.encodePacked(
+                IVault.Aera__NoClaimableFeesForCaller.selector,
+                abi.encode(vault.guardian())
+            )
+        );
+        vault.claim();
+        vm.stopPrank();
+    }
+
 
     function test_curveSwap() public whenMainnet {
         uint256 startSize = 15_000_000e18;
@@ -208,7 +261,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
     }
 
-    function test_swapWETHUSDC() public whenMainnet {
+    function test_swapWETHUSDCExactInput() public whenMainnet {
         uint256 exactInput = 1e18;
         uint256 minOutput = 1616e6;
 
@@ -222,7 +275,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         i = 0;
         operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
-        operations[i++] = Ops.swap(
+        operations[i++] = Ops.swapExactInput(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(weth, uint24(500), usdc),
@@ -244,7 +297,44 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(usdc).balanceOf(address(vault)) >= minOutput);
     }
 
-    function test_swapWstETHETH() public whenMainnet {
+    function test_swapWETHUSDCExactOutput() public whenMainnet {
+        uint256 maxInput = 1e18;
+        uint256 exactOutput = 1616e6;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(weth), value: maxInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](3);
+
+        i = 0;
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, maxInput);
+        operations[i++] = Ops.swapExactOutput(
+            uniswapSwapRouter,
+            ISwapRouter.ExactOutputParams(
+                abi.encodePacked(usdc, uint24(500), weth),
+                address(vault),
+                block.timestamp + 3600,
+                exactOutput,
+                maxInput
+            )
+        );
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, 0);
+        assert(operations.length == i);
+
+        assert(IERC20(weth).balanceOf(address(vault)) == maxInput);
+        assert(IERC20(usdc).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(weth).balanceOf(address(vault)) < maxInput);
+        assert(IERC20(usdc).balanceOf(address(vault)) == exactOutput);
+    }
+
+    function test_swapWstETHETHExactInput() public whenMainnet {
         uint256 exactInput = 1e18;
         uint256 minOutput = 1.12e18;
 
@@ -258,7 +348,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         i = 0;
         operations[i++] = Ops.approve(wsteth, uniswapSwapRouter, exactInput);
-        operations[i++] = Ops.swap(
+        operations[i++] = Ops.swapExactInput(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(wsteth, uint24(100), weth),
@@ -280,7 +370,44 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(weth).balanceOf(address(vault)) >= minOutput);
     }
 
-    function test_swapWethWstETH() public whenMainnet {
+    function test_swapWstETHETHExactOutput() public whenMainnet {
+        uint256 maxInput = 1e18;
+        uint256 exactOutput = 1.12e18;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(wsteth), value: maxInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](3);
+
+        i = 0;
+        operations[i++] = Ops.approve(wsteth, uniswapSwapRouter, maxInput);
+        operations[i++] = Ops.swapExactOutput(
+            uniswapSwapRouter,
+            ISwapRouter.ExactOutputParams(
+                abi.encodePacked(weth, uint24(100), wsteth),
+                address(vault),
+                block.timestamp + 1 hours,
+                exactOutput,
+                maxInput
+            )
+        );
+        operations[i++] = Ops.approve(wsteth, uniswapSwapRouter, 0);
+        assert(operations.length == i);
+
+        assert(IERC20(wsteth).balanceOf(address(vault)) == maxInput);
+        assert(IERC20(weth).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(wsteth).balanceOf(address(vault)) < maxInput);
+        assert(IERC20(weth).balanceOf(address(vault)) == exactOutput);
+    }
+
+    function test_swapWethWstETHExactInput() public whenMainnet {
         uint256 exactInput = 1.15e18;
         uint256 minOutput = 1e18;
 
@@ -294,7 +421,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         i = 0;
         operations[i++] = Ops.approve(weth, uniswapSwapRouter, exactInput);
-        operations[i++] = Ops.swap(
+        operations[i++] = Ops.swapExactInput(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(weth, uint24(100), wsteth),
@@ -316,6 +443,43 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         assert(IERC20(wsteth).balanceOf(address(vault)) >= minOutput);
     }
 
+    function test_swapWethWstETHExactOutput() public whenMainnet {
+        uint256 maxInput = 1.15e18;
+        uint256 exactOutput = 1e18;
+
+        AssetValue[] memory amounts = new AssetValue[](1);
+        uint256 i = 0;
+        amounts[i++] = AssetValue({asset: IERC20(weth), value: maxInput});
+        assert(amounts.length == i);
+        _depositAmounts(amounts);
+
+        Operation[] memory operations = new Operation[](3);
+
+        i = 0;
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, maxInput);
+        operations[i++] = Ops.swapExactOutput(
+            uniswapSwapRouter,
+            ISwapRouter.ExactOutputParams(
+                abi.encodePacked(wsteth, uint24(100), weth),
+                address(vault),
+                block.timestamp + 1 hours,
+                exactOutput,
+                maxInput
+            )
+        );
+        operations[i++] = Ops.approve(weth, uniswapSwapRouter, 0);
+        assert(operations.length == i);
+
+        assert(IERC20(weth).balanceOf(address(vault)) == maxInput);
+        assert(IERC20(wsteth).balanceOf(address(vault)) == 0);
+
+        vm.startPrank(vault.guardian());
+        vault.submit(operations);
+        vm.stopPrank();
+        assert(IERC20(weth).balanceOf(address(vault)) < maxInput);
+        assert(IERC20(wsteth).balanceOf(address(vault)) >= exactOutput);
+    }
+
     function _deployFactory() internal {
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         v2Factory = address(factory);
@@ -335,7 +499,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vault = AeraVaultV2(payable(vaultAddress));
     }
 
-    function _loadSwapAndDepositOperationsPolygon()
+    function _loadSwapAndDepositOperationsPolygonExactInput()
         internal
         view
         returns (Operation[] memory)
@@ -347,7 +511,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 minOutput = 1293364631244994;
         operations[i++] =
             Ops.approve(usdcPolygon, uniswapSwapRouter, exactInput);
-        operations[i++] = Ops.swap(
+        operations[i++] = Ops.swapExactInput(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdcPolygon, uint24(500), wethPolygon),
@@ -363,7 +527,37 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         return operations;
     }
 
-    function _loadSwapAndDepositOperationsMainnet()
+    function _loadSwapAndDepositOperationsPolygonExactOutput()
+        internal
+        view
+        returns (Operation[] memory)
+    {
+        Operation[] memory operations = new Operation[](5);
+
+        uint256 i = 0;
+        uint256 maxInput = 2480252;
+        uint256 exactOutput = 1293364631244994;
+        operations[i++] =
+            Ops.approve(usdcPolygon, uniswapSwapRouter, maxInput);
+        operations[i++] = Ops.swapExactOutput(
+            uniswapSwapRouter,
+            ISwapRouter.ExactOutputParams(
+                abi.encodePacked(wethPolygon, uint24(500), usdcPolygon),
+                address(this),
+                block.timestamp + 1 hours,
+                exactOutput,
+                maxInput
+            )
+        );
+
+        operations[i++] = Ops.approve(wethPolygon, waPolWETH, exactOutput);
+        operations[i++] = Ops.deposit(waPolWETH, exactOutput, vaultAddress);
+        operations[i++] =
+            Ops.approve(usdcPolygon, uniswapSwapRouter, 0);
+        return operations;
+    }
+
+    function _loadSwapAndDepositOperationsMainnetExactInput()
         internal
         view
         returns (Operation[] memory)
@@ -374,7 +568,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         uint256 i = 0;
         operations[i++] = Ops.approve(usdc, uniswapSwapRouter, exactInput);
-        operations[i++] = Ops.swap(
+        operations[i++] = Ops.swapExactInput(
             uniswapSwapRouter,
             ISwapRouter.ExactInputParams(
                 abi.encodePacked(usdc, uint24(500), weth),
@@ -387,6 +581,35 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         uint256 depositAmount = 20e6;
         operations[i++] = Ops.approve(usdc, waUSDC, depositAmount);
         operations[i++] = Ops.deposit(waUSDC, depositAmount, vaultAddress);
+        assert(operations.length == i);
+        return operations;
+    }
+
+    function _loadSwapAndDepositOperationsMainnetExactOutput()
+        internal
+        view
+        returns (Operation[] memory)
+    {
+        uint256 maxInput = 2480252;
+        uint256 exactOutput = 1293364631244994;
+        Operation[] memory operations = new Operation[](5);
+
+        uint256 i = 0;
+        operations[i++] = Ops.approve(usdc, uniswapSwapRouter, maxInput);
+        operations[i++] = Ops.swapExactOutput(
+            uniswapSwapRouter,
+            ISwapRouter.ExactOutputParams(
+                abi.encodePacked(weth, uint24(500), usdc),
+                address(this),
+                block.timestamp + 1 hours,
+                exactOutput,
+                maxInput
+            )
+        );
+        uint256 depositAmount = 20e6;
+        operations[i++] = Ops.approve(usdc, waUSDC, depositAmount);
+        operations[i++] = Ops.deposit(waUSDC, depositAmount, vaultAddress);
+        operations[i++] = Ops.approve(usdc, uniswapSwapRouter, 0);
         assert(operations.length == i);
         return operations;
     }
