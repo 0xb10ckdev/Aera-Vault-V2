@@ -20,8 +20,8 @@ import {
 } from "src/v2/Types.sol";
 import {DeployAeraContracts} from "./DeployAeraContracts.s.sol";
 import "@chainlink/interfaces/AggregatorV2V3Interface.sol";
-import "periphery/ICurveFiPool.sol";
-import "periphery/IBalancer.sol";
+import "periphery/interfaces/ICurveFiPool.sol";
+import "test/utils/IBalancer.sol";
 
 contract DeployAeraContractsForThreshold is DeployAeraContracts {
     TargetSighashData[] targetSighashAllowlistStorage;

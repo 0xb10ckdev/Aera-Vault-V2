@@ -9,10 +9,8 @@ contract DeployTETHCurveOracle is Script, DeployConstants {
         returns (address deployedAddress)
     {
         address pool = teth;
-        address baseToken = T;
-        address quoteToken = weth;
         vm.startBroadcast();
-        CurveOracle oracle = new CurveOracle(pool, baseToken, quoteToken);
+        CurveOracle oracle = new CurveOracle(pool);
         vm.stopBroadcast();
         deployedAddress = address(oracle);
     }

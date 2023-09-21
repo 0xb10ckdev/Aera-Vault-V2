@@ -12,7 +12,7 @@ import "src/v2/AeraVaultHooks.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "periphery/ICurveFiPool.sol";
+import "periphery/interfaces/ICurveFiPool.sol";
 
 contract AddTargetSigHashes is Script, Test {
     using stdJson for string;
