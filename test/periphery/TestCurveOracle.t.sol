@@ -94,15 +94,6 @@ contract TestCurveOracle is Test {
         assertEq(updatedAt, block.timestamp);
     }
 
-    function testThatPriceDecimalsAreEighteen() public {
-        oracle = new CurveOracle(teth);
-        assertEq(oracle.decimals(), 18);
-
-        address usdct = address(new MockCurvePool(t, usdc));
-        oracle = new CurveOracle(usdct);
-        assertEq(oracle.decimals(), 18);
-    }
-
     function testThatPriceRespectsDecimals() public {
         MockCurvePool POOL = new MockCurvePool(t, usdc);
         POOL.setPrice(20e18); // 1 USDC is worth 20 T

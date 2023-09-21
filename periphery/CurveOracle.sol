@@ -14,7 +14,7 @@ contract CurveOracle is IAeraV2Oracle {
     ICurveFiPool public immutable pool;
 
     /// @notice Decimals of price returned by this oracle.
-    uint8 public immutable decimals;
+    uint8 public constant decimals = 18;
 
     /// ERRORS ///
 
@@ -44,8 +44,6 @@ contract CurveOracle is IAeraV2Oracle {
 
         // Effects: set pool and oracle decimals.
         pool = c;
-        // Quote decimals are always 18 for the Curve price_oracle.
-        decimals = 18;
     }
 
     /// @inheritdoc IAeraV2Oracle
