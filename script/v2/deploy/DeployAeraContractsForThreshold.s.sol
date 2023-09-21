@@ -73,9 +73,9 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
     address internal guardianAddress =
         0xacEb23F3d96a2e3BE44306D9e57aaF9a0d1FFD74;
     address internal feeRecipient = guardianAddress;
-    uint256 minDailyValue = 0.9e18;
+    uint256 minDailyValue = 0.97e18;
     uint256 fee = 0;
-    string description = "Threshold Vault";
+    string description = "Threshold Aera Vault";
 
     /// @inheritdoc DeployAeraContracts
     function run()
