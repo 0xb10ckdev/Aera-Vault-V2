@@ -25,8 +25,8 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     AeraVaultV2 public vault;
     // forge test --fork-url $POLYGON_RPC_URL --fork-block-number 47786597
     uint256 public requiredBlockNumberPolygon = 47786597;
-    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18180542
-    uint256 public requiredBlockNumberMainnet = 18180542;
+    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18186365
+    uint256 public requiredBlockNumberMainnet = 18186365;
 
     error WrongBlockNumber(uint256 expected, uint256 actual);
 
@@ -255,15 +255,15 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         );
         assert(
             IERC20(waUSDC).balanceOf(address(vault))
-                < startSizeWaUSDC - withdrawAmt + 15e3
+                < startSizeWaUSDC - withdrawAmt + 16e3
         ); // small wiggle room
         uint256 actualUSDCEndAmt = IERC20(usdc).balanceOf(address(vault));
-        assert(usdcEndAmt - actualUSDCEndAmt < 15e3); // small wiggle room
+        assert(usdcEndAmt - actualUSDCEndAmt < 16e3); // small wiggle room
     }
 
     function test_swapWETHUSDCExactInput() public whenMainnet {
         uint256 exactInput = 1e18;
-        uint256 minOutput = 1616e6;
+        uint256 minOutput = 1587e6;
 
         AssetValue[] memory amounts = new AssetValue[](1);
         uint256 i = 0;
@@ -299,7 +299,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function test_swapWETHUSDCExactOutput() public whenMainnet {
         uint256 maxInput = 1e18;
-        uint256 exactOutput = 1616e6;
+        uint256 exactOutput = 1587e6;
 
         AssetValue[] memory amounts = new AssetValue[](1);
         uint256 i = 0;
