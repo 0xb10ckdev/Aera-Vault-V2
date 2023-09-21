@@ -13,7 +13,7 @@ ETHERSCAN_API_KEY=$ETHERSCAN_API_KEY forge verify-contract 0x0B453140f6174788b56
 ```
 forge script script/v2/deploy/DeployAeraContractsForThreshold.s.sol --rpc-url $ETH_RPC_URL -vvvv --ledger --sender 0xA02e24B89Fb296A3c347f88C5Ff3dE3aeFAa6b8b --broadcast
 ```
-Deployed AeraVaultV2: ``
-Deployed AeraVaultHooks: ``
-Deployed AeraVaultAssetRegistry: ``
+Deployed AeraVaultV2: `0xB90101398F8e5bD93bB34a7Ff9F60af7a2d7f67C`
+Deployed AeraVaultAssetRegistry: `0x836EF1d270AC5deb345d3c61fc4a120e03cf2930`
+Deployed AeraVaultHooks: `0xD287773927ad3B7836cB8A953e418529e2b3eA02`
 Factories hardcoded into `script/v2/deploy/DeployAeraContractsForThreshold.s.sol``
