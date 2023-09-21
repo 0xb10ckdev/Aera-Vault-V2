@@ -29,13 +29,26 @@ library Ops {
         });
     }
 
-    function swap(
+    function swapExactInput(
         address swapRouter,
         ISwapRouter.ExactInputParams memory params
     ) public pure returns (Operation memory) {
         return Operation({
             data: abi.encodePacked(
                 ISwapRouter.exactInput.selector, abi.encode(params)
+                ),
+            target: swapRouter,
+            value: 0
+        });
+    }
+
+    function swapExactOutput(
+        address swapRouter,
+        ISwapRouter.ExactOutputParams memory params
+    ) public pure returns (Operation memory) {
+        return Operation({
+            data: abi.encodePacked(
+                ISwapRouter.exactOutput.selector, abi.encode(params)
                 ),
             target: swapRouter,
             value: 0
