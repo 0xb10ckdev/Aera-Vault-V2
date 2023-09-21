@@ -15,6 +15,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC20.sol";
 import "forge-std/console.sol";
 import {Ops} from "./Ops.sol";
+import "periphery/IAeraV2Oracle.sol";
 
 contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     address public vaultAddress;
@@ -24,8 +25,8 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     AeraVaultV2 public vault;
     // forge test --fork-url $POLYGON_RPC_URL --fork-block-number 47786597
     uint256 public requiredBlockNumberPolygon = 47786597;
-    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18176564
-    uint256 public requiredBlockNumberMainnet = 18176564;
+    // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18180542
+    uint256 public requiredBlockNumberMainnet = 18180542;
 
     error WrongBlockNumber(uint256 expected, uint256 actual);
 
@@ -64,7 +65,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
         vm.label(weth, "wethMainnet");
         vm.label(waPolUSDC, "waPolUSDC");
         vm.label(usdc, "usdcMainnet");
-
+        
         if (block.chainid == 137 || block.chainid == 1) {
             if (block.chainid == 137) {
                 wrappedNativeToken = wmaticPolygon;
