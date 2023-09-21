@@ -2,71 +2,50 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/IERC20Metadata.sol";
-import "./SafeCast.sol";
+import "./dependencies/openzeppelin/SafeCast.sol";
+import "./interfaces/IAeraV2Oracle.sol";
+import "./interfaces/ICurveFiPool.sol";
 import {ONE} from "src/v2/Constants.sol";
-import "./ICurveFiPool.sol";
-import "./IAeraV2Oracle.sol";
 
 /// @title CurveOracle
-/// @notice Used to calculate price of tokens in a Curve V2 pool
+/// @notice Used to calculate price of tokens in a Curve V2 pool.
 contract CurveOracle is IAeraV2Oracle {
-    /// @notice The address of underlying curve pool
-    address public immutable pool;
+    /// @notice The address of underlying Curve pool.
+    ICurveFiPool public immutable pool;
 
-    /// @notice Decimals of price returned by this oracle (matches the quote token's decimals)
+    /// @notice Decimals of price returned by this oracle.
     uint8 public immutable decimals;
-
-    /// @notice "BASE/QUOTE"
-    string public description;
-
-    /// @notice Whether the price returned by this oracle inverts the pool's pricing oracle
-    bool private immutable invertedPrice;
-
-    /// @notice If invertedPrice, then invertedNumerator / price is what's returned
-    uint256 private immutable invertedNumerator;
 
     /// ERRORS ///
 
-    error CannotPrice(
-        address pool,
-        address poolCoin0,
-        address poolCoin1,
-        address baseToken,
-        address quoteToken
-    );
+    error AeraPeriphery__CurvePoolIsZeroAddress();
+    error AeraPeriphery__InvalidCurvePool();
 
     /// FUNCTIONS ///
 
     /// @notice Initialize the oracle contract.
-    /// @param pool_ The address of the underlying curve pool
-    /// @param baseToken The address of the underlying token to get a price for
-    /// @param quoteToken The address of the other token in the pool to price against
-    constructor(address pool_, address baseToken, address quoteToken) {
-        ICurveFiPool c = ICurveFiPool(pool_);
-        address coin0 = c.coins(0);
-        address coin1 = c.coins(1);
-
-        // Curve's coin(0) is the quote token
-        if (baseToken == coin1 && quoteToken == coin0) {
-            invertedPrice = false;
-        } else if (baseToken == coin0 && quoteToken == coin1) {
-            invertedPrice = true;
-        } else {
-            revert CannotPrice(pool_, coin0, coin1, baseToken, quoteToken);
+    /// @param pool_ The address of the underlying Curve pool.
+    constructor(address pool_) {
+        // Requirements: check Curve pool integrity.
+        if (pool_ == address(0)) {
+            revert AeraPeriphery__CurvePoolIsZeroAddress();
+        }
+        if (pool_.code.length == 0) {
+            revert AeraPeriphery__InvalidCurvePool();
         }
 
-        uint8 baseDecimals = IERC20Metadata(baseToken).decimals();
-        uint8 quoteDecimals = IERC20Metadata(quoteToken).decimals();
+        ICurveFiPool c = ICurveFiPool(pool_);
 
-        pool = pool_;
-        description = string.concat(
-            IERC20Metadata(baseToken).symbol(),
-            "/",
-            IERC20Metadata(quoteToken).symbol()
-        );
+        // Requirements: check that price_oracle works.
+        try c.price_oracle() returns (uint256) {}
+        catch {
+            revert AeraPeriphery__InvalidCurvePool();
+        }
 
-        decimals = quoteDecimals;
-        invertedNumerator = 10 ** (baseDecimals + quoteDecimals);
+        // Effects: set pool and oracle decimals.
+        pool = c;
+        // Quote decimals are always 18 for the Curve price_oracle.
+        decimals = 18;
     }
 
     /// @inheritdoc IAeraV2Oracle
@@ -81,15 +60,14 @@ contract CurveOracle is IAeraV2Oracle {
             uint80 answeredInRound
         )
     {
-        uint256 price = ICurveFiPool(pool).price_oracle();
-        if (invertedPrice) {
-            price = invertedNumerator / price;
-        }
+        uint256 price = pool.price_oracle();
 
         roundId = 0;
         answer = SafeCast.toInt256(price);
         startedAt = 0;
-        updatedAt = block.timestamp;
+        // Price is always interpolated against latest block timestamp.
+        // However, last_prices_timestamp registers the latest pool action.
+        updatedAt = pool.last_prices_timestamp();
         answeredInRound = 0;
     }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.21;
 
 import {console} from "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
-import {FixedPriceOracle} from "periphery/mock/FixedPriceOracle.sol";
+import {FixedPriceOracle} from "test/utils/FixedPriceOracle.sol";
 
 contract DeployFixedPriceOracle is Script {
     function run()

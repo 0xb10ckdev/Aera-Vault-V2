@@ -15,7 +15,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC20.sol";
 import "forge-std/console.sol";
 import {Ops} from "./Ops.sol";
-import "periphery/IAeraV2Oracle.sol";
+import "periphery/interfaces/IAeraV2Oracle.sol";
 
 contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     address public vaultAddress;

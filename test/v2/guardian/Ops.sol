@@ -5,7 +5,7 @@ import {Operation} from "src/v2/Types.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC4626.sol";
 import "@openzeppelin/IERC20.sol";
-import "periphery/ICurveFiPool.sol";
+import "periphery/interfaces/ICurveFiPool.sol";
 
 
 library Ops {

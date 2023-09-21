@@ -15,4 +15,5 @@ interface ICurveFiPool {
         uint256 min_dy
     ) external;
     function price_oracle() external view returns (uint256);
+    function last_prices_timestamp() external view returns (uint256);
 }
