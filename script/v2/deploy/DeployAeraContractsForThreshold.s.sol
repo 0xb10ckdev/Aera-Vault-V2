@@ -103,7 +103,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         return (
             v2Factory,
             VaultParameters(
-                address(this), guardianAddress, guardianAddress, fee
+                _deployerAddress, guardianAddress, guardianAddress, fee
                 ),
             description
         );
@@ -180,7 +180,7 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         address feeToken = weth;
         return AssetRegistryParameters(
             vaultModulesFactory,
-            address(this),
+            _deployerAddress,
             assets,
             IERC20(numeraireToken),
             IERC20(feeToken),

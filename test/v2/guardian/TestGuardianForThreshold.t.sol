@@ -13,11 +13,11 @@ import "src/v2/interfaces/IAssetRegistry.sol";
 import "src/v2/interfaces/IVault.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@openzeppelin/IERC20.sol";
-import "forge-std/console.sol";
 import {Ops} from "./Ops.sol";
 import "periphery/interfaces/IAeraV2Oracle.sol";
 
 contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
+    address ownerAddress = address(1);
     address public vaultAddress;
     address public hooksAddress;
     address public assetRegistryAddress;
@@ -57,7 +57,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function setUp() public virtual {
-        _deployerAddress = address(this);
+        _deployerAddress = ownerAddress;
 
         vm.label(wethPolygon, "wethPolygon");
         vm.label(waPolWETH, "waPolWETH");
@@ -78,12 +78,14 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function _depositAmounts(AssetValue[] memory amounts) internal {
+        vm.startPrank(ownerAddress);
         for (uint256 i = 0; i < amounts.length; i++) {
-            deal(address(amounts[i].asset), address(this), amounts[i].value);
+            deal(address(amounts[i].asset), ownerAddress, amounts[i].value);
             amounts[i].asset.approve(address(vault), amounts[i].value);
         }
         vault.deposit(amounts);
         vault.resume();
+        vm.stopPrank();
     }
 
     function test_submitSwapAndDepositPolygonExactInput() public whenPolygon {
@@ -137,7 +139,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function test_submitSwapAndDepositMainnetExactInput() public whenMainnet {
-        assertEq(address(this), vault.owner());
+        assertEq(ownerAddress, vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
@@ -164,7 +166,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function test_submitSwapAndDepositMainnetExactOutput() public whenMainnet {
-        assertEq(address(this), vault.owner());
+        assertEq(ownerAddress, vault.owner());
 
         AssetValue[] memory amounts = new AssetValue[](2);
         amounts[0] = AssetValue({asset: IERC20(usdc), value: 50e6});
@@ -481,11 +483,13 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     }
 
     function _deployFactory() internal {
+        vm.startPrank(ownerAddress);
         AeraV2Factory factory = new AeraV2Factory(wrappedNativeToken);
         v2Factory = address(factory);
         AeraVaultModulesFactory modulesFactory = new AeraVaultModulesFactory(
             v2Factory
         );
+        vm.stopPrank();
         vaultModulesFactory = address(modulesFactory);
         vm.label(v2Factory, "Factory");
         vm.label(vaultModulesFactory, "ModulesFactory");
@@ -493,6 +497,9 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
     function _deployContracts() internal {
         (vaultAddress, assetRegistryAddress, hooksAddress) = run();
+        assertEq(AeraVaultV2(payable(vaultAddress)).owner(), ownerAddress);
+        assertEq(AeraVaultHooks(payable(hooksAddress)).owner(), ownerAddress);
+        assertEq(AeraVaultAssetRegistry(payable(assetRegistryAddress)).owner(), ownerAddress);
         vm.label(vaultAddress, "VAULT");
         vm.label(hooksAddress, "HOOKS");
         vm.label(assetRegistryAddress, "ASSET_REGISTRY");
@@ -634,7 +641,7 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
 
         return AssetRegistryParameters(
             vaultModulesFactory,
-            address(this),
+            _deployerAddress,
             assets,
             IERC20(numeraireToken),
             IERC20(feeToken),
