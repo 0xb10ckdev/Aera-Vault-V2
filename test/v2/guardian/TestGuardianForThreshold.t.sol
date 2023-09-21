@@ -27,12 +27,17 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
     // forge test --fork-url $ETHEREUM_RPC_URL --fork-block-number 18176564
     uint256 public requiredBlockNumberMainnet = 18176564;
 
+    error WrongBlockNumber(uint256 expected, uint256 actual);
+
     modifier whenPolygon() {
         if (block.chainid != 137) {
             return;
         }
         if (block.number != requiredBlockNumberPolygon) {
-            revert("wrong block number");
+            revert WrongBlockNumber({
+                expected: requiredBlockNumberPolygon,
+                actual: block.number
+            });
         }
         _;
     }
@@ -42,7 +47,10 @@ contract TestGuardianForThreshold is Test, DeployAeraContractsForThreshold {
             return;
         }
         if (block.number != requiredBlockNumberMainnet) {
-            revert("wrong block number");
+            revert WrongBlockNumber({
+                expected: requiredBlockNumberMainnet,
+                actual: block.number
+            });
         }
         _;
     }
