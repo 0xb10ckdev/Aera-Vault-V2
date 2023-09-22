@@ -97,10 +97,23 @@ contract DeployAeraContracts is DeployScriptBase {
         // Get parameters for AssetRegistry
         AssetRegistryParameters memory assetRegistryParameters =
             _getAssetRegistryParams(assetRegistryPath);
+        console.log("Asset Registry Constructor Args");
+        address vault = 0x5B45aB5F70B3272410088D241bfDc6E3DBC0F5D4;
+        console.logBytes(abi.encode(
+            assetRegistryParameters.owner, 
+            vault, 
+            assetRegistryParameters.assets, 
+            assetRegistryParameters.numeraireToken, 
+            assetRegistryParameters.feeToken, 
+            weth,
+            assetRegistryParameters.sequencer));
 
         // Get parameters for AeraVaultHooks
         HooksParameters memory hooksParameters =
             _getAeraVaultHooksParams(aeraVaultHooksPath);
+
+        console.log("Hooks Constructor Args");
+        console.logBytes(abi.encode(hooksParameters.owner, vault, hooksParameters.minDailyValue, hooksParameters.targetSighashAllowlist));
 
         // Deploy AeraVaultV2, AeraVaultAssetRegistry, AeraVaultHooks
         (deployedVault, deployedAssetRegistry, deployedHooks) = AeraV2Factory(

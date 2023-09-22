@@ -68,8 +68,8 @@ contract DeployAeraContractsForThreshold is DeployAeraContracts {
         ISwapRouter.exactOutputSingle.selector
     ];
 
-    address v2Factory = 0x6b8d4485e11aae228a32FAe5802c6d4BA25EA404;
-    address vaultModulesFactory = 0xC6149001299f3894FA2554e518b40961Da554eE0;
+    address v2Factory = 0x9500948c2BEeeB2Da4CC3aA21CB05Bd2e7C27191;
+    address vaultModulesFactory = 0x0fB6052Cc079A4EEc277f73e51E0dE3411792FF4;
     address internal guardianAddress =
         0xacEb23F3d96a2e3BE44306D9e57aaF9a0d1FFD74;
     address internal feeRecipient = guardianAddress;
