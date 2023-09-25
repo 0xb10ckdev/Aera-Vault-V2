@@ -113,6 +113,18 @@ contract DeployAeraContracts is DeployScriptBase {
             hooksParameters
         );
 
+        console.log("Asset Registry Constructor Args");
+        console.logBytes(abi.encode(
+            assetRegistryParameters.owner, 
+            deployedVault, 
+            assetRegistryParameters.assets, 
+            assetRegistryParameters.numeraireToken, 
+            assetRegistryParameters.feeToken, 
+            weth,
+            assetRegistryParameters.sequencer));
+        console.log("Hooks Constructor Args");
+        console.logBytes(abi.encode(hooksParameters.owner, deployedVault, hooksParameters.minDailyValue, hooksParameters.targetSighashAllowlist));
+
         // Check deployed AeraVaultV2
         _checkAeraVaultV2Integrity(
             AeraVaultV2(payable(deployedVault)),
