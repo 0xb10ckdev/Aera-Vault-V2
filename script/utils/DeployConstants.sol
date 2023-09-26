@@ -26,4 +26,7 @@ contract DeployConstants {
     address wstethOracle = 0xb4BAbDF623A35b422BFaCF05C46D0d93E0D9AE15;
     address waUSDC = 0x2F79D4CEB79EBD26161e51ca0C9300F970DEd54d;
     address uniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    
+    address v2Factory = 0x9500948c2BEeeB2Da4CC3aA21CB05Bd2e7C27191;
+    address vaultModulesFactory = 0x0fB6052Cc079A4EEc277f73e51E0dE3411792FF4;
 }
