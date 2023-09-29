@@ -343,12 +343,14 @@ contract AeraVaultV2Handler is TestBase {
             });
 
             _addTargetSighash(tokenIn, _APPROVE_SELECTOR);
+        }
+        vm.stopPrank();
 
+        for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] > 1e6) {
                 vaultValueChanged = true;
             }
         }
-        vm.stopPrank();
 
         _submit(operations);
     }
