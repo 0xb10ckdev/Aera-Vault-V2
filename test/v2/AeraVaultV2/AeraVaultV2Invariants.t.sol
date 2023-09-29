@@ -43,7 +43,8 @@ contract AeraVaultV2InvariantTest is TestBaseAeraVaultV2 {
             vaultWithHooksMock, 
             hooks, 
             assetRegistry,
-            erc20Assets
+            erc20Assets,
+            yieldAssets
         );
 
         targetContract(address(handler));

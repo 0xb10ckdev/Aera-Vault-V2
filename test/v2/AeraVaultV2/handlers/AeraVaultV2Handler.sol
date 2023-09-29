@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import {TestBase} from "test/utils/TestBase.sol";
 import {ISwapRouter} from
     "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@openzeppelin/IERC4626.sol";
 import "src/v2/AeraVaultAssetRegistry.sol";
 import "src/v2/AeraVaultV2.sol";
 import "src/v2/AeraVaultHooks.sol";
@@ -20,6 +21,7 @@ contract AeraVaultV2Handler is TestBase {
         0xa6f548df93de924d73be7d25dc02554c6bd66db500020000000000000000000e;
     bytes4 internal constant _TRANSFER_SELECTOR = IERC20.transfer.selector;
     bytes4 internal constant _APPROVE_SELECTOR = IERC20.approve.selector;
+    bytes4 internal constant _DEPOSIT_SELECTOR = IERC4626.deposit.selector;
     bytes4 internal constant _EXACT_INPUT_SINGLE_SELECTOR =
         ISwapRouter.exactInputSingle.selector;
     bytes4 internal constant _BALANCER_SWAP_SELECTOR =
@@ -30,7 +32,9 @@ contract AeraVaultV2Handler is TestBase {
     AeraVaultHooks public hooks;
     AeraVaultAssetRegistry public assetRegistry;
     IERC20[] public erc20Assets;
+    IERC4626[] public yieldAssets;
     uint256 public numERC20Assets;
+    uint256 public numYieldAssets;
 
     uint256 public beforeValue;
     bool public vaultValueChanged;
@@ -41,14 +45,17 @@ contract AeraVaultV2Handler is TestBase {
         AeraVaultV2 vaultWithHooksMock_,
         AeraVaultHooks hooks_,
         AeraVaultAssetRegistry assetRegistry_,
-        IERC20[] memory erc20Assets_
+        IERC20[] memory erc20Assets_,
+        IERC4626[] memory yieldAssets_
     ) {
         vault = vault_;
         vaultWithHooksMock = vaultWithHooksMock_;
         hooks = hooks_;
         assetRegistry = assetRegistry_;
         erc20Assets = erc20Assets_;
+        yieldAssets = yieldAssets_;
         numERC20Assets = erc20Assets_.length;
+        numYieldAssets = yieldAssets_.length;
 
         beforeValue = vault.value();
     }
@@ -163,6 +170,49 @@ contract AeraVaultV2Handler is TestBase {
             });
 
             _addTargetSighash(asset, _TRANSFER_SELECTOR);
+
+            if (amounts[i] > 1e6) {
+                vaultValueChanged = true;
+            }
+        }
+        vm.stopPrank();
+
+        _submit(operations);
+    }
+
+    function runSubmitDepositToYield(
+        uint256[3] memory tokenIndex,
+        uint256[3] memory amounts,
+        uint256 skipTimestamp
+    ) public {
+        vm.startPrank(hooks.owner());
+
+        skip(skipTimestamp % 10000);
+
+        Operation[] memory operations = new Operation[](tokenIndex.length * 2);
+
+        for (uint256 i = 0; i < tokenIndex.length; i++) {
+            uint256 index = tokenIndex[i] % numYieldAssets;
+            address asset = address(yieldAssets[index]);
+            address underlyingAsset = yieldAssets[index].asset();
+
+            amounts[i] %= IERC20(underlyingAsset).balanceOf(address(vault));
+
+            operations[i * 2] = Operation({
+                target: underlyingAsset,
+                value: 0,
+                data: abi.encodeWithSelector(_APPROVE_SELECTOR, asset, amounts[i])
+            });
+            operations[i * 2 + 1] = Operation({
+                target: asset,
+                value: 0,
+                data: abi.encodeWithSelector(
+                    _DEPOSIT_SELECTOR, amounts[i], address(vault)
+                    )
+            });
+
+            _addTargetSighash(underlyingAsset, _APPROVE_SELECTOR);
+            _addTargetSighash(asset, _DEPOSIT_SELECTOR);
 
             if (amounts[i] > 1e6) {
                 vaultValueChanged = true;
