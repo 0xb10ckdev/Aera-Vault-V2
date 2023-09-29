@@ -7,9 +7,6 @@ import {TestBase} from "test/utils/TestBase.sol";
 import {WrappedNativeMock} from "test/utils/WrappedNativeMock.sol";
 
 contract TestBaseFactory is TestBase {
-    address internal constant _WETH_ADDRESS =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-
     AeraV2Factory public factory;
     AeraVaultModulesFactory public modulesFactory;
 

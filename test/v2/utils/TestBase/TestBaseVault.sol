@@ -14,10 +14,6 @@ import {ERC20, ERC4626Mock} from "test/utils/ERC4626Mock.sol";
 contract TestBaseVault is TestBaseFactory, TestBaseVariables {
     using stdJson for string;
 
-    address internal constant _WBTC_ADDRESS =
-        0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address internal constant _USDC_ADDRESS =
-        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant _BTC_USD_ORACLE =
         0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
     address internal constant _ETH_USD_ORACLE =
