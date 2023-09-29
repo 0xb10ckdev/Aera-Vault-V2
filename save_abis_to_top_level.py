@@ -2,7 +2,7 @@ import json
 
 
 def save_abis_to_top_level():
-    for contract in ['AeraVaultV2', 'AeraVaultAssetRegistry', 'AeraVaultHooks']:
+    for contract in ['AeraVaultV2', 'AeraVaultAssetRegistry', 'AeraVaultHooks', 'AeraV2Factory', 'AeraVaultModulesFactory']:
         with open(f'./out/{contract}.sol/{contract}.json', 'r') as f:
             abi = json.load(f)['abi']
         with open(f'./{contract}.json', 'w') as f:
