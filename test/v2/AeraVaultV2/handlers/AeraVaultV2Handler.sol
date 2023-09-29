@@ -33,8 +33,10 @@ contract AeraVaultV2Handler is TestBase {
     AeraVaultAssetRegistry public assetRegistry;
     IERC20[] public erc20Assets;
     IERC4626[] public yieldAssets;
+    uint256[] public oraclePrices;
     uint256 public numERC20Assets;
     uint256 public numYieldAssets;
+    uint256 public numeraireUnit;
 
     uint256 public beforeValue;
     bool public vaultValueChanged;
@@ -46,7 +48,8 @@ contract AeraVaultV2Handler is TestBase {
         AeraVaultHooks hooks_,
         AeraVaultAssetRegistry assetRegistry_,
         IERC20[] memory erc20Assets_,
-        IERC4626[] memory yieldAssets_
+        IERC4626[] memory yieldAssets_,
+        uint256[] memory oraclePrices_
     ) {
         vault = vault_;
         vaultWithHooksMock = vaultWithHooksMock_;
@@ -54,6 +57,9 @@ contract AeraVaultV2Handler is TestBase {
         assetRegistry = assetRegistry_;
         erc20Assets = erc20Assets_;
         yieldAssets = yieldAssets_;
+        oraclePrices = oraclePrices_;
+        numeraireUnit = 10
+            ** IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
         numERC20Assets = erc20Assets_.length;
         numYieldAssets = yieldAssets_.length;
 
@@ -76,9 +82,7 @@ contract AeraVaultV2Handler is TestBase {
 
             depositAmounts[i] = AssetValue({asset: asset, value: amounts[i]});
 
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+            _checkVaultValueStatus(address(asset), oraclePrices[i], amounts[i]);
         }
 
         vault.deposit(depositAmounts);
@@ -97,9 +101,7 @@ contract AeraVaultV2Handler is TestBase {
 
             withdrawAmounts[i] = AssetValue({asset: asset, value: amounts[i]});
 
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+            _checkVaultValueStatus(address(asset), oraclePrices[i], amounts[i]);
         }
 
         vm.startPrank(vault.owner());
@@ -125,19 +127,18 @@ contract AeraVaultV2Handler is TestBase {
         IAssetRegistry.AssetInformation[] memory assets =
             vault.assetRegistry().assets();
         assetIndex %= assets.length;
-        amount %= assets[assetIndex].asset.balanceOf(address(vault));
+        address asset = address(assets[assetIndex].asset);
+        amount %= IERC20(asset).balanceOf(address(vault));
 
         skip(skipTimestamp % 10000);
 
         Operation memory operation = Operation({
-            target: address(assets[assetIndex].asset),
+            target: asset,
             value: 0,
             data: abi.encodeWithSelector(_TRANSFER_SELECTOR, address(this), amount)
         });
 
-        if (amount > 1e6) {
-            vaultValueChanged = true;
-        }
+        _checkVaultValueStatus(asset, oraclePrices[assetIndex], amount);
 
         vm.startPrank(vault.owner());
         vault.execute(operation);
@@ -171,9 +172,7 @@ contract AeraVaultV2Handler is TestBase {
 
             _addTargetSighash(asset, _TRANSFER_SELECTOR);
 
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+            _checkVaultValueStatus(asset, oraclePrices[i], amounts[i]);
         }
         vm.stopPrank();
 
@@ -214,9 +213,7 @@ contract AeraVaultV2Handler is TestBase {
             _addTargetSighash(underlyingAsset, _APPROVE_SELECTOR);
             _addTargetSighash(asset, _DEPOSIT_SELECTOR);
 
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+            _checkVaultValueStatus(asset, oraclePrices[index], amounts[i]);
         }
         vm.stopPrank();
 
@@ -269,9 +266,11 @@ contract AeraVaultV2Handler is TestBase {
 
             _addTargetSighash(tokenIn, _APPROVE_SELECTOR);
 
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+            _checkVaultValueStatus(
+                tokenIn,
+                oraclePrices[tokenIndex[i][0] % numERC20Assets],
+                amounts[i]
+            );
         }
         vm.stopPrank();
 
@@ -346,10 +345,13 @@ contract AeraVaultV2Handler is TestBase {
         }
         vm.stopPrank();
 
-        for (uint256 i = 0; i < amounts.length; i++) {
-            if (amounts[i] > 1e6) {
-                vaultValueChanged = true;
-            }
+        for (uint256 i = 0; i < tokenIndex.length; i++) {
+            uint256 tokenInIndex = tokenIndex[i][0] % numERC20Assets;
+            _checkVaultValueStatus(
+                address(erc20Assets[tokenInIndex]),
+                oraclePrices[tokenInIndex],
+                amounts[i]
+            );
         }
 
         _submit(operations);
@@ -393,6 +395,17 @@ contract AeraVaultV2Handler is TestBase {
 
         tokenIn = address(erc20Assets[tokenInIndex]);
         tokenOut = address(erc20Assets[tokenOutIndex]);
+    }
+
+    function _checkVaultValueStatus(
+        address asset,
+        uint256 price,
+        uint256 amount
+    ) internal {
+        uint256 assetDecimals = IERC20Metadata(asset).decimals();
+        if (amount * price * numeraireUnit / _ONE / 10 ** assetDecimals > 0) {
+            vaultValueChanged = true;
+        }
     }
 }
 
