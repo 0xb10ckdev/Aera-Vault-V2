@@ -138,12 +138,6 @@ contract AeraVaultV2 is
             uint256 fee_
         ) = IAeraV2Factory(msg.sender).parameters();
 
-        // Requirements: check provided addresses.
-        _checkAssetRegistryAddress(assetRegistry_);
-        _checkHooksAddress(hooks_);
-        _checkGuardianAddress(guardian_, owner_);
-        _checkFeeRecipientAddress(feeRecipient_, owner_);
-
         // Requirements: check that initial owner is not zero address.
         if (owner_ == address(0)) {
             revert Aera__InitialOwnerIsZeroAddress();
@@ -152,6 +146,15 @@ contract AeraVaultV2 is
         if (fee_ > _MAX_FEE) {
             revert Aera__FeeIsAboveMax(fee_, _MAX_FEE);
         }
+
+        // Effects: set new owner.
+        _transferOwnership(owner_);
+
+        // Requirements: check provided addresses.
+        _checkAssetRegistryAddress(assetRegistry_);
+        _checkHooksAddress(hooks_);
+        _checkGuardianAddress(guardian_);
+        _checkFeeRecipientAddress(feeRecipient_);
 
         // Effects: initialize vault state.
         wrappedNativeToken = IAeraV2Factory(msg.sender).wrappedNativeToken();
@@ -167,9 +170,6 @@ contract AeraVaultV2 is
         _feeTokenDecimals = IERC20Metadata(address(_feeToken)).decimals();
         _numeraireTokenDecimals =
             IERC20Metadata(address(assetRegistry.numeraireToken())).decimals();
-
-        // Effects: set new owner.
-        _transferOwnership(owner_);
 
         // Effects: pause vault.
         _pause();
@@ -290,8 +290,8 @@ contract AeraVaultV2 is
         address newFeeRecipient
     ) external override onlyOwner whenNotFinalized reserveFees {
         // Requirements: check guardian and fee recipient addresses.
-        _checkGuardianAddress(newGuardian, msg.sender);
-        _checkFeeRecipientAddress(newFeeRecipient, msg.sender);
+        _checkGuardianAddress(newGuardian);
+        _checkFeeRecipientAddress(newFeeRecipient);
 
         // Effects: update guardian and fee recipient addresses.
         guardian = newGuardian;
@@ -867,30 +867,25 @@ contract AeraVaultV2 is
 
     /// @notice Check if the address can be a guardian.
     /// @param newGuardian Address to check.
-    /// @param owner_ Owner address.
-    function _checkGuardianAddress(
-        address newGuardian,
-        address owner_
-    ) internal pure {
+    function _checkGuardianAddress(address newGuardian) internal view {
         if (newGuardian == address(0)) {
             revert Aera__GuardianIsZeroAddress();
         }
-        if (newGuardian == owner_) {
+        if (newGuardian == owner()) {
             revert Aera__GuardianIsOwner();
         }
     }
 
     /// @notice Check if the address can be a fee recipient.
     /// @param newFeeRecipient Address to check.
-    /// @param owner_ Owner address.
-    function _checkFeeRecipientAddress(
-        address newFeeRecipient,
-        address owner_
-    ) internal pure {
+    function _checkFeeRecipientAddress(address newFeeRecipient)
+        internal
+        view
+    {
         if (newFeeRecipient == address(0)) {
             revert Aera__FeeRecipientIsZeroAddress();
         }
-        if (newFeeRecipient == owner_) {
+        if (newFeeRecipient == owner()) {
             revert Aera__FeeRecipientIsOwner();
         }
     }
