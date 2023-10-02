@@ -31,6 +31,8 @@ lcov.info
 mnemonic.txt
 
 # ABI files
+AeraV2Factory.json
 AeraVaultAssetRegistry.json
 AeraVaultHooks.json
+AeraVaultModulesFactory.json
 AeraVaultV2.json
