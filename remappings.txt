@@ -5,4 +5,3 @@ test/=test/
 @openzeppelin/=src/v2/dependencies/openzeppelin/
 @uniswap/v3-periphery/=lib/v3-periphery
 @uniswap/v3-core/=lib/v3-core
-@openzeppelintest/=test/v2/dependencies/openzeppelin/

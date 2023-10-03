@@ -14,9 +14,9 @@ contract AeraVaultHooksHandler is TestBase {
     uint256 public cumulativeDailyMultiplier;
     uint256 public beforeValue;
 
-    constructor(AeraVaultV2 _vault, AeraVaultHooks _hooks) {
-        vault = _vault;
-        hooks = _hooks;
+    constructor(AeraVaultV2 vault_, AeraVaultHooks hooks_) {
+        vault = vault_;
+        hooks = hooks_;
 
         currentDay = hooks.currentDay();
         cumulativeDailyMultiplier = _ONE;
