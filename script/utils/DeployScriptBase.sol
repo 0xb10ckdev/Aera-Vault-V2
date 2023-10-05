@@ -19,7 +19,7 @@ contract DeployScriptBase is DeployConstants, Script, Test {
     function _storeDeployedAddress(
         string memory key,
         address deployed
-    ) internal {
+    ) internal virtual {
         string memory path =
             string.concat(vm.projectRoot(), "/config/Deployments.json");
 
