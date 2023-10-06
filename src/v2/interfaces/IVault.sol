@@ -60,18 +60,18 @@ interface IVault is IVaultEvents {
     function withdraw(AssetValue[] memory amounts) external;
 
     /// @notice Set current guardian and fee recipient.
-    /// @param guardian New guardian address.
-    /// @param feeRecipient New fee recipient address.
+    /// @param newGuardian New guardian address.
+    /// @param newFeeRecipient New fee recipient address.
     /// @dev MUST revert if not called by owner.
     function setGuardianAndFeeRecipient(
-        address guardian,
-        address feeRecipient
+        address newGuardian,
+        address newFeeRecipient
     ) external;
 
     /// @notice Sets the current hooks module.
-    /// @param hooks New hooks module address.
+    /// @param newHooks New hooks module address.
     /// @dev MUST revert if not called by owner.
-    function setHooks(address hooks) external;
+    function setHooks(address newHooks) external;
 
     /// @notice Execute a transaction via the vault.
     /// @dev Execution still should work when vault is finalized.
@@ -100,36 +100,30 @@ interface IVault is IVaultEvents {
     function claim() external;
 
     /// @notice Get the current guardian.
-    /// @return guardian Address of guardian.
-    function guardian() external view returns (address guardian);
+    /// @return Address of guardian.
+    function guardian() external view returns (address);
 
     /// @notice Get the current fee recipient.
-    /// @return feeRecipient Address of fee recipient.
-    function feeRecipient() external view returns (address feeRecipient);
+    /// @return Address of fee recipient.
+    function feeRecipient() external view returns (address);
 
     /// @notice Get the current asset registry.
-    /// @return assetRegistry Address of asset registry.
-    function assetRegistry()
-        external
-        view
-        returns (IAssetRegistry assetRegistry);
+    /// @return Address of asset registry.
+    function assetRegistry() external view returns (IAssetRegistry);
 
     /// @notice Get the current hooks module address.
-    /// @return hooks Address of hooks module.
-    function hooks() external view returns (IHooks hooks);
+    /// @return Address of hooks module.
+    function hooks() external view returns (IHooks);
 
     /// @notice Get fee per second.
-    /// @return fee Fee per second in 18 decimal fixed point format.
-    function fee() external view returns (uint256 fee);
+    /// @return Fee per second in 18 decimal fixed point format.
+    function fee() external view returns (uint256);
 
     /// @notice Get current balances of all assets.
-    /// @return assetAmounts Amounts of registered assets.
-    function holdings()
-        external
-        view
-        returns (AssetValue[] memory assetAmounts);
+    /// @return Amounts of registered assets.
+    function holdings() external view returns (AssetValue[] memory);
 
     /// @notice Get current total value of assets in vault.
-    /// @return value Current total value.
-    function value() external view returns (uint256 value);
+    /// @return Current total value.
+    function value() external view returns (uint256);
 }
