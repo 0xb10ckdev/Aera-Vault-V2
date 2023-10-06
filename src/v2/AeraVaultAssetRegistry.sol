@@ -596,6 +596,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Effects: adjust the number of ERC4626 assets.
         if (asset.isERC4626) {
+            // slither-disable-next-line costly-loop
             numYieldAssets++;
         }
 
