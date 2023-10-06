@@ -15,7 +15,7 @@ contract Sweepable is ISweepable, Ownable2Step {
     /// @inheritdoc ISweepable
     function sweep(address token, uint256 amount) external onlyOwner {
         if (token == address(0)) {
-            // slither-disable-next-line unchecked-lowlevel
+            // slither-disable-next-line unchecked-lowlevel,reentrancy-events
             msg.sender.call{value: amount}("");
         } else {
             IERC20(token).safeTransfer(msg.sender, amount);
