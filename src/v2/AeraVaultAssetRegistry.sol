@@ -516,6 +516,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         view
         returns (uint256 price)
     {
+        // slither-disable-next-line calls-loop
         (, int256 answer,, uint256 updatedAt,) = asset.oracle.latestRoundData();
 
         // Check price staleness
@@ -542,6 +543,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     ) internal view {
         uint256 numAssets = assetsToCheck.length;
 
+        // slither-disable-next-line calls-loop
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
         uint256 underlyingIndex = 0;
 
