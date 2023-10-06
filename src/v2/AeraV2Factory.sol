@@ -216,6 +216,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         delete parameters;
 
         // Log vault creation.
+        // slither-disable-next-line reentrancy-events
         emit VaultCreated(
             deployed,
             assetRegistry,
