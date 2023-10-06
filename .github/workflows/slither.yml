@@ -8,21 +8,9 @@ jobs:
     environment: contracts
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.9"
-
-      - name: Install solc
-        uses: pontem-network/get-solc@master
-        with:
-          version: v0.8.21
-
-      - name: Install Slither
-        run: pip3 install slither-analyzer
 
       - name: Run slither analyzer
-        run: yarn run slither
+        uses: crytic/slither-action@v0.3.0
+        with:
+          target: 'src/v2/'
+          solc-version: 0.8.21
