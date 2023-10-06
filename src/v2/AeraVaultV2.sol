@@ -154,6 +154,7 @@ contract AeraVaultV2 is
         }
 
         // Effects: initialize vault state.
+        // slither-disable-start missing-zero-check
         wrappedNativeToken = IAeraV2Factory(msg.sender).wrappedNativeToken();
         assetRegistry = IAssetRegistry(assetRegistry_);
         hooks = IHooks(hooks_);
@@ -161,6 +162,7 @@ contract AeraVaultV2 is
         feeRecipient = feeRecipient_;
         fee = fee_;
         lastFeeCheckpoint = block.timestamp;
+        // slither-disable-end
 
         // Effects: cache numeraire and fee token decimals.
         _feeToken = IAssetRegistry(assetRegistry_).feeToken();
@@ -294,6 +296,7 @@ contract AeraVaultV2 is
         _checkFeeRecipientAddress(newFeeRecipient, msg.sender);
 
         // Effects: update guardian and fee recipient addresses.
+        // slither-disable-next-line missing-zero-check
         guardian = newGuardian;
         feeRecipient = newFeeRecipient;
 
