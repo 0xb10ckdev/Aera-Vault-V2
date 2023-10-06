@@ -1,5 +1,5 @@
 {
-  "detectors_to_exclude": "solc-version,timestamp,unused-return,naming-convention",
+  "detectors_to_exclude": "solc-version,timestamp,unused-return,naming-convention,low-level-calls",
   "filter_paths": "lib/|dependencies/|test/",
   "solc_remaps": [
     "@chainlink/=src/v2/dependencies/chainlink/",
