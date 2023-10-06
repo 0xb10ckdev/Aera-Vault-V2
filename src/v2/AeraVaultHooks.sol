@@ -245,6 +245,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
+            // slither-disable-next-line incorrect-equality
             newMultiplier = currentDay == day ? currentMultiplier : ONE;
             newMultiplier =
                 (newMultiplier * IVault(vault).value()) / _beforeValue;
