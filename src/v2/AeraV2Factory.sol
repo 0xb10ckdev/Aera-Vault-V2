@@ -213,6 +213,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         // Requirements, Effects and Interactions: deploy vault with create2.
         deployed = address(new AeraVaultV2{salt: salt}());
 
+        // slither-disable-next-line reentrancy-benign
         delete parameters;
 
         // Log vault creation.
