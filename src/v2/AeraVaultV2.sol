@@ -485,6 +485,7 @@ contract AeraVaultV2 is
             }
 
             // Interactions: execute operation.
+            // slither-disable-next-line calls-loop
             (success, result) =
                 operation.target.call{value: operation.value}(operation.data);
 

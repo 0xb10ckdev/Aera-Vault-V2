@@ -352,6 +352,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         } else {
             for (uint256 i = 0; i < numAssets;) {
                 if (
+                    // slither-disable-next-line calls-loop
                     i != oldAssetIndex && _assets[i].isERC4626
                         && IERC4626(address(_assets[i].asset)).asset() == asset
                 ) {
@@ -446,6 +447,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
                 });
             } else {
                 price = _checkOraclePrice(_assets[i]);
+                // slither-disable-next-line calls-loop
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (oracleDecimals < 18) {
