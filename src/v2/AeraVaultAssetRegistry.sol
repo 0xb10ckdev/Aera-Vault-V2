@@ -109,6 +109,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @param feeToken_ Fee token address.
     /// @param wrappedNativeToken_ Wrapped native token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
+    // slither-disable-next-line cyclomatic-complexity
     constructor(
         address owner_,
         address vault_,
