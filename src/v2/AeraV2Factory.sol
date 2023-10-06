@@ -237,6 +237,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         view
         returns (address)
     {
+        // slither-disable-next-line too-many-digits
         return Create2.computeAddress(
             salt, keccak256(type(AeraVaultV2).creationCode)
         );
