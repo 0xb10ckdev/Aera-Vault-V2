@@ -656,6 +656,7 @@ contract AeraVaultV2 is
             newFee =
                 newFee * (10 ** (_feeTokenDecimals - _numeraireTokenDecimals));
         } else if (_numeraireTokenDecimals > _feeTokenDecimals) {
+            // slither-disable-next-line divide-before-multiply
             newFee =
                 newFee / (10 ** (_numeraireTokenDecimals - _feeTokenDecimals));
         }
