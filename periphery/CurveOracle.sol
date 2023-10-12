@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import "@openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/SafeCast.sol";
 import "./interfaces/IAeraV2Oracle.sol";
 import "./interfaces/ICurveFiPool.sol";
-import {ONE} from "src/v2/Constants.sol";
 
 /// @title CurveOracle
 /// @notice Used to calculate price of tokens in a Curve V2 pool.
@@ -14,7 +12,7 @@ contract CurveOracle is IAeraV2Oracle {
     ICurveFiPool public immutable pool;
 
     /// @notice Decimals of price returned by this oracle.
-    uint8 public constant decimals = 18;
+    uint8 public immutable decimals;
 
     /// ERRORS ///
 
@@ -44,6 +42,7 @@ contract CurveOracle is IAeraV2Oracle {
 
         // Effects: set pool and oracle decimals.
         pool = c;
+        decimals = 18;
     }
 
     /// @inheritdoc IAeraV2Oracle
