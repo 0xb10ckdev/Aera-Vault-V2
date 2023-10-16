@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import "@openzeppelin/IERC20Metadata.sol";
 import "./dependencies/openzeppelin/SafeCast.sol";
 import "./interfaces/IAeraV2Oracle.sol";
 import "./interfaces/IWstETH.sol";
 import {ONE} from "src/v2/Constants.sol";
-
-/// ERRORS ///
-
-error AeraPeriphery__WstETHIsZeroAddress();
-error AeraPeriphery__InvalidWstETH();
 
 /// @title WstETHOracle
 /// @notice Used to calculate price of wstETH.
@@ -20,6 +14,11 @@ contract WstETHOracle is IAeraV2Oracle {
 
     /// @notice Decimals of price returned by this oracle.
     uint8 public immutable decimals;
+
+    /// ERRORS ///
+
+    error AeraPeriphery__WstETHIsZeroAddress();
+    error AeraPeriphery__InvalidWstETH();
 
     /// FUNCTIONS ///
 
