@@ -127,6 +127,49 @@ Once the deployments are done, the deployed addresses will be stored in the `/co
 If you want to run the tests with the deployed contracts, you need to specify the deployment addresses in the file, and set `TEST_WITH_DEPLOYED_CONTRACTS` as `true`.
 Then just run the tests.
 
+### Scripts
+
+Similar to deployment, make sure you have a private key available
+
+Pause a vault:
+```sh
+$ VAULT_ADDRESS=<vault_address> forge script script/v2/Pause.s.sol --rpc <URL> --broadcast
+```
+
+Resume a vault:
+```sh
+$ VAULT_ADDRESS=<vault_address> forge script script/v2/Resume.s.sol --rpc <URL> --broadcast
+```
+
+Deposit to a vault:
+First set the amounts and vault address in config/AeraVaultDeposit.json
+```sh
+$ forge script script/v2/Deposit.s.sol --rpc <URL> --broadcast
+```
+
+Withdraw from a vault:
+First set the amounts and vault address in config/AeraVaultWithdraw.json
+```sh
+$ forge script script/v2/Withdraw.s.sol --rpc <URL> --broadcast
+```
+
+Add assets to registry:
+First set the asset information in config/AddAssetsToRegistry.json
+```sh
+$ forge script script/v2/AddAssetsToRegistry.s.sol --rpc <URL> --broadcast
+```
+
+Remove assets from registry:
+First set the assets to remove in config/RemoveAssetsFromRegistry.json
+```sh
+$ forge script script/v2/RemoveAssetsFromRegistry.s.sol --rpc <URL> --broadcast
+```
+
+Transfer a vault's ownership:
+```sh
+$ VAULT_ADDRESS=<vault_address> NEW_OWNER=<new_owner> forge script script/v2/TransferOwnership.s.sol --rpc <URL> --broadcast
+```
+
 #### Deployment Flow
 
 ```mermaid
