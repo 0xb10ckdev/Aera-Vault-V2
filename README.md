@@ -5,6 +5,7 @@
 Tools used:
 
 - [Foundry](https://github.com/foundry-rs/foundry): Compile and run the smart contracts on a local development network
+- [Slither](https://github.com/crytic/slither): solidity analyzer
 - [Solhint](https://github.com/protofire/solhint): linter
 - [Prettier Plugin Solidity](https://github.com/prettier-solidity/prettier-plugin-solidity): code formatter
 
@@ -33,6 +34,14 @@ Compile the smart contracts with Forge:
 
 ```sh
 $ forge build
+```
+
+### Analyze Solidity
+
+Analyze the Solidity code:
+
+```sh
+$ yarn slither
 ```
 
 ### Lint Solidity
@@ -96,6 +105,12 @@ Deploy the AeraV2Factory to a specific network:
 $ forge script script/v2/deploy/DeployAeraV2Factory.s.sol --fork-url <URL> --broadcast
 ```
 
+Deploy the AeraVaultModulesFactory to a specific network:
+
+```sh
+$ forge script script/v2/deploy/DeployAeraVaultModulesFactory.s.sol --fork-url <URL> --broadcast
+```
+
 Deploy the AeraVaultV2, AeraVaultAssetRegistry and AeraVaultHooks to a specific network with salt value:
 
 ```sh
@@ -119,41 +134,38 @@ graph LR
     D{Deployer}
     subgraph Contracts
         F(AeraV2Factory)
+        M("AeraVaultModulesFactory\n(AeraVaultAssetRegistryFactory,\nAeraVaultHooksFactory)")
         A(AeraVaultAssetRegistry)
         V(AeraVaultV2)
         H(AeraVaultHooks)
     end
     subgraph Process
         S1[1. Deploy AeraV2Factory]:::Process
-        subgraph DeployContracts[Deploy Contracts]
-            S2[2. Check and Deploy AeraVaultAssetRegistry]:::Process
-            S3[3. Check and Deploy AeraVaultV2]:::Process
-            S4[4. Check and Deploy AeraVaultHooks]:::Process
-            S5[5. Link Vault and Hooks]:::Process
-        end
+        S2[2. Deploy AeraVaultModulesFactory]:::Process
+        S3[3. Deploy Contracts]:::Process
     end
     D --- S1 --> F
-    D --- S2 --> A
-    D --- S3 --> F -. Create .-> V -. link .-> A
-    D --- S4 --> H -. link .-> V
-    D --- S5 --> V -. link .-> H
+    D --- S2 --> M
+    F -. Call .-> M -. Create .-> A
+    F -. Call .-> M -. Create .-> H
+    D --- S3 --> F -. Create .-> V
+    V -. Link .-> A
+    V -. Link .-> H
 
     %% ===== This is just for order of process =====
-    S1 --- A
     S2 --- H
     %% =============================================
 
     linkStyle 0,1 stroke:black
     linkStyle 2,3 stroke:cyan
-    linkStyle 4,5,6,7 stroke:red
-    linkStyle 8,9,10 stroke:blue
-    linkStyle 11,12,13 stroke:green
-    linkStyle 14,15 stroke:none
+    linkStyle 4,5 stroke:red
+    linkStyle 6,7 stroke:blue
+    linkStyle 8,9,10,11,12 stroke:green
+    linkStyle 13 stroke:none
 
     classDef Process fill:none,stroke:none
 
     style Process fill:none,stroke:grey
-    style DeployContracts fill:none,stroke:grey
     style Contracts fill:none,stroke:grey
 ```
 
