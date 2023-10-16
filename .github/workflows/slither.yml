@@ -12,5 +12,11 @@ jobs:
       - name: Run slither analyzer
         uses: crytic/slither-action@v0.3.0
         with:
-          target: 'src/v2/'
+          target: "src/v2/"
+          solc-version: 0.8.21
+
+      - name: Run slither analyzer for periphery contracts
+        uses: crytic/slither-action@v0.3.0
+        with:
+          target: "periphery/"
           solc-version: 0.8.21
