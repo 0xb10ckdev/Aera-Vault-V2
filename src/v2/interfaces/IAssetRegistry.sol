@@ -27,36 +27,30 @@ interface IAssetRegistry {
     }
 
     /// @notice Get address of vault.
-    /// @return vault Address of vault.
-    function vault() external view returns (address vault);
+    /// @return Address of vault.
+    function vault() external view returns (address);
 
     /// @notice Get a list of all registered assets.
-    /// @return assets List of assets.
+    /// @return List of assets.
     /// @dev MUST return assets in an order sorted by address.
-    function assets()
-        external
-        view
-        returns (AssetInformation[] memory assets);
+    function assets() external view returns (AssetInformation[] memory);
 
     /// @notice Get address of fee token.
-    /// @return feeToken Address of fee token.
+    /// @return Address of fee token.
     /// @dev Represented as an address for efficiency reasons.
     /// @dev MUST be present in assets array.
-    function feeToken() external view returns (IERC20 feeToken);
+    function feeToken() external view returns (IERC20);
 
     /// @notice Get the index of the Numeraire token in the assets array.
-    /// @return numeraireToken Numeraire token address.
+    /// @return Numeraire token address.
     /// @dev Represented as an index for efficiency reasons.
     /// @dev MUST be a number between 0 (inclusive) and the length of assets array (exclusive).
-    function numeraireToken() external view returns (IERC20 numeraireToken);
+    function numeraireToken() external view returns (IERC20);
 
     /// @notice Calculate spot prices of non-ERC4626 assets.
-    /// @return spotPrices Spot prices of non-ERC4626 assets in 18 decimals.
+    /// @return Spot prices of non-ERC4626 assets in 18 decimals.
     /// @dev MUST return assets in the same order as in assets but with ERC4626 assets filtered out.
     /// @dev MUST also include Numeraire token (spot price = 1).
     /// @dev MAY revert if oracle prices for any asset are unreliable at the time.
-    function spotPrices()
-        external
-        view
-        returns (AssetPriceReading[] memory spotPrices);
+    function spotPrices() external view returns (AssetPriceReading[] memory);
 }

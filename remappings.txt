@@ -1,7 +1,7 @@
 src/=src/
 test/=test/
 
-@chainlink/=src/v2/dependencies/chainlink
+@chainlink/=src/v2/dependencies/chainlink/
 @openzeppelin/=src/v2/dependencies/openzeppelin/
-@uniswap/v3-periphery/=lib/v3-periphery
-@uniswap/v3-core/=lib/v3-core
+@uniswap/v3-periphery/=lib/v3-periphery/
+@uniswap/v3-core/=lib/v3-core/

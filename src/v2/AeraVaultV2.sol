@@ -154,6 +154,7 @@ contract AeraVaultV2 is
         }
 
         // Effects: initialize vault state.
+        // slither-disable-start missing-zero-check
         wrappedNativeToken = IAeraV2Factory(msg.sender).wrappedNativeToken();
         assetRegistry = IAssetRegistry(assetRegistry_);
         hooks = IHooks(hooks_);
@@ -161,6 +162,7 @@ contract AeraVaultV2 is
         feeRecipient = feeRecipient_;
         fee = fee_;
         lastFeeCheckpoint = block.timestamp;
+        // slither-disable-end
 
         // Effects: cache numeraire and fee token decimals.
         _feeToken = IAssetRegistry(assetRegistry_).feeToken();
@@ -294,6 +296,7 @@ contract AeraVaultV2 is
         _checkFeeRecipientAddress(newFeeRecipient, msg.sender);
 
         // Effects: update guardian and fee recipient addresses.
+        // slither-disable-next-line missing-zero-check
         guardian = newGuardian;
         feeRecipient = newFeeRecipient;
 
@@ -315,6 +318,7 @@ contract AeraVaultV2 is
 
         // Effects: decommission old hooks contract.
         if (address(hooks) != address(0)) {
+            // slither-disable-next-line reentrancy-no-eth
             hooks.decommission();
         }
 
@@ -366,6 +370,7 @@ contract AeraVaultV2 is
         reserveFees
     {
         // Hooks: before finalizing.
+        // slither-disable-next-line reentrancy-no-eth
         hooks.beforeFinalize();
 
         // Effects: mark the vault as finalized.
@@ -483,6 +488,7 @@ contract AeraVaultV2 is
             }
 
             // Interactions: execute operation.
+            // slither-disable-next-line calls-loop
             (success, result) =
                 operation.target.call{value: operation.value}(operation.data);
 
@@ -496,6 +502,7 @@ contract AeraVaultV2 is
         }
 
         if (address(this).balance > 0) {
+            // slither-disable-next-line unchecked-lowlevel
             wrappedNativeToken.call{value: address(this).balance}("");
         }
 
@@ -519,6 +526,7 @@ contract AeraVaultV2 is
             Math.min(_feeToken.balanceOf(address(this)), reservedFee);
 
         // Requirements: check that fees are available to claim.
+        // slither-disable-next-line incorrect-equality
         if (availableFee == 0) {
             revert Aera__NoAvailableFeesForCaller(msg.sender);
         }
@@ -616,6 +624,7 @@ contract AeraVaultV2 is
         uint256 feeIndex = _getFeeIndex();
 
         // Requirements: check if fees have been accruing.
+        // slither-disable-next-line incorrect-equality
         if (feeIndex == 0) {
             return;
         }
@@ -647,12 +656,14 @@ contract AeraVaultV2 is
             newFee =
                 newFee * (10 ** (_feeTokenDecimals - _numeraireTokenDecimals));
         } else if (_numeraireTokenDecimals > _feeTokenDecimals) {
+            // slither-disable-next-line divide-before-multiply
             newFee =
                 newFee / (10 ** (_numeraireTokenDecimals - _feeTokenDecimals));
         }
 
         newFee /= lastFeeTokenPrice;
 
+        // slither-disable-next-line incorrect-equality
         if (newFee == 0) {
             return;
         }

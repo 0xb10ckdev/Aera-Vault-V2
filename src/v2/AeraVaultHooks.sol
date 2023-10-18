@@ -245,6 +245,7 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
         if (_beforeValue > 0) {
             // Initialize new cumulative multiplier with the current submit multiplier.
+            // slither-disable-next-line incorrect-equality
             newMultiplier = currentDay == day ? currentMultiplier : ONE;
             newMultiplier =
                 (newMultiplier * IVault(vault).value()) / _beforeValue;
@@ -292,7 +293,9 @@ contract AeraVaultHooks is IHooks, IAeraVaultHooksEvents, Sweepable, ERC165 {
 
                 token = IERC20(operations[i].target);
 
-                // Requirements: check that the current outgoing allowance for this token is zero.
+                // Requirements: check that the current outgoing allowance
+                // for this token is zero.
+                // slither-disable-next-line calls-loop
                 if (token.allowance(vault, spender) > 0) {
                     revert Aera__AllowanceIsNotZero(address(token), spender);
                 }

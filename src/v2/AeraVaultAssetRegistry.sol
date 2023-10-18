@@ -109,6 +109,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     /// @param feeToken_ Fee token address.
     /// @param wrappedNativeToken_ Wrapped native token address.
     /// @param sequencer_ Sequencer Uptime Feed address for L2.
+    // slither-disable-next-line cyclomatic-complexity
     constructor(
         address owner_,
         address vault_,
@@ -352,6 +353,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         } else {
             for (uint256 i = 0; i < numAssets;) {
                 if (
+                    // slither-disable-next-line calls-loop
                     i != oldAssetIndex && _assets[i].isERC4626
                         && IERC4626(address(_assets[i].asset)).asset() == asset
                 ) {
@@ -446,6 +448,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
                 });
             } else {
                 price = _checkOraclePrice(_assets[i]);
+                // slither-disable-next-line calls-loop
                 oracleDecimals = _assets[i].oracle.decimals();
 
                 if (oracleDecimals < 18) {
@@ -513,6 +516,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
         view
         returns (uint256 price)
     {
+        // slither-disable-next-line calls-loop
         (, int256 answer,, uint256 updatedAt,) = asset.oracle.latestRoundData();
 
         // Check price staleness
@@ -539,6 +543,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
     ) internal view {
         uint256 numAssets = assetsToCheck.length;
 
+        // slither-disable-next-line calls-loop
         address underlyingAsset = IERC4626(address(asset.asset)).asset();
         uint256 underlyingIndex = 0;
 
@@ -593,6 +598,7 @@ contract AeraVaultAssetRegistry is IAssetRegistry, Sweepable, ERC165 {
 
         // Effects: adjust the number of ERC4626 assets.
         if (asset.isERC4626) {
+            // slither-disable-next-line costly-loop
             numYieldAssets++;
         }
 

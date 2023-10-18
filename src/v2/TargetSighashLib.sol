@@ -10,6 +10,7 @@ library TargetSighashLib {
     /// @param target Target contract address.
     /// @param selector Function selector.
     /// @return targetSighash Packed value of target and selector.
+    // slither-disable-next-line dead-code
     function toTargetSighash(
         address target,
         bytes4 selector

@@ -213,9 +213,11 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         // Requirements, Effects and Interactions: deploy vault with create2.
         deployed = address(new AeraVaultV2{salt: salt}());
 
+        // slither-disable-next-line reentrancy-benign
         delete parameters;
 
         // Log vault creation.
+        // slither-disable-next-line reentrancy-events
         emit VaultCreated(
             deployed,
             assetRegistry,
@@ -237,6 +239,7 @@ contract AeraV2Factory is IAeraV2Factory, Sweepable {
         view
         returns (address)
     {
+        // slither-disable-next-line too-many-digits
         return Create2.computeAddress(
             salt, keccak256(type(AeraVaultV2).creationCode)
         );

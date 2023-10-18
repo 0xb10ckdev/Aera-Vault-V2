@@ -12,6 +12,9 @@
     "solhint-plugin-prettier": "^0.0.5"
   },
   "scripts": {
+    "slither": "slither ./src/v2 && slither ./periphery/",
+    "slither:src": "slither ./src/v2",
+    "slither:periphery": "slither ./periphery/",
     "lint:sol": "solhint --config ./.solhint.json --max-warnings 0 \"src/**/*.sol\""
   }
 }
